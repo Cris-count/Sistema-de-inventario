@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
 import { roleGuard } from './core/auth/role.guard';
+import { syncUserGuard } from './core/auth/sync-user.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'app' },
@@ -12,7 +13,7 @@ export const routes: Routes = [
   },
   {
     path: 'app',
-    canActivate: [authGuard],
+    canActivate: [authGuard, syncUserGuard],
     loadComponent: () => import('./shared/shell/app-shell.component').then((m) => m.AppShellComponent),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },

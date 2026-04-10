@@ -60,14 +60,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 writeUnauthorized(request, response);
                 return;
             }
-            Object uidObj = claims.get("uid");
-            if (uidObj != null) {
-                long tokenUserId = uidObj instanceof Number n ? n.longValue() : Long.parseLong(String.valueOf(uidObj).trim());
-                if (!usuario.getId().equals(tokenUserId)) {
-                    writeUnauthorized(request, response);
-                    return;
-                }
-            }
+            // No exigir coincidencia del claim "uid" con el id en BD: tras resembrar datos el mismo
+            // email puede tener otro id y un JWT antiguo seguiría siendo criptográficamente válido.
+            // La identidad efectiva la define el subject (email) verificado y el usuario activo en BD.
             var rolEntity = usuario.getRol();
             if (rolEntity == null || rolEntity.getCodigo() == null || rolEntity.getCodigo().isBlank()) {
                 writeUnauthorized(request, response);
