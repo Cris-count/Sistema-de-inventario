@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { NAV_ITEMS, navExactActive, navVisibleForRole } from '../../core/navigation';
@@ -100,9 +100,15 @@ import { NAV_ITEMS, navExactActive, navVisibleForRole } from '../../core/navigat
     }
   `
 })
-export class AppShellComponent {
+export class AppShellComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly navExactActive = navExactActive;
+
+  ngOnInit(): void {
+    this.auth.refreshMe().subscribe({
+      error: () => this.auth.logout()
+    });
+  }
 
   readonly visibleNav = computed(() => {
     const role = this.auth.role();

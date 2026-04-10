@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TokenResponse, UserSummary } from '../models/auth.model';
+import { isJwtExpired } from '../util/jwt-expiry';
 
 const TOKEN_KEY = 'inventario_token';
 const USER_KEY = 'inventario_user';
@@ -28,17 +29,26 @@ export class AuthService {
   private restoreFromStorage(): void {
     const t = localStorage.getItem(TOKEN_KEY);
     const u = localStorage.getItem(USER_KEY);
-    if (t && u) {
-      try {
-        this._token.set(t);
-        this._user.set(JSON.parse(u) as UserSummary);
-      } catch {
+    if (!t || !u) {
+      if (t != null || u != null) {
         this.clearSession();
       }
+      return;
+    }
+    try {
+      if (isJwtExpired(t)) {
+        this.clearSession();
+        return;
+      }
+      this._token.set(t);
+      this._user.set(JSON.parse(u) as UserSummary);
+    } catch {
+      this.clearSession();
     }
   }
 
   login(email: string, password: string): Observable<TokenResponse> {
+    this.clearSession();
     return this.http
       .post<TokenResponse>(`${environment.apiUrl}/auth/login`, { email, password })
       .pipe(tap((res) => this.persist(res)));

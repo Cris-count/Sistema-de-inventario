@@ -21,6 +21,16 @@ mvn spring-boot:run
 4. Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)  
 5. Usuario semilla (si la base está vacía): **`admin@inventario.local` / `Admin123!`** — configurable con `app.seed.*` en `application.yml` o con `APP_SEED_ADMIN_EMAIL` / `APP_SEED_ADMIN_PASSWORD`.
 
+## Pruebas automatizadas
+
+Arranque de contexto Spring con perfil `test` (H2 en memoria, sin Docker):
+
+```bash
+mvn verify
+```
+
+Los mismos tests se ejecutan en CI (GitHub Actions) al hacer push o abrir un PR.
+
 ## Variables de entorno (alineadas con `application.yml`)
 
 | Variable | Propiedad Spring | Uso |
