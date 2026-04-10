@@ -56,8 +56,8 @@ import { getApiErrorMessage } from '../../core/util/api-error';
           <tbody>
             @for (r of rows(); track r.id.productoId + '-' + r.id.bodegaId) {
               <tr>
-                <td>{{ r.producto?.codigo }} {{ r.producto?.nombre }}</td>
-                <td>{{ r.bodega?.nombre }}</td>
+                <td>{{ r.producto.codigo }} {{ r.producto.nombre }}</td>
+                <td>{{ r.bodega.nombre }}</td>
                 <td>{{ r.cantidad }}</td>
                 <td>{{ fmt(r.updatedAt) }}</td>
               </tr>
