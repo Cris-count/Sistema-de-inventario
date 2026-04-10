@@ -17,7 +17,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const token = auth.token();
 
-  if (token && !req.url.endsWith('/auth/login') && isJwtExpired(token)) {
+  const isLoginRequest = req.url.includes('/auth/login');
+  if (token && !isLoginRequest && isJwtExpired(token)) {
     sessionInvalidLogout(auth, router);
     return throwError(
       () =>
@@ -26,9 +27,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   const withAuth =
-    token && !req.url.endsWith('/auth/login')
-      ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-      : req;
+    token && !isLoginRequest ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
    return next(withAuth).pipe(
     catchError((err) => {

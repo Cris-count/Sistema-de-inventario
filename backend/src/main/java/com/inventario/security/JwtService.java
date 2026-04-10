@@ -2,7 +2,6 @@ package com.inventario.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.Map;
 
 @Service
 public class JwtService {
@@ -32,9 +30,14 @@ public class JwtService {
     public String generateToken(String email, Long userId, String rolCodigo) {
         Date now = new Date();
         Date exp = new Date(now.getTime() + expirationMs);
+        String rol = rolCodigo == null ? "" : rolCodigo.trim();
+        if (rol.isEmpty()) {
+            throw new IllegalArgumentException("rolCodigo no puede estar vacío en el JWT");
+        }
         return Jwts.builder()
-                .claims(Map.of("uid", userId, "rol", rolCodigo))
                 .subject(email)
+                .claim("uid", userId)
+                .claim("rol", rol)
                 .issuedAt(now)
                 .expiration(exp)
                 .signWith(key)

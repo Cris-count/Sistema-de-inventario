@@ -4,9 +4,11 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "dev": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "ci": "npm run build && ng test --no-watch",
     "serve:ssr:Inventario": "node dist/Inventario/server/server.mjs"
   },
   "private": true,
