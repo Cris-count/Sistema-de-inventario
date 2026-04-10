@@ -9,52 +9,50 @@ import { AuthService } from '../../core/auth/auth.service';
   imports: [RouterLink],
   template: `
     <div class="page stack">
-      <div>
-        <h1>Panel</h1>
-        <p class="muted">
-          Usuario: <strong>{{ auth.user()?.email }}</strong>
-          — Use el menú lateral para operar. La seguridad efectiva la define el API (JWT + roles).
+      <header class="page-header">
+        <h1>Panel de control</h1>
+               <p class="page-lead">
+          Bienvenido, <strong>{{ auth.user()?.nombre }}</strong>
+          <span class="muted"> · {{ auth.user()?.email }}</span>
         </p>
-      </div>
-      <div class="row">
-        <div class="card" style="flex:1; min-width:200px">
-          <h2>Existencias (registros)</h2>
+        <p class="page-lead" style="margin-top:0.5rem">
+          Use el menú lateral para las operaciones del día. Los permisos los aplica el servidor según su rol (JWT).
+        </p>
+      </header>
+
+      <section class="kpi-grid" aria-label="Resumen">
+        <div class="card kpi-card">
+          <h2>Existencias registradas</h2>
           @if (loading()) {
             <p><span class="spinner"></span></p>
           } @else {
             <p class="stat">{{ totalInventario() }}</p>
-            <a routerLink="/app/inventario">Ver inventario</a>
+            <a routerLink="/app/inventario">Ir al inventario →</a>
           }
         </div>
-        <div class="card" style="flex:1; min-width:200px">
-          <h2>Alertas stock mínimo</h2>
+        <div class="card kpi-card">
+          <h2>Alertas bajo mínimo</h2>
           @if (loading()) {
             <p><span class="spinner"></span></p>
           } @else {
             <p class="stat">{{ alertasCount() }}</p>
-            <a routerLink="/app/inventario">Consultar en vista inventario / alertas</a>
+            <a routerLink="/app/inventario">Revisar en vista inventario →</a>
           }
         </div>
-      </div>
-      <div class="card">
-        <h2>Flujo sugerido (negocio)</h2>
-        <ol class="muted" style="margin:0; padding-left:1.25rem">
-          <li>Maestros: categorías, productos, bodegas (según rol).</li>
-          <li>Stock inicial (solo administrador).</li>
-          <li>Entradas, salidas, transferencias o ajustes.</li>
-          <li>Consulta de inventario y reportes (kardex / CSV).</li>
+      </section>
+
+      <section class="card" aria-label="Flujo de trabajo sugerido">
+        <h2>Flujo de trabajo recomendado</h2>
+        <ol class="flow-list">
+          <li>Configurar maestros: categorías, productos y bodegas (según su rol).</li>
+          <li>Cargar stock inicial (solo administración).</li>
+          <li>Registrar entradas, salidas, transferencias o ajustes.</li>
+          <li>Consultar existencias y reportes (kardex, exportación).</li>
         </ol>
-      </div>
+      </section>
     </div>
   `,
-  styles: `
-    .stat {
-      font-size: 2rem;
-      font-weight: 700;
-      margin: 0.5rem 0;
-      color: var(--accent);
-    }
-  `
+  styles: []
 })
 export class DashboardPage implements OnInit {
   readonly auth = inject(AuthService);
