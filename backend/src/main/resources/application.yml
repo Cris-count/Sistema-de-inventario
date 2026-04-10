@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: inventario-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/inventario}
+    username: ${SPRING_DATASOURCE_USERNAME:inventario}
+    password: ${SPRING_DATASOURCE_PASSWORD:inventario}
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    # En producción preferir DTOs y open-in-view: false; true evita LazyInitializationException al serializar entidades en controladores.
+    open-in-view: true
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        format_sql: false
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: UTC
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:cambiarEnProduccionMinimo256BitsParaHS256AlgoritmoSeguro!!}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+  seed:
+    admin-email: ${APP_SEED_ADMIN_EMAIL:admin@inventario.local}
+    admin-password: ${APP_SEED_ADMIN_PASSWORD:Admin123!}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    org.hibernate.SQL: WARN
+    com.inventario: INFO

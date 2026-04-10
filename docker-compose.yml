@@ -1,0 +1,43 @@
+# PostgreSQL + API Spring Boot (PASO 5)
+# Levantar: docker compose up -d --build
+# API: http://localhost:8080/swagger-ui.html  |  DB: localhost:5432 inventario/inventario
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: inventario-postgres
+    environment:
+      POSTGRES_USER: inventario
+      POSTGRES_PASSWORD: inventario
+      POSTGRES_DB: inventario
+    ports:
+      - "5432:5432"
+    volumes:
+      - inventario_pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventario -d inventario"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: inventario-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/inventario
+      SPRING_DATASOURCE_USERNAME: inventario
+      SPRING_DATASOURCE_PASSWORD: inventario
+      JWT_SECRET: ${JWT_SECRET:-cambiarEnProduccionMinimo256BitsParaHS256AlgoritmoSeguro!!}
+      APP_SEED_ADMIN_EMAIL: ${APP_SEED_ADMIN_EMAIL:-admin@inventario.local}
+      APP_SEED_ADMIN_PASSWORD: ${APP_SEED_ADMIN_PASSWORD:-Admin123!}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  inventario_pgdata:
