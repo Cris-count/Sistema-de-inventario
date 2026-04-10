@@ -114,7 +114,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
               <tr>
                 <td>{{ p.codigo }}</td>
                 <td>{{ p.nombre }}</td>
-                <td>{{ p.categoria?.nombre }}</td>
+                <td>{{ p.categoria.nombre }}</td>
                 <td>{{ p.stockMinimo }}</td>
                 <td>
                   <span class="badge" [class.badge-ok]="p.activo" [class.badge-off]="!p.activo">{{
@@ -234,7 +234,7 @@ export class ProductosPage implements OnInit {
       codigo: p.codigo,
       nombre: p.nombre,
       descripcion: p.descripcion ?? '',
-      categoriaId: p.categoria?.id ?? 0,
+      categoriaId: p.categoria.id,
       unidadMedida: p.unidadMedida,
       stockMinimo: String(p.stockMinimo)
     });
