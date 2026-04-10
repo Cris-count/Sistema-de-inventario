@@ -36,12 +36,17 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
   imports: [ReactiveFormsModule, FormsModule],
   template: `
     <div class="page stack">
-      <div class="row" style="justify-content:space-between; align-items:center">
-        <h1>Productos</h1>
-        @if (isAdmin()) {
-          <button type="button" class="btn btn-primary" (click)="startCreate()">Nuevo producto</button>
-        }
-      </div>
+      <header class="page-header">
+        <div class="row" style="justify-content:space-between; align-items:center; width:100%">
+          <div>
+            <h1 style="margin-bottom:0.25rem">Productos</h1>
+            <p class="page-lead" style="margin:0">Catálogo corporativo y unidades de medida.</p>
+          </div>
+          @if (isAdmin()) {
+            <button type="button" class="btn btn-primary" (click)="startCreate()">Nuevo producto</button>
+          }
+        </div>
+      </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">{{ error() }}</div>
       } @else if (message()) {
