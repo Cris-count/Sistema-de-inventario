@@ -1,7 +1,7 @@
 package com.inventario.web.controller;
 
 import com.inventario.domain.entity.Bodega;
-import com.inventario.domain.repository.BodegaRepository;
+import com.inventario.service.catalog.BodegaCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -20,40 +19,29 @@ import java.util.List;
 @SecurityRequirement(name = "bearer-jwt")
 public class BodegaController {
 
-    private final BodegaRepository bodegaRepository;
+    private final BodegaCatalogService bodegaCatalogService;
 
     public record BodegaRequest(@NotBlank String codigo, @NotBlank String nombre, String direccion) {}
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
     @Operation(summary = "Listar bodegas")
     public List<Bodega> listar() {
-        return bodegaRepository.findAll();
+        return bodegaCatalogService.listar();
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear bodega")
     public Bodega crear(@Valid @RequestBody BodegaRequest req) {
-        Bodega b = new Bodega();
-        b.setCodigo(req.codigo());
-        b.setNombre(req.nombre());
-        b.setDireccion(req.direccion());
-        b.setActivo(true);
-        b.setCreatedAt(Instant.now());
-        return bodegaRepository.save(b);
+        return bodegaCatalogService.crear(req.codigo(), req.nombre(), req.direccion());
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @Operation(summary = "Actualizar bodega")
     public Bodega actualizar(@PathVariable Long id, @Valid @RequestBody BodegaRequest req) {
-        Bodega b = bodegaRepository.findById(id).orElseThrow();
-        b.setCodigo(req.codigo());
-        b.setNombre(req.nombre());
-        b.setDireccion(req.direccion());
-        b.setUpdatedAt(Instant.now());
-        return bodegaRepository.save(b);
+        return bodegaCatalogService.actualizar(id, req.codigo(), req.nombre(), req.direccion());
     }
 }

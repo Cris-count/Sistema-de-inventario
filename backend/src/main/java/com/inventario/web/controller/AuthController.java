@@ -31,7 +31,14 @@ public class AuthController {
     public TokenResponse.UserSummary me() {
         var u = currentUserService.requireUsuario();
         var r = u.getRol();
+        var e = u.getEmpresa();
         return new TokenResponse.UserSummary(
-                u.getId(), u.getEmail(), u.getNombre(), SecurityRoles.canonicalCodigo(r.getCodigo()), r.getNombre());
+                u.getId(),
+                u.getEmail(),
+                u.getNombre(),
+                SecurityRoles.canonicalCodigo(r.getCodigo()),
+                r.getNombre(),
+                e != null ? e.getId() : null,
+                e != null ? e.getNombre() : null);
     }
 }

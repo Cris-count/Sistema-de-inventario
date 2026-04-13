@@ -32,8 +32,11 @@ app:
     secret: ${JWT_SECRET:cambiarEnProduccionMinimo256BitsParaHS256AlgoritmoSeguro!!}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   seed:
+    empresa-identificacion: ${APP_SEED_EMPRESA_IDENT:DEV-DEFAULT-001}
     admin-email: ${APP_SEED_ADMIN_EMAIL:admin@inventario.local}
     admin-password: ${APP_SEED_ADMIN_PASSWORD:Admin123!}
+    superadmin-email: ${APP_SEED_SUPERADMIN_EMAIL:superadmin@inventario.local}
+    superadmin-password: ${APP_SEED_SUPERADMIN_PASSWORD:SuperAdmin123!}
     aux-email: ${APP_SEED_AUX_EMAIL:aux@inventario.local}
     aux-password: ${APP_SEED_AUX_PASSWORD:AuxBodega123!}
     compras-email: ${APP_SEED_COMPRAS_EMAIL:compras@inventario.local}

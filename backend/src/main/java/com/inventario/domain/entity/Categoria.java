@@ -7,7 +7,10 @@ import lombok.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "categoria")
+@Table(
+        name = "categoria",
+        uniqueConstraints = @UniqueConstraint(name = "uk_categoria_empresa_nombre", columnNames = {"empresa_id", "nombre"})
+)
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
@@ -20,7 +23,11 @@ public class Categoria {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 150)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_id", nullable = false)
+    private Empresa empresa;
+
+    @Column(nullable = false, length = 150)
     private String nombre;
 
     @Column(columnDefinition = "TEXT")
@@ -34,4 +41,8 @@ public class Categoria {
 
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private Usuario createdBy;
 }

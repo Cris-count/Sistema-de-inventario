@@ -17,6 +17,7 @@ import java.util.Date;
  *     <li>{@code sub} — email del usuario (identidad para el filtro JWT)</li>
  *     <li>{@code uid} — id de usuario al momento del login (informativo; la autorización no confía solo en esto)</li>
  *     <li>{@code rol} — código de rol canónico ({@link SecurityRoles#canonicalCodigo(String)}) al emitir el token</li>
+ *     <li>{@code empresaId} / {@code empresaNombre} — contexto de empresa (opcional; la autorización efectiva sigue en BD)</li>
  *     <li>{@code iat} / {@code exp} — emisión y expiración</li>
  * </ul>
  * El {@link com.inventario.security.JwtAuthenticationFilter} vuelve a cargar el rol desde la base de datos;
@@ -40,20 +41,29 @@ public class JwtService {
     }
 
     public String generateToken(String email, Long userId, String rolCodigo) {
+        return generateToken(email, userId, rolCodigo, null, null);
+    }
+
+    public String generateToken(String email, Long userId, String rolCodigo, Long empresaId, String empresaNombre) {
         Date now = new Date();
         Date exp = new Date(now.getTime() + expirationMs);
         String rol = SecurityRoles.canonicalCodigo(rolCodigo);
         if (rol.isEmpty()) {
             throw new IllegalArgumentException("rolCodigo no puede estar vacío en el JWT");
         }
-        return Jwts.builder()
+        var b = Jwts.builder()
                 .subject(email)
                 .claim("uid", userId)
                 .claim("rol", rol)
                 .issuedAt(now)
-                .expiration(exp)
-                .signWith(key)
-                .compact();
+                .expiration(exp);
+        if (empresaId != null) {
+            b.claim("empresaId", empresaId);
+        }
+        if (empresaNombre != null && !empresaNombre.isBlank()) {
+            b.claim("empresaNombre", empresaNombre);
+        }
+        return b.signWith(key).compact();
     }
 
     public Claims parse(String token) {

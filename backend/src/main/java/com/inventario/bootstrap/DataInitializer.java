@@ -1,6 +1,9 @@
 package com.inventario.bootstrap;
 
+import com.inventario.domain.entity.Empresa;
+import com.inventario.domain.entity.EstadoEmpresa;
 import com.inventario.domain.entity.Usuario;
+import com.inventario.domain.repository.EmpresaRepository;
 import com.inventario.domain.repository.RolRepository;
 import com.inventario.domain.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,9 @@ import java.util.Locale;
 /**
  * Crea usuarios semilla por <strong>email</strong> si aún no existen (no depende de que la tabla esté vacía).
  * Contraseñas solo vía {@link PasswordEncoder} (BCrypt), nunca en SQL manual sin hash real.
+ * <p>
+ * Multi-empresa: todos los usuarios semilla se asocian a la empresa indicada por {@code app.seed.empresa-identificacion}
+ * (por defecto coincide con la fila {@code DEV-DEFAULT-001} de {@code database/schema.sql} / migración 002).
  */
 @Component
 @RequiredArgsConstructor
@@ -24,11 +30,6 @@ public class DataInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
 
-    /**
-     * Si {@code APP_SEED_*_EMAIL} o contraseña vienen como cadena vacía desde el entorno,
-     * Spring puede resolver el placeholder a "" y el usuario semilla no se crea. Estos fallbacks
-     * coinciden con los valores por defecto de {@code application.yml} / {@code docker-compose.yml}.
-     */
     private static final String DEF_AUX_EMAIL = "aux@inventario.local";
     private static final String DEF_AUX_PASSWORD = "AuxBodega123!";
     private static final String DEF_COMPRAS_EMAIL = "compras@inventario.local";
@@ -38,6 +39,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
+    private final EmpresaRepository empresaRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.seed.admin-email}")
@@ -64,12 +66,54 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${app.seed.gerencia-password:}")
     private String gerenciaPassword;
 
+    @Value("${app.seed.empresa-identificacion:DEV-DEFAULT-001}")
+    private String empresaIdentificacion;
+
+    @Value("${app.seed.superadmin-email:}")
+    private String superadminEmail;
+
+    @Value("${app.seed.superadmin-password:}")
+    private String superadminPassword;
+
     @Override
     public void run(String... args) {
-        ensureUser(adminEmail, adminPassword, "Administrador", "Sistema", "ADMIN");
-        ensureUser(orDefaultEmail(auxEmail, DEF_AUX_EMAIL), orDefaultPassword(auxPassword, DEF_AUX_PASSWORD), "Auxiliar", "Bodega", "AUX_BODEGA");
-        ensureUser(orDefaultEmail(comprasEmail, DEF_COMPRAS_EMAIL), orDefaultPassword(comprasPassword, DEF_COMPRAS_PASSWORD), "Compras", "Demo", "COMPRAS");
-        ensureUser(orDefaultEmail(gerenciaEmail, DEF_GERENCIA_EMAIL), orDefaultPassword(gerenciaPassword, DEF_GERENCIA_PASSWORD), "Gerencia", "Demo", "GERENCIA");
+        Empresa empresa = ensureEmpresaSemilla();
+        ensureUser(adminEmail, adminPassword, "Administrador", "Sistema", "ADMIN", empresa);
+        ensureUser(orDefaultEmail(auxEmail, DEF_AUX_EMAIL), orDefaultPassword(auxPassword, DEF_AUX_PASSWORD), "Auxiliar", "Bodega", "AUX_BODEGA", empresa);
+        ensureUser(orDefaultEmail(comprasEmail, DEF_COMPRAS_EMAIL), orDefaultPassword(comprasPassword, DEF_COMPRAS_PASSWORD), "Compras", "Demo", "COMPRAS", empresa);
+        ensureUser(orDefaultEmail(gerenciaEmail, DEF_GERENCIA_EMAIL), orDefaultPassword(gerenciaPassword, DEF_GERENCIA_PASSWORD), "Gerencia", "Demo", "GERENCIA", empresa);
+        ensureSuperAdmin(empresa);
+    }
+
+    private Empresa ensureEmpresaSemilla() {
+        String ident = empresaIdentificacion == null ? "" : empresaIdentificacion.trim();
+        if (ident.isEmpty()) {
+            throw new IllegalStateException("app.seed.empresa-identificacion no puede estar vacío");
+        }
+        return empresaRepository.findByIdentificacion(ident).orElseGet(() -> {
+            Empresa e = Empresa.builder()
+                    .nombre("Empresa semilla (" + ident + ")")
+                    .identificacion(ident)
+                    .emailContacto("contacto@" + ident.toLowerCase(Locale.ROOT) + ".local")
+                    .estado(EstadoEmpresa.ACTIVA)
+                    .createdAt(Instant.now())
+                    .build();
+            Empresa saved = empresaRepository.save(e);
+            log.info("Empresa semilla creada: {} ({})", saved.getNombre(), ident);
+            return saved;
+        });
+    }
+
+    private void ensureSuperAdmin(Empresa empresa) {
+        String e = superadminEmail == null ? "" : superadminEmail.trim().toLowerCase(Locale.ROOT);
+        if (e.isEmpty()) {
+            return;
+        }
+        if (superadminPassword == null || superadminPassword.isBlank()) {
+            log.warn("SUPER_ADMIN omitido para {}: contraseña vacía (defina app.seed.superadmin-password).", e);
+            return;
+        }
+        ensureUser(e, superadminPassword.trim(), "Super", "Administrador", "SUPER_ADMIN", empresa);
     }
 
     private static String orDefaultEmail(String value, String fallback) {
@@ -86,7 +130,7 @@ public class DataInitializer implements CommandLineRunner {
         return value.trim();
     }
 
-    private void ensureUser(String email, String password, String nombre, String apellido, String rolCodigo) {
+    private void ensureUser(String email, String password, String nombre, String apellido, String rolCodigo, Empresa empresa) {
         String e = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
         if (e.isEmpty()) {
             return;
@@ -101,8 +145,9 @@ public class DataInitializer implements CommandLineRunner {
         }
         var rol = rolRepository.findByCodigo(rolCodigo).orElseThrow(() ->
                 new IllegalStateException(
-                        "Rol " + rolCodigo + " no existe. Ejecutar database/schema.sql o la sección de roles de database/dev_verify_and_seed.sql"));
+                        "Rol " + rolCodigo + " no existe. Ejecutar database/schema.sql, database/migrations/002_multiempresa.sql o dev_verify_and_seed.sql"));
         Usuario u = new Usuario();
+        u.setEmpresa(empresa);
         u.setEmail(e);
         u.setPasswordHash(passwordEncoder.encode(password.trim()));
         u.setNombre(nombre);

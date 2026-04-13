@@ -65,20 +65,31 @@ Cabecera en el resto de llamadas:
 Authorization: Bearer <accessToken>
 ```
 
+## Multi-empresa (multi-tenant)
+
+- Cada usuario tiene una **empresa**; listados y operaciones filtran por `empresaId`.
+- **Regla crítica**: no usar `findById` en entidades con `empresa_id` desde la aplicación; usar `TenantEntityLoader` y servicios en `com.inventario.service.catalog` (los controladores no inyectan esos repositorios).
+- Migraciones: `../database/migrations/002_multiempresa.sql`, `../database/migrations/003_empresa_updated_by.sql` (trazabilidad `updated_by` en empresa).
+- Contrato ampliado: login y `GET /api/v1/auth/me` incluyen `empresaId` y `empresaNombre`; el JWT puede incluir el claim `empresaId` (si no coincide con la BD → 401).
+- Endpoints: `GET /api/v1/empresa/mi`, `PUT /api/v1/empresa/mi` (solo `ADMIN` o `SUPER_ADMIN`; validación de email/teléfono).
+- Detalle: **`../docs/multiempresa-backend.md`**.
+
 ## Roles (coinciden con `rol.codigo` en BD)
 
-| Código       | Uso principal                          |
-|-------------|-----------------------------------------|
-| `ADMIN`     | Configuración, usuarios, maestros       |
-| `AUX_BODEGA`| Movimientos, consultas                  |
-| `COMPRAS`   | Entradas, consulta stock                |
-| `GERENCIA`  | Solo lectura (inventario, reportes)     |
+| Código         | Uso principal |
+|----------------|----------------------------------------------------|
+| `SUPER_ADMIN`  | Igual que `ADMIN` en la API; solo él asigna `SUPER_ADMIN` a otros |
+| `ADMIN`        | Configuración, usuarios, maestros                  |
+| `AUX_BODEGA`   | Movimientos, consultas                             |
+| `COMPRAS`      | Entradas, consulta stock                         |
+| `GERENCIA`     | Solo lectura (inventario, reportes) |
 
 ## Endpoints principales
 
 | Área        | Prefijo |
 |------------|---------|
 | Auth       | `/api/v1/auth` |
+| Empresa    | `/api/v1/empresa` (`/mi`) |
 | Usuarios   | `/api/v1/usuarios` |
 | Categorías | `/api/v1/categorias` |
 | Productos  | `/api/v1/productos` |
@@ -98,3 +109,4 @@ Contrato detallado: **`../docs/endpoints.md`**. Matriz de roles: **`../docs/role
 
 - `ddl-auto: validate`: el esquema debe existir antes de arrancar (init SQL o Flyway futuro).
 - Si la base se creó antes de la columna `motivo`, ejecutar `database/migrations/001_add_movimiento_motivo.sql`.
+- Multi-empresa: aplicar `database/migrations/002_multiempresa.sql` y `003_empresa_updated_by.sql` (o usar `../database/schema.sql` en bases nuevas).

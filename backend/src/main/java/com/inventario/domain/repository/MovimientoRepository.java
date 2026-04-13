@@ -15,16 +15,18 @@ import java.util.Optional;
 public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
 
     @EntityGraph(attributePaths = {"usuario", "detalles", "detalles.producto", "detalles.bodegaOrigen", "detalles.bodegaDestino"})
-    @Override
-    Optional<Movimiento> findById(Long id);
+    @Query("SELECT m FROM Movimiento m WHERE m.id = :id AND m.empresa.id = :empresaId")
+    Optional<Movimiento> findByIdAndEmpresaId(@Param("id") Long id, @Param("empresaId") Long empresaId);
 
     @Query("""
             SELECT m FROM Movimiento m
-            WHERE (:tipo IS NULL OR m.tipoMovimiento = :tipo)
+            WHERE m.empresa.id = :empresaId
+              AND (:tipo IS NULL OR m.tipoMovimiento = :tipo)
               AND m.fechaMovimiento >= :desde AND m.fechaMovimiento < :hasta
             """)
     @EntityGraph(attributePaths = {"usuario", "detalles", "detalles.producto"})
-    Page<Movimiento> findByTipoAndFechaBetween(
+    Page<Movimiento> findByEmpresaAndTipoAndFechaBetween(
+            @Param("empresaId") Long empresaId,
             @Param("tipo") TipoMovimiento tipo,
             @Param("desde") Instant desde,
             @Param("hasta") Instant hasta,
@@ -32,11 +34,14 @@ public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
 
     @Query("""
             SELECT DISTINCT m FROM Movimiento m JOIN m.detalles d
-            WHERE d.producto.id = :productoId
+            WHERE m.empresa.id = :empresaId
+              AND d.producto.id = :productoId
               AND m.fechaMovimiento >= :desde AND m.fechaMovimiento < :hasta
             ORDER BY m.fechaMovimiento ASC
             """)
-    Page<Movimiento> findKardexByProducto(
+    @EntityGraph(attributePaths = {"usuario", "detalles", "detalles.producto"})
+    Page<Movimiento> findKardexByEmpresaAndProducto(
+            @Param("empresaId") Long empresaId,
             @Param("productoId") Long productoId,
             @Param("desde") Instant desde,
             @Param("hasta") Instant hasta,

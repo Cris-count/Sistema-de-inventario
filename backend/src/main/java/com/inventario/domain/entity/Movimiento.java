@@ -22,6 +22,10 @@ public class Movimiento {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_id", nullable = false)
+    private Empresa empresa;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_movimiento", nullable = false, length = 30)
     private TipoMovimiento tipoMovimiento;

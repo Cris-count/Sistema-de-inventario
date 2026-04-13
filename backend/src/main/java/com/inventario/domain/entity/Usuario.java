@@ -20,6 +20,10 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "empresa_id", nullable = false)
+    private Empresa empresa;
+
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 

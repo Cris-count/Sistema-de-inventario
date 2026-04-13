@@ -27,13 +27,17 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(req.email(), req.password()));
         var u = usuarioRepository.findByEmailIgnoreCase(req.email()).orElseThrow();
         var r = u.getRol();
-        String token = jwtService.generateToken(u.getEmail(), u.getId(), r.getCodigo());
+        var e = u.getEmpresa();
+        String token = jwtService.generateToken(
+                u.getEmail(), u.getId(), r.getCodigo(), e != null ? e.getId() : null, e != null ? e.getNombre() : null);
         var summary = new TokenResponse.UserSummary(
                 u.getId(),
                 u.getEmail(),
                 u.getNombre(),
                 SecurityRoles.canonicalCodigo(r.getCodigo()),
-                r.getNombre()
+                r.getNombre(),
+                e != null ? e.getId() : null,
+                e != null ? e.getNombre() : null
         );
         return new TokenResponse(token, "Bearer", expirationMs / 1000, summary);
     }

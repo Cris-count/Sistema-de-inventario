@@ -37,6 +37,7 @@ ORDER BY id;
 -- 5. Roles base (requiere UNIQUE en rol.codigo; coincide con schema.sql)
 INSERT INTO rol (codigo, nombre, descripcion)
 VALUES
+  ('SUPER_ADMIN', 'Super administrador', 'Administrador principal de la empresa (multi-tenant)'),
   ('ADMIN',       'Administrador',      'Acceso total a la información y configuración'),
   ('AUX_BODEGA',  'Auxiliar de bodega', 'Operaciones de inventario; gestión de productos según API'),
   ('COMPRAS',     'Compras',            'Consulta de stock y registro de abastecimiento'),

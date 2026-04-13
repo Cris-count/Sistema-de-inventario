@@ -1,6 +1,7 @@
 package com.inventario.security;
 
 import com.inventario.config.SecurityRoles;
+import com.inventario.domain.entity.EstadoEmpresa;
 import com.inventario.domain.repository.UsuarioRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -31,6 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
+    private final TenantJwtClaimsValidator tenantJwtClaimsValidator;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -58,6 +60,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
             var usuario = usuarioRepository.findByEmailIgnoreCase(email.trim()).orElse(null);
             if (usuario == null || !Boolean.TRUE.equals(usuario.getActivo())) {
+                writeUnauthorized(request, response);
+                return;
+            }
+            if (usuario.getEmpresa() == null || usuario.getEmpresa().getEstado() != EstadoEmpresa.ACTIVA) {
+                writeUnauthorized(request, response);
+                return;
+            }
+            if (!tenantJwtClaimsValidator.empresaClaimConsistentWithUser(claims, usuario)) {
                 writeUnauthorized(request, response);
                 return;
             }

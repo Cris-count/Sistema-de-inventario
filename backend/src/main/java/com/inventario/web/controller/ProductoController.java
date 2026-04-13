@@ -1,10 +1,7 @@
 package com.inventario.web.controller;
 
-import com.inventario.domain.entity.Categoria;
 import com.inventario.domain.entity.Producto;
-import com.inventario.domain.repository.CategoriaRepository;
-import com.inventario.domain.repository.ProductoRepository;
-import com.inventario.service.CurrentUserService;
+import com.inventario.service.catalog.ProductoCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -18,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 @RestController
 @RequestMapping("/api/v1/productos")
@@ -26,9 +22,7 @@ import java.time.Instant;
 @SecurityRequirement(name = "bearer-jwt")
 public class ProductoController {
 
-    private final ProductoRepository productoRepository;
-    private final CategoriaRepository categoriaRepository;
-    private final CurrentUserService currentUserService;
+    private final ProductoCatalogService productoCatalogService;
 
     public record ProductoRequest(
             @NotBlank String codigo,
@@ -42,61 +36,42 @@ public class ProductoController {
     public record ActivoRequest(boolean activo) {}
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
     @Operation(summary = "Listar productos")
     public Page<Producto> listar(Pageable pageable) {
-        return productoRepository.findAll(pageable);
+        return productoCatalogService.listar(pageable);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
     @Operation(summary = "Detalle producto")
     public Producto get(@PathVariable Long id) {
-        return productoRepository.findById(id).orElseThrow();
+        return productoCatalogService.obtener(id);
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA')")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear producto")
     public Producto crear(@Valid @RequestBody ProductoRequest req) {
-        Categoria cat = categoriaRepository.findById(req.categoriaId()).orElseThrow();
-        Producto p = new Producto();
-        p.setCodigo(req.codigo());
-        p.setNombre(req.nombre());
-        p.setDescripcion(req.descripcion());
-        p.setCategoria(cat);
-        p.setUnidadMedida(req.unidadMedida() != null ? req.unidadMedida() : "UND");
-        p.setStockMinimo(req.stockMinimo() != null ? req.stockMinimo() : BigDecimal.ZERO);
-        p.setActivo(true);
-        p.setCreatedAt(Instant.now());
-        p.setCreatedBy(currentUserService.requireUsuario());
-        return productoRepository.save(p);
+        return productoCatalogService.crear(
+                req.codigo(), req.nombre(), req.descripcion(), req.categoriaId(),
+                req.unidadMedida(), req.stockMinimo());
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA')")
     @Operation(summary = "Actualizar producto")
     public Producto actualizar(@PathVariable Long id, @Valid @RequestBody ProductoRequest req) {
-        Producto p = productoRepository.findById(id).orElseThrow();
-        Categoria cat = categoriaRepository.findById(req.categoriaId()).orElseThrow();
-        p.setCodigo(req.codigo());
-        p.setNombre(req.nombre());
-        p.setDescripcion(req.descripcion());
-        p.setCategoria(cat);
-        p.setUnidadMedida(req.unidadMedida() != null ? req.unidadMedida() : p.getUnidadMedida());
-        p.setStockMinimo(req.stockMinimo() != null ? req.stockMinimo() : p.getStockMinimo());
-        p.setUpdatedAt(Instant.now());
-        return productoRepository.save(p);
+        return productoCatalogService.actualizar(
+                id, req.codigo(), req.nombre(), req.descripcion(), req.categoriaId(),
+                req.unidadMedida(), req.stockMinimo());
     }
 
     @PatchMapping("/{id}/estado")
-    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA')")
     @Operation(summary = "Activar/desactivar producto")
     public Producto estado(@PathVariable Long id, @Valid @RequestBody ActivoRequest req) {
-        Producto p = productoRepository.findById(id).orElseThrow();
-        p.setActivo(req.activo());
-        p.setUpdatedAt(Instant.now());
-        return productoRepository.save(p);
+        return productoCatalogService.cambiarEstado(id, req.activo());
     }
 }

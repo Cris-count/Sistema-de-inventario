@@ -10,6 +10,8 @@ import java.util.Locale;
  * hubiera variaciones de mayúsculas o espacios.
  */
 public final class SecurityRoles {
+    /** Administrador principal de la empresa (multi-tenant); mismos permisos operativos que {@link #ADMIN} en la API actual. */
+    public static final String SUPER_ADMIN = "SUPER_ADMIN";
     public static final String ADMIN = "ADMIN";
     public static final String AUX_BODEGA = "AUX_BODEGA";
     public static final String COMPRAS = "COMPRAS";
