@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, switchMap, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TokenResponse, UserSummary } from '../models/auth.model';
 import { isJwtExpired } from '../util/jwt-expiry';
@@ -47,11 +47,18 @@ export class AuthService {
     }
   }
 
-  login(email: string, password: string): Observable<TokenResponse> {
+  /**
+   * Login y sincronización inmediata con `GET /auth/me` para alinear rol con la BD
+   * (misma fuente que el filtro JWT en el servidor).
+   */
+  login(email: string, password: string): Observable<UserSummary> {
+    const e = email.trim().toLowerCase();
+    const p = password.trim();
     this.clearSession();
-    return this.http
-      .post<TokenResponse>(`${environment.apiUrl}/auth/login`, { email, password })
-      .pipe(tap((res) => this.persist(res)));
+    return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/login`, { email: e, password: p }).pipe(
+      tap((res) => this.persist(res)),
+      switchMap(() => this.refreshMe())
+    );
   }
 
   refreshMe(): Observable<UserSummary> {

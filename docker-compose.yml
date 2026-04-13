@@ -35,6 +35,12 @@ services:
       JWT_SECRET: ${JWT_SECRET:-cambiarEnProduccionMinimo256BitsParaHS256AlgoritmoSeguro!!}
       APP_SEED_ADMIN_EMAIL: ${APP_SEED_ADMIN_EMAIL:-admin@inventario.local}
       APP_SEED_ADMIN_PASSWORD: ${APP_SEED_ADMIN_PASSWORD:-Admin123!}
+      APP_SEED_AUX_EMAIL: ${APP_SEED_AUX_EMAIL:-aux@inventario.local}
+      APP_SEED_AUX_PASSWORD: ${APP_SEED_AUX_PASSWORD:-AuxBodega123!}
+      APP_SEED_COMPRAS_EMAIL: ${APP_SEED_COMPRAS_EMAIL:-compras@inventario.local}
+      APP_SEED_COMPRAS_PASSWORD: ${APP_SEED_COMPRAS_PASSWORD:-Compras123!}
+      APP_SEED_GERENCIA_EMAIL: ${APP_SEED_GERENCIA_EMAIL:-gerencia@inventario.local}
+      APP_SEED_GERENCIA_PASSWORD: ${APP_SEED_GERENCIA_PASSWORD:-Gerencia123!}
     depends_on:
       db:
         condition: service_healthy

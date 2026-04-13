@@ -1,5 +1,6 @@
 package com.inventario.service;
 
+import com.inventario.config.SecurityRoles;
 import com.inventario.domain.repository.UsuarioRepository;
 import com.inventario.security.JwtService;
 import com.inventario.web.dto.LoginRequest;
@@ -24,14 +25,14 @@ public class AuthService {
     public TokenResponse login(LoginRequest req) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.email(), req.password()));
-        var u = usuarioRepository.findByEmail(req.email()).orElseThrow();
+        var u = usuarioRepository.findByEmailIgnoreCase(req.email()).orElseThrow();
         var r = u.getRol();
         String token = jwtService.generateToken(u.getEmail(), u.getId(), r.getCodigo());
         var summary = new TokenResponse.UserSummary(
                 u.getId(),
                 u.getEmail(),
                 u.getNombre(),
-                r.getCodigo(),
+                SecurityRoles.canonicalCodigo(r.getCodigo()),
                 r.getNombre()
         );
         return new TokenResponse(token, "Bearer", expirationMs / 1000, summary);

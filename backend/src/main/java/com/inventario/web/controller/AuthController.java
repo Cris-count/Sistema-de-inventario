@@ -1,5 +1,6 @@
 package com.inventario.web.controller;
 
+import com.inventario.config.SecurityRoles;
 import com.inventario.service.AuthService;
 import com.inventario.service.CurrentUserService;
 import com.inventario.web.dto.LoginRequest;
@@ -30,6 +31,7 @@ public class AuthController {
     public TokenResponse.UserSummary me() {
         var u = currentUserService.requireUsuario();
         var r = u.getRol();
-        return new TokenResponse.UserSummary(u.getId(), u.getEmail(), u.getNombre(), r.getCodigo(), r.getNombre());
+        return new TokenResponse.UserSummary(
+                u.getId(), u.getEmail(), u.getNombre(), SecurityRoles.canonicalCodigo(r.getCodigo()), r.getNombre());
     }
 }

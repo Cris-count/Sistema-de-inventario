@@ -1,5 +1,6 @@
 package com.inventario.security;
 
+import com.inventario.config.SecurityRoles;
 import com.inventario.domain.repository.UsuarioRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -8,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,8 +17,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import static com.inventario.web.error.ApiErrorMessages.UNAUTHORIZED_JWT_DETAIL;
 
 /**
  * Valida el JWT y fija la autenticación usando el rol vigente en base de datos (no solo el claim {@code rol}
@@ -55,7 +56,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 writeUnauthorized(request, response);
                 return;
             }
-            var usuario = usuarioRepository.findByEmail(email.trim()).orElse(null);
+            var usuario = usuarioRepository.findByEmailIgnoreCase(email.trim()).orElse(null);
             if (usuario == null || !Boolean.TRUE.equals(usuario.getActivo())) {
                 writeUnauthorized(request, response);
                 return;
@@ -68,7 +69,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 writeUnauthorized(request, response);
                 return;
             }
-            String authority = rolEntity.getCodigo().trim();
+            String authority = SecurityRoles.canonicalCodigo(rolEntity.getCodigo());
+            if (authority.isEmpty()) {
+                writeUnauthorized(request, response);
+                return;
+            }
             var auth = new UsernamePasswordAuthenticationToken(
                     email.trim(),
                     null,
@@ -85,25 +90,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private static void writeUnauthorized(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        applyCorsForBrowserDev(request, response);
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.getWriter().write(
-                "{\"type\":\"about:blank\",\"title\":\"Autenticación\",\"status\":401,"
-                        + "\"detail\":\"Token inválido, expirado o usuario inactivo. Cierre sesión e inicie de nuevo.\"}"
-        );
-    }
-
-    /** Misma política que {@link SecurityConfig#corsConfigurationSource()} para respuestas cortadas en el filtro. */
-    private static void applyCorsForBrowserDev(HttpServletRequest request, HttpServletResponse response) {
-        String origin = request.getHeader("Origin");
-        if (origin == null) {
-            return;
-        }
-        if ("http://localhost:4200".equals(origin) || "http://127.0.0.1:4200".equals(origin)) {
-            response.setHeader("Access-Control-Allow-Origin", origin);
-            response.setHeader("Access-Control-Allow-Credentials", "true");
-        }
+        SecurityErrorResponseWriter.writeProblemDetail(request, response, 401, "Autenticación", UNAUTHORIZED_JWT_DETAIL);
     }
 }

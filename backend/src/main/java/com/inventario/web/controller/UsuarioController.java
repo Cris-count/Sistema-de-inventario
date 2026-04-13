@@ -1,5 +1,6 @@
 package com.inventario.web.controller;
 
+import com.inventario.config.SecurityRoles;
 import com.inventario.domain.entity.Rol;
 import com.inventario.domain.entity.Usuario;
 import com.inventario.domain.repository.RolRepository;
@@ -19,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.Locale;
 
 @RestController
 @RequestMapping("/api/v1/usuarios")
@@ -67,12 +69,13 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear usuario")
     public UsuarioResponse crear(@Valid @RequestBody UsuarioCreateRequest req) {
-        if (usuarioRepository.existsByEmail(req.email())) {
+        String emailNorm = req.email().trim().toLowerCase(Locale.ROOT);
+        if (usuarioRepository.existsByEmailIgnoreCase(emailNorm)) {
             throw new com.inventario.web.error.BusinessException(org.springframework.http.HttpStatus.CONFLICT, "Email ya registrado");
         }
-        Rol rol = rolRepository.findByCodigo(req.rolCodigo()).orElseThrow();
+        Rol rol = rolRepository.findByCodigo(SecurityRoles.canonicalCodigo(req.rolCodigo())).orElseThrow();
         Usuario u = new Usuario();
-        u.setEmail(req.email());
+        u.setEmail(emailNorm);
         u.setPasswordHash(passwordEncoder.encode(req.password()));
         u.setNombre(req.nombre());
         u.setApellido(req.apellido());
@@ -90,7 +93,7 @@ public class UsuarioController {
         if (req.nombre() != null) u.setNombre(req.nombre());
         if (req.apellido() != null) u.setApellido(req.apellido());
         if (req.rolCodigo() != null) {
-            u.setRol(rolRepository.findByCodigo(req.rolCodigo()).orElseThrow());
+            u.setRol(rolRepository.findByCodigo(SecurityRoles.canonicalCodigo(req.rolCodigo())).orElseThrow());
         }
         u.setUpdatedAt(Instant.now());
         return toResponse(usuarioRepository.save(u));
@@ -112,7 +115,7 @@ public class UsuarioController {
                 u.getEmail(),
                 u.getNombre(),
                 u.getApellido(),
-                u.getRol().getCodigo(),
+                SecurityRoles.canonicalCodigo(u.getRol().getCodigo()),
                 u.getActivo()
         );
     }

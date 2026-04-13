@@ -14,6 +14,6 @@ public class CurrentUserService {
 
     public Usuario requireUsuario() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return usuarioRepository.findByEmail(email).orElseThrow();
+        return usuarioRepository.findByEmailIgnoreCase(email).orElseThrow();
     }
 }

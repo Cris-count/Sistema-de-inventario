@@ -28,12 +28,18 @@ docker compose up -d --build
 | OpenAPI JSON | http://localhost:8080/v3/api-docs |
 | PostgreSQL | `localhost:5432`, base `inventario`, usuario `inventario`, contraseña `inventario` |
 
-**Usuario administrador semilla** (solo si la tabla `usuario` está vacía al arrancar):
+**Usuarios semilla** (se crean por **email** si aún no existen; contraseñas en BCrypt; valores por defecto en `application.yml` / Docker):
 
-- Email: `admin@inventario.local`
-- Contraseña: `Admin123!`
+| Rol | Email | Contraseña por defecto |
+|-----|--------|-------------------------|
+| ADMIN | `admin@inventario.local` | `Admin123!` |
+| AUX_BODEGA | `aux@inventario.local` | `AuxBodega123!` |
+| COMPRAS | `compras@inventario.local` | `Compras123!` |
+| GERENCIA | `gerencia@inventario.local` | `Gerencia123!` |
 
-Se puede cambiar con variables de entorno (ver abajo).
+Sobrescribir con `APP_SEED_*` (ver abajo). No dejar variables vacías en `.env` si usás Docker Compose.
+
+**Flujo:** login → JWT → operaciones según rol; el rol efectivo lo confirma el servidor (`GET /auth/me`).
 
 ## Frontend (Angular)
 
@@ -94,15 +100,20 @@ En **Docker Compose** (`docker-compose.yml`) ya se pasan `JWT_SECRET`, `APP_SEED
 | `backend/` | Spring Boot — ver [backend/README.md](backend/README.md) |
 | `database/` | `schema.sql`, migraciones y scripts de desarrollo |
 | `docs/` | Proceso, requisitos, modelo, endpoints — [docs/INDICE.md](docs/INDICE.md) |
-| `tests/postman/` | Colección Postman de ejemplo |
+| `tests/postman/` | Colección Postman ([tests/README.md](tests/README.md)) |
 | `docker-compose.yml` | Postgres + API |
 
-## Documentación académica
+## Documentación
 
-Índice: [docs/INDICE.md](docs/INDICE.md) (pasos 1–4, contrato de API, etc.).
+| Documento | Contenido |
+|-----------|------------|
+| [docs/INDICE.md](docs/INDICE.md) | Índice general |
+| [docs/endpoints.md](docs/endpoints.md) | **Contrato API real** (métodos, roles, ejemplos) |
+| [docs/roles-y-permisos.md](docs/roles-y-permisos.md) | Matriz de permisos |
+| [docs/pruebas-api.md](docs/pruebas-api.md) | Cómo probar y evidencia de humo |
+| [README_BACKEND.md](README_BACKEND.md) | Arquitectura del backend |
 
 ## Más ayuda
 
-- Detalle de endpoints: [docs/endpoints.md](docs/endpoints.md)
 - Solo base de datos: `docker compose up -d db`
-- Backend sin Docker: [backend/README.md](backend/README.md)
+- Backend: [backend/README.md](backend/README.md)

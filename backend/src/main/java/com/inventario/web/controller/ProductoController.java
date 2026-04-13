@@ -56,7 +56,7 @@ public class ProductoController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA')")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear producto")
     public Producto crear(@Valid @RequestBody ProductoRequest req) {
@@ -75,7 +75,7 @@ public class ProductoController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA')")
     @Operation(summary = "Actualizar producto")
     public Producto actualizar(@PathVariable Long id, @Valid @RequestBody ProductoRequest req) {
         Producto p = productoRepository.findById(id).orElseThrow();
@@ -91,7 +91,7 @@ public class ProductoController {
     }
 
     @PatchMapping("/{id}/estado")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA')")
     @Operation(summary = "Activar/desactivar producto")
     public Producto estado(@PathVariable Long id, @Valid @RequestBody ActivoRequest req) {
         Producto p = productoRepository.findById(id).orElseThrow();

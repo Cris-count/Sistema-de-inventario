@@ -34,6 +34,12 @@ app:
   seed:
     admin-email: ${APP_SEED_ADMIN_EMAIL:admin@inventario.local}
     admin-password: ${APP_SEED_ADMIN_PASSWORD:Admin123!}
+    aux-email: ${APP_SEED_AUX_EMAIL:aux@inventario.local}
+    aux-password: ${APP_SEED_AUX_PASSWORD:AuxBodega123!}
+    compras-email: ${APP_SEED_COMPRAS_EMAIL:compras@inventario.local}
+    compras-password: ${APP_SEED_COMPRAS_PASSWORD:Compras123!}
+    gerencia-email: ${APP_SEED_GERENCIA_EMAIL:gerencia@inventario.local}
+    gerencia-password: ${APP_SEED_GERENCIA_PASSWORD:Gerencia123!}
 
 springdoc:
   api-docs:

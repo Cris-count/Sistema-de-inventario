@@ -19,6 +19,13 @@ class JwtServiceTest {
     }
 
     @Test
+    void tokenCanonicalizesRolClaim() {
+        JwtService jwt = new JwtService(SECRET_32_PLUS, 3_600_000L);
+        String token = jwt.generateToken("a@b.c", 1L, "  admin  ");
+        assertEquals("ADMIN", jwt.parse(token).get("rol", String.class));
+    }
+
+    @Test
     void generateTokenRejectsBlankRol() {
         JwtService jwt = new JwtService(SECRET_32_PLUS, 3_600_000L);
         assertThrows(IllegalArgumentException.class, () -> jwt.generateToken("a@b.c", 1L, "  "));

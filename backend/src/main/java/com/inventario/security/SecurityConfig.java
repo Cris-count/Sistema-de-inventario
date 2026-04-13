@@ -12,7 +12,10 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import com.inventario.web.error.ApiErrorMessages;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -44,6 +47,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authenticationEntryPoint())
+                        .accessDeniedHandler(accessDeniedHandler())
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
@@ -68,5 +75,30 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    /**
+     * Petición sin autenticación a rutas protegidas (sin JWT o sesión). Complementa el 401 del {@link JwtAuthenticationFilter}
+     * cuando ni siquiera hay Bearer que validar.
+     */
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, authException) -> SecurityErrorResponseWriter.writeProblemDetail(
+                request,
+                response,
+                401,
+                "Autenticación",
+                ApiErrorMessages.UNAUTHORIZED_ANONYMOUS_DETAIL);
+    }
+
+    /** Denegación en la cadena de filtros (coherente con {@code @ExceptionHandler(AccessDeniedException)}). */
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> SecurityErrorResponseWriter.writeProblemDetail(
+                request,
+                response,
+                403,
+                "Autorización",
+                ApiErrorMessages.FORBIDDEN_DETAIL);
     }
 }

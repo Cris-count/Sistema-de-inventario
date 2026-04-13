@@ -19,7 +19,7 @@ mvn spring-boot:run
 ```
 
 4. Swagger UI: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)  
-5. Usuario semilla (si la base está vacía): **`admin@inventario.local` / `Admin123!`** — configurable con `app.seed.*` en `application.yml` o con `APP_SEED_ADMIN_EMAIL` / `APP_SEED_ADMIN_PASSWORD`.
+5. Usuarios semilla por **email** (ver `DataInitializer` y tabla en README raíz): por defecto `admin@inventario.local` / `Admin123!`, más aux, compras y gerencia — configurable con `app.seed.*` / `APP_SEED_*`.
 
 ## Pruebas automatizadas
 
@@ -88,7 +88,7 @@ Authorization: Bearer <accessToken>
 | Movimientos| `/api/v1/movimientos` (entradas, salidas, transferencias, ajustes) |
 | Reportes   | `/api/v1/reportes` |
 
-Detalle: `../docs/endpoints.md`.
+Contrato detallado: **`../docs/endpoints.md`**. Matriz de roles: **`../docs/roles-y-permisos.md`**.
 
 ## Salud
 
