@@ -13,3 +13,19 @@ spring:
     init:
       mode: always
       data-locations: classpath:test-seed.sql
+
+# En tests solo se sembrará el admin; el resto de emails vacíos evita cuatro usuarios en H2.
+app:
+  billing:
+    api-secret: test-billing-secret-key-for-integration-tests
+    post-payment-empresa-estado: ACTIVA
+  seed:
+    empresa-identificacion: TEST-001
+    superadmin-email: ""
+    superadmin-password: ""
+    aux-email: ""
+    aux-password: ""
+    compras-email: ""
+    compras-password: ""
+    gerencia-email: ""
+    gerencia-password: ""

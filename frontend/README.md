@@ -9,7 +9,7 @@ El código fuente del frontend está en la **raíz del monorepo** (`src/`, `angu
 ## Tecnologías
 
 - Angular 21, RxJS, `HttpClient` con functional interceptors
-- Estilos: CSS global en `src/styles.css` (sin Tailwind en build por restricciones de entorno Windows en el repo)
+- Estilos: `src/styles.css`, `src/landing-styles.css` y **Tailwind CSS v4** (`@tailwindcss/postcss` en el build)
 - Build: `outputMode: static` (SPA sin SSR) para simplificar sesión JWT y `localStorage`
 
 ## Estructura de carpetas (`src/app/`)
@@ -49,11 +49,22 @@ Ajustar si el backend corre en otro host/puerto (p. ej. Docker publicando otro p
 
 ## Cómo ejecutar
 
+Desde la **raíz del monorepo** (donde está `package.json` y `angular.json`):
+
 ```bash
+npm install
 npm start
 ```
 
-Navegador: http://localhost:4200
+Arranque conjunto con base de datos Docker + API local (ver README raíz):
+
+```bash
+npm run up
+```
+
+(`npm run frontend` y `npm run dev` son equivalentes a `npm start`.)
+
+Navegador: http://localhost:4200 — la home pública es la **landing** (`/`). El panel autenticado es `/app`.
 
 El backend debe exponer CORS para `http://localhost:4200` (ya configurado en `SecurityConfig` del API).
 

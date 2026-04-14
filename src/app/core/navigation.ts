@@ -1,3 +1,5 @@
+import { ROLES_LECTURA_API } from './auth/app-roles';
+
 /** Enlaces de navegación; `roles` vacío = todos los autenticados. */
 export interface NavItem {
   /** Segmentos relativos a `/app` (ej. `['movimientos','entrada']`). */
@@ -10,19 +12,19 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { parts: ['dashboard'], label: 'Inicio', icon: '🏠', roles: [] },
-  { parts: ['productos'], label: 'Productos', icon: '📦', roles: [] },
+  { parts: ['productos'], label: 'Productos', icon: '📦', roles: ROLES_LECTURA_API },
   { parts: ['categorias'], label: 'Categorías', icon: '🗂️', roles: ['ADMIN'] },
-  { parts: ['bodegas'], label: 'Bodegas', icon: '🏭', roles: [] },
+  { parts: ['bodegas'], label: 'Bodegas', icon: '🏭', roles: ROLES_LECTURA_API },
   { parts: ['proveedores'], label: 'Proveedores', icon: '🤝', roles: ['ADMIN', 'COMPRAS', 'GERENCIA'] },
-  { parts: ['inventario'], label: 'Inventario', icon: '📊', roles: [] },
+  { parts: ['inventario'], label: 'Inventario', icon: '📊', roles: ROLES_LECTURA_API },
   { parts: ['stock-inicial'], label: 'Stock inicial', icon: '📥', roles: ['ADMIN'] },
-  { parts: ['movimientos'], label: 'Historial mov.', icon: '📜', roles: [] },
+  { parts: ['movimientos'], label: 'Historial mov.', icon: '📜', roles: ROLES_LECTURA_API },
   { parts: ['movimientos', 'entrada'], label: 'Entrada', icon: '➕', roles: ['ADMIN', 'AUX_BODEGA', 'COMPRAS'] },
   { parts: ['movimientos', 'salida'], label: 'Salida', icon: '➖', roles: ['ADMIN', 'AUX_BODEGA'] },
   { parts: ['movimientos', 'transferencia'], label: 'Transferencia', icon: '🔀', roles: ['ADMIN', 'AUX_BODEGA'] },
   { parts: ['movimientos', 'ajuste'], label: 'Ajuste', icon: '⚙️', roles: ['ADMIN', 'AUX_BODEGA'] },
-  { parts: ['reportes', 'kardex'], label: 'Kardex', icon: '📑', roles: [] },
-  { parts: ['reportes', 'export'], label: 'Exportar CSV', icon: '📤', roles: [] },
+  { parts: ['reportes', 'kardex'], label: 'Kardex', icon: '📑', roles: ROLES_LECTURA_API },
+  { parts: ['reportes', 'export'], label: 'Exportar CSV', icon: '📤', roles: ROLES_LECTURA_API },
   { parts: ['usuarios'], label: 'Usuarios', icon: '👥', roles: ['ADMIN'] }
 ];
 

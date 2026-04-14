@@ -4,6 +4,9 @@ export interface UserSummary {
   nombre: string;
   rolCodigo: string;
   rolNombre: string;
+  /** Contexto multi-empresa (opcional para sesiones antiguas en localStorage). */
+  empresaId?: number | null;
+  empresaNombre?: string | null;
 }
 
 export interface TokenResponse {

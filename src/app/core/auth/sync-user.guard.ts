@@ -4,9 +4,10 @@ import { catchError, map, of } from 'rxjs';
 import { AuthService } from './auth.service';
 
 /**
- * Alinea rol y datos de usuario con el servidor antes de mostrar el shell.
- * Evita que la UI (p. ej. botón «Nuevo producto») use un rol cacheado en localStorage
- * distinto del que aplica Spring Security tras {@link JwtAuthenticationFilter}.
+ * Alinea rol y datos de usuario con el servidor (GET /auth/me).
+ * Debe ejecutarse también al navegar entre rutas hijas de `/app` vía
+ * {@code runGuardsAndResolvers: 'always'} en la ruta {@code app}, no solo al entrar la primera vez.
+ * Así la UI no usa un rol cacheado distinto del que aplica Spring Security (JWT + BD).
  */
 export const syncUserGuard: CanActivateFn = () => {
   const auth = inject(AuthService);

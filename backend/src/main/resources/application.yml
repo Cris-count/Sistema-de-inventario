@@ -28,12 +28,31 @@ server:
     context-path: /
 
 app:
+  billing:
+    # Misma clave para webhook y confirmación manual (sustituir en producción; usar longitud fija para comparación constante).
+    api-secret: ${BILLING_API_SECRET:dev-billing-secret-key-32chars!}
+    # Tras pago aprobado: ACTIVA | EN_PRUEBA
+    post-payment-empresa-estado: ${BILLING_POST_PAYMENT_EMPRESA:ACTIVA}
+  onboarding:
+    # TRIAL | PENDING_PAYMENT | ACTIVE — define el estado comercial inicial tras POST /onboarding/register-company
+    activation-default: ${APP_ONBOARDING_ACTIVATION:TRIAL}
+    trial-days: ${APP_ONBOARDING_TRIAL_DAYS:14}
+    generate-pin-on-pending-payment: ${APP_ONBOARDING_GENERATE_PIN:true}
   jwt:
     secret: ${JWT_SECRET:cambiarEnProduccionMinimo256BitsParaHS256AlgoritmoSeguro!!}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}
   seed:
+    empresa-identificacion: ${APP_SEED_EMPRESA_IDENT:DEV-DEFAULT-001}
     admin-email: ${APP_SEED_ADMIN_EMAIL:admin@inventario.local}
     admin-password: ${APP_SEED_ADMIN_PASSWORD:Admin123!}
+    superadmin-email: ${APP_SEED_SUPERADMIN_EMAIL:superadmin@inventario.local}
+    superadmin-password: ${APP_SEED_SUPERADMIN_PASSWORD:SuperAdmin123!}
+    aux-email: ${APP_SEED_AUX_EMAIL:aux@inventario.local}
+    aux-password: ${APP_SEED_AUX_PASSWORD:AuxBodega123!}
+    compras-email: ${APP_SEED_COMPRAS_EMAIL:compras@inventario.local}
+    compras-password: ${APP_SEED_COMPRAS_PASSWORD:Compras123!}
+    gerencia-email: ${APP_SEED_GERENCIA_EMAIL:gerencia@inventario.local}
+    gerencia-password: ${APP_SEED_GERENCIA_PASSWORD:Gerencia123!}
 
 springdoc:
   api-docs:

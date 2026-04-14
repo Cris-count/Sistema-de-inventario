@@ -1,0 +1,77 @@
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { LandingNavbarComponent } from './sections/navbar/landing-navbar.component';
+import { LandingHeroComponent } from './sections/hero/landing-hero.component';
+import { LandingSocialProofComponent } from './sections/social-proof/landing-social-proof.component';
+import { LandingProblemSolutionComponent } from './sections/problem-solution/landing-problem-solution.component';
+import { LandingFeaturesComponent } from './sections/features/landing-features.component';
+import { LandingProductShowcaseComponent } from './sections/product-showcase/landing-product-showcase.component';
+import { LandingBenefitsComponent } from './sections/benefits/landing-benefits.component';
+import { LandingPricingComponent } from './sections/pricing/landing-pricing.component';
+import { LandingTestimonialsComponent } from './sections/testimonials/landing-testimonials.component';
+import { LandingFaqComponent } from './sections/faq/landing-faq.component';
+import { LandingCtaComponent } from './sections/cta/landing-cta.component';
+import { LandingFooterComponent } from './sections/footer/landing-footer.component';
+import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.component';
+
+@Component({
+  selector: 'app-landing-page',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    LandingNavbarComponent,
+    LandingHeroComponent,
+    LandingSocialProofComponent,
+    LandingProblemSolutionComponent,
+    LandingFeaturesComponent,
+    LandingProductShowcaseComponent,
+    LandingBenefitsComponent,
+    LandingPricingComponent,
+    LandingTestimonialsComponent,
+    LandingFaqComponent,
+    LandingCtaComponent,
+    LandingFooterComponent,
+    UiButtonComponent
+  ],
+  template: `
+    <div id="lp-root" class="min-h-screen bg-background font-sans text-primary antialiased">
+      <app-landing-navbar />
+      <main>
+        <app-landing-hero />
+        <app-landing-social-proof />
+        <app-landing-problem-solution />
+        <app-landing-features />
+        <app-landing-product-showcase />
+        <app-landing-benefits />
+        <app-landing-pricing />
+        <app-landing-testimonials />
+        <app-landing-faq />
+        <app-landing-cta />
+      </main>
+      <app-landing-footer />
+
+      <div
+        class="fixed bottom-4 right-4 z-50 hidden sm:block"
+        aria-label="Acciones rápidas"
+      >
+        <div
+          class="flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-surface/95 px-3 py-2 shadow-lg backdrop-blur"
+        >
+          <app-ui-button variant="ghost" size="sm" routerLink="/login">Entrar</app-ui-button>
+          <app-ui-button variant="gradient" size="sm" routerLink="/registro">Registrarse</app-ui-button>
+        </div>
+      </div>
+
+      <div
+        class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-surface/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden"
+        aria-label="Acciones rápidas móvil"
+      >
+        <div class="mx-auto flex max-w-lg items-stretch gap-2">
+          <app-ui-button variant="secondary" class="flex-1" routerLink="/login">Entrar</app-ui-button>
+          <app-ui-button variant="gradient" class="flex-1" routerLink="/registro">Crear cuenta</app-ui-button>
+        </div>
+      </div>
+
+      <div class="h-20 sm:h-0" aria-hidden="true"></div>
+    </div>
+  `
+})
+export class LandingPageComponent {}
