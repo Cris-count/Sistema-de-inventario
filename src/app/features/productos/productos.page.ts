@@ -3,6 +3,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { CategoriaService } from '../../core/api/categoria.service';
 import { ProductoService, ProductoRequest } from '../../core/api/producto.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ROLES_GESTION_PRODUCTOS } from '../../core/auth/app-roles';
 import { Producto } from '../../core/models/entities.model';
 import { getApiErrorMessage } from '../../core/util/api-error';
 import { flashSuccess } from '../../core/util/page-flash';
@@ -42,11 +43,24 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
             <h1 style="margin-bottom:0.25rem">Productos</h1>
             <p class="page-lead" style="margin:0">Catálogo corporativo y unidades de medida.</p>
           </div>
-          @if (isAdmin()) {
+          @if (canGestionarProductos()) {
             <button type="button" class="btn btn-primary" (click)="startCreate()">Nuevo producto</button>
           }
         </div>
       </header>
+      @if (canGestionarProductos()) {
+        <div class="alert alert-info" role="note">
+          <strong>Mercancía nueva:</strong> si recibe productos cuyo código aún no está en el catálogo, regístrelos aquí
+          antes de cargar existencias o registrar movimientos.
+        </div>
+      }
+      @if (esSoloLecturaProductos()) {
+        <div class="alert alert-info" role="note">
+          <strong>Solo consulta:</strong> su rol (<strong>{{ auth.role() }}</strong>) puede ver el catálogo. La alta,
+          edición y activación de productos la realizan <strong>Administración</strong> o <strong>Auxiliar de bodega</strong>,
+          según política del servidor.
+        </div>
+      }
       @if (error()) {
         <div class="alert alert-error" role="alert">{{ error() }}</div>
       } @else if (message()) {
@@ -54,7 +68,12 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
       }
       @if (formMode()) {
         <div class="card stack">
-          <h2>{{ formMode() === 'create' ? 'Crear' : 'Editar' }} producto</h2>
+          <h2>{{ formMode() === 'create' ? 'Registrar producto nuevo' : 'Editar producto' }}</h2>
+          @if (formMode() === 'create') {
+            <p class="page-lead" style="margin: 0 0 0.75rem">
+              Complete los datos del producto. Al guardarlo quedará disponible para entradas, salidas y existencias.
+            </p>
+          }
           <form [formGroup]="form" (ngSubmit)="saveProducto()" class="stack">
             <div class="row">
               <div class="field">
@@ -109,7 +128,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
               <th>Categoría</th>
               <th>Mínimo</th>
               <th>Estado</th>
-              @if (isAdmin()) {
+              @if (canGestionarProductos()) {
                 <th></th>
               }
             </tr>
@@ -126,7 +145,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                     p.activo ? 'Activo' : 'Inactivo'
                   }}</span>
                 </td>
-                @if (isAdmin()) {
+                @if (canGestionarProductos()) {
                   <td>
                     <button type="button" class="btn btn-ghost" (click)="startEdit(p)">Editar</button>
                     <button type="button" class="btn btn-ghost" (click)="toggleActivo(p)">
@@ -154,7 +173,12 @@ export class ProductosPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   readonly auth = inject(AuthService);
 
-  readonly isAdmin = () => this.auth.hasAnyRole(['ADMIN']);
+  /** ADMIN y auxiliar de bodega pueden dar de alta/editar productos (mercancía nueva). */
+  readonly canGestionarProductos = () => this.auth.hasAnyRole(ROLES_GESTION_PRODUCTOS);
+
+  /** COMPRAS y GERENCIA: listado permitido; escritura no (alineado con @PreAuthorize en API). */
+  readonly esSoloLecturaProductos = () =>
+    this.auth.hasAnyRole(['COMPRAS', 'GERENCIA']) && !this.auth.hasAnyRole(ROLES_GESTION_PRODUCTOS);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -272,12 +296,16 @@ export class ProductosPage implements OnInit {
     this.saving.set(true);
     this.error.set(null);
     const id = this.editingId();
-    const req =
-      this.formMode() === 'create' ? this.productoApi.create(body) : this.productoApi.update(id!, body);
+    const esAlta = this.formMode() === 'create';
+    const req = esAlta ? this.productoApi.create(body) : this.productoApi.update(id!, body);
     req.subscribe({
       next: () => {
         this.error.set(null);
-        this.message.set('Producto guardado.');
+        this.message.set(
+          esAlta
+            ? 'Producto nuevo registrado en el catálogo. Ya puede usarlo en movimientos y existencias.'
+            : 'Cambios guardados en el producto.'
+        );
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.cancelForm();
         this.load();

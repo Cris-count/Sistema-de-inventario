@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { InventarioService } from '../../core/api/inventario.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { consumeAccessFlash } from '../../core/util/access-flash';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,12 +12,23 @@ import { AuthService } from '../../core/auth/auth.service';
     <div class="page stack">
       <header class="page-header">
         <h1>Panel de control</h1>
-               <p class="page-lead">
+        @if (accessDeniedHint()) {
+          <div class="alert alert-error" role="alert">
+            No tiene permiso para acceder a esa sección con su rol actual (<strong>{{ auth.role() }}</strong>). Use el
+            menú lateral para las opciones disponibles.
+          </div>
+        }
+        <p class="page-lead">
           Bienvenido, <strong>{{ auth.user()?.nombre }}</strong>
           <span class="muted"> · {{ auth.user()?.email }}</span>
         </p>
-        <p class="page-lead" style="margin-top:0.5rem">
-          Use el menú lateral para las operaciones del día. Los permisos los aplica el servidor según su rol (JWT).
+        <p class="muted page-lead" style="margin-top: 0.35rem">
+          Rol: <strong>{{ auth.user()?.rolNombre }}</strong> ({{ auth.user()?.rolCodigo }}) — sincronizado con el
+          servidor.
+        </p>
+        <p class="page-lead" style="margin-top: 0.5rem">
+          Use el menú lateral para las operaciones del día. Los permisos los aplica el servidor según su rol en base de
+          datos.
         </p>
       </header>
 
@@ -61,8 +73,13 @@ export class DashboardPage implements OnInit {
   readonly loading = signal(true);
   readonly totalInventario = signal(0);
   readonly alertasCount = signal(0);
+  /** Tras redirect del roleGuard por ruta no permitida. */
+  readonly accessDeniedHint = signal(false);
 
   ngOnInit(): void {
+    if (consumeAccessFlash() === 'route_forbidden') {
+      this.accessDeniedHint.set(true);
+    }
     let pending = 2;
     const done = (): void => {
       pending--;

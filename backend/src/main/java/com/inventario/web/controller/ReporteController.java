@@ -1,7 +1,7 @@
 package com.inventario.web.controller;
 
 import com.inventario.domain.entity.Movimiento;
-import com.inventario.domain.repository.MovimientoRepository;
+import com.inventario.service.catalog.MovimientoConsultaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 
@@ -25,30 +24,30 @@ import java.time.ZoneOffset;
 @SecurityRequirement(name = "bearer-jwt")
 public class ReporteController {
 
-    private final MovimientoRepository movimientoRepository;
+    private final MovimientoConsultaService movimientoConsultaService;
 
     @GetMapping("/kardex")
-    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
     @Operation(summary = "Kardex por producto")
     public Page<Movimiento> kardex(
             @RequestParam Long productoId,
             @RequestParam LocalDate desde,
             @RequestParam LocalDate hasta,
             Pageable pageable) {
-        Instant iDesde = desde.atStartOfDay().toInstant(ZoneOffset.UTC);
-        Instant iHasta = hasta.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
-        return movimientoRepository.findKardexByProducto(productoId, iDesde, iHasta, pageable);
+        var iDesde = desde.atStartOfDay().toInstant(ZoneOffset.UTC);
+        var iHasta = hasta.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        return movimientoConsultaService.kardex(productoId, iDesde, iHasta, pageable);
     }
 
     @GetMapping(value = "/movimientos/export", produces = "text/csv")
-    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
     @Operation(summary = "Export CSV simple de movimientos (MVP)")
     public ResponseEntity<byte[]> exportMovimientos(
             @RequestParam LocalDate desde,
             @RequestParam LocalDate hasta) {
-        Instant iDesde = desde.atStartOfDay().toInstant(ZoneOffset.UTC);
-        Instant iHasta = hasta.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
-        var page = movimientoRepository.findByTipoAndFechaBetween(null, iDesde, iHasta, Pageable.unpaged());
+        var iDesde = desde.atStartOfDay().toInstant(ZoneOffset.UTC);
+        var iHasta = hasta.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        var page = movimientoConsultaService.listar(null, iDesde, iHasta, Pageable.unpaged());
         StringBuilder sb = new StringBuilder("id,tipo,fecha,motivo,usuarioEmail\n");
         for (Movimiento m : page.getContent()) {
             sb.append(m.getId()).append(',')

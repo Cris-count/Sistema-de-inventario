@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
 import { getApiErrorMessage } from '../../core/util/api-error';
 
@@ -48,6 +49,42 @@ import { getApiErrorMessage } from '../../core/util/api-error';
               Entrar al panel
             </button>
           </form>
+          @if (showSeedHint()) {
+            <details class="seed-hint">
+              <summary>Cuentas de prueba (desarrollo)</summary>
+              <p class="muted tiny">
+                Misma lista que <code>application.yml</code> / Docker. Si «Credenciales inválidas»: revise mayúsculas y el
+                símbolo <code>!</code> al final.
+              </p>
+              <table class="seed-table">
+                <thead>
+                  <tr><th>Rol</th><th>Email</th><th>Contraseña</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>ADMIN</td>
+                    <td><code>admin&#64;inventario.local</code></td>
+                    <td><code>Admin123!</code></td>
+                  </tr>
+                  <tr>
+                    <td>AUX_BODEGA</td>
+                    <td><code>aux&#64;inventario.local</code></td>
+                    <td><code>AuxBodega123!</code></td>
+                  </tr>
+                  <tr>
+                    <td>COMPRAS</td>
+                    <td><code>compras&#64;inventario.local</code></td>
+                    <td><code>Compras123!</code></td>
+                  </tr>
+                  <tr>
+                    <td>GERENCIA</td>
+                    <td><code>gerencia&#64;inventario.local</code></td>
+                    <td><code>Gerencia123!</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </details>
+          }
         </div>
       </div>
     </div>
@@ -56,12 +93,43 @@ import { getApiErrorMessage } from '../../core/util/api-error';
     :host {
       display: block;
     }
+    .seed-hint {
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+    }
+    .seed-hint summary {
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--muted, #94a3b8);
+    }
+    .tiny {
+      font-size: 0.75rem;
+      margin: 0.5rem 0;
+    }
+    .seed-table {
+      width: 100%;
+      font-size: 0.75rem;
+      border-collapse: collapse;
+    }
+    .seed-table th,
+    .seed-table td {
+      padding: 0.35rem 0.25rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .seed-table code {
+      font-size: 0.7rem;
+      word-break: break-all;
+    }
   `
 })
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+
+  readonly showSeedHint = () => environment.showSeedLoginHint === true;
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);

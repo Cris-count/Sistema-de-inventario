@@ -1,5 +1,7 @@
 package com.inventario.security;
 
+import com.inventario.config.SecurityRoles;
+import com.inventario.domain.entity.EstadoEmpresa;
 import com.inventario.domain.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.User;
@@ -16,12 +18,16 @@ public class DomainUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        var u = usuarioRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
+        var u = usuarioRepository
+                .findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new UsernameNotFoundException(email));
+        boolean empresaBloquea =
+                u.getEmpresa() == null || !u.getEmpresa().getEstado().permiteAccesoUsuarios();
         return User.builder()
                 .username(u.getEmail())
                 .password(u.getPasswordHash())
-                .authorities(u.getRol().getCodigo())
-                .disabled(!u.getActivo())
+                .authorities(SecurityRoles.canonicalCodigo(u.getRol().getCodigo()))
+                .disabled(!u.getActivo() || empresaBloquea)
                 .build();
     }
 }

@@ -20,16 +20,22 @@ public interface InventarioRepository extends JpaRepository<Inventario, Inventar
     Optional<Inventario> findForUpdate(@Param("pid") Long productoId, @Param("bid") Long bodegaId);
 
     @Query("""
-            SELECT i FROM Inventario i
-            WHERE (:productoId IS NULL OR i.id.productoId = :productoId)
+            SELECT i FROM Inventario i JOIN i.producto p
+            WHERE p.empresa.id = :empresaId
+              AND (:productoId IS NULL OR i.id.productoId = :productoId)
               AND (:bodegaId IS NULL OR i.id.bodegaId = :bodegaId)
             """)
-    Page<Inventario> buscar(@Param("productoId") Long productoId, @Param("bodegaId") Long bodegaId, Pageable pageable);
+    Page<Inventario> buscarPorEmpresa(
+            @Param("empresaId") Long empresaId,
+            @Param("productoId") Long productoId,
+            @Param("bodegaId") Long bodegaId,
+            Pageable pageable);
 
     @Query("""
             SELECT i FROM Inventario i JOIN i.producto p
-            WHERE i.cantidad <= p.stockMinimo
+            WHERE p.empresa.id = :empresaId
+              AND i.cantidad <= p.stockMinimo
               AND (:bodegaId IS NULL OR i.id.bodegaId = :bodegaId)
             """)
-    List<Inventario> findBajoMinimo(@Param("bodegaId") Long bodegaId);
+    List<Inventario> findBajoMinimoPorEmpresa(@Param("empresaId") Long empresaId, @Param("bodegaId") Long bodegaId);
 }

@@ -1,12 +1,17 @@
 package com.inventario.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
 
 @Entity
-@Table(name = "proveedor")
+@Table(
+        name = "proveedor",
+        uniqueConstraints = @UniqueConstraint(name = "uk_proveedor_empresa_documento", columnNames = {"empresa_id", "documento"})
+)
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,7 +23,11 @@ public class Proveedor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 32)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_id", nullable = false)
+    private Empresa empresa;
+
+    @Column(nullable = false, length = 32)
     private String documento;
 
     @Column(name = "razon_social", nullable = false, length = 255)
@@ -41,4 +50,8 @@ public class Proveedor {
 
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private Usuario createdBy;
 }

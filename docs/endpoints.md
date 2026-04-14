@@ -1,142 +1,171 @@
-# API REST — Endpoints previstos (v1)
+# API REST — Contrato real (`/api/v1`)
 
-Base URL: `https://{host}/api/v1`  
-Autenticación: `Authorization: Bearer {accessToken}` (salvo login).
+**Base URL (desarrollo):** `http://localhost:8080/api/v1`  
+**Autenticación:** cabecera `Authorization: Bearer <accessToken>` en todos los recursos salvo login.  
+**Errores:** cuerpo tipo **Problem Details** (RFC 7807): `title`, `status`, `detail`.
 
-Convenciones de error: `400` validación, `401` no autenticado, `403` prohibido, `404` no encontrado, `409` conflicto de negocio (p. ej. stock insuficiente).
+Convenciones HTTP habituales: `400` validación, `401` no autenticado, `403` prohibido, `404` no encontrado, `409` conflicto de negocio (p. ej. stock).
 
 ---
 
 ## Auth
 
-| Método | Ruta | Descripción | Request body | Response | Roles |
-|--------|------|-------------|--------------|----------|-------|
-| POST | `/auth/login` | Obtener tokens | `{ "email", "password" }` | `{ "accessToken", "tokenType", "expiresIn", "user": { id, email, nombre, rol } }` | Público |
-| POST | `/auth/logout` | Invalidar sesión (opcional) | vacío o refresh | 204 | Autenticado |
-| GET | `/auth/me` | Perfil actual | — | Usuario + rol | Autenticado |
+| Método | Ruta | Roles | Descripción |
+|--------|------|-------|-------------|
+| POST | `/auth/login` | Público | Login; cuerpo JSON con `email` y `password` (trim; email en minúsculas en servidor). |
+| GET | `/auth/me` | Autenticado | Perfil actual (`UserSummary`: id, email, nombre, rolCodigo, rolNombre). |
+
+**POST `/auth/login` — request**
+
+```json
+{ "email": "admin@inventario.local", "password": "Admin123!" }
+```
+
+**Response 200**
+
+```json
+{
+  "accessToken": "<JWT>",
+  "tokenType": "Bearer",
+  "expiresIn": 86400,
+  "user": {
+    "id": 1,
+    "email": "admin@inventario.local",
+    "nombre": "Administrador",
+    "rolCodigo": "ADMIN",
+    "rolNombre": "Administrador"
+  }
+}
+```
+
+**Errores:** `401` credenciales inválidas (Problem Details).
 
 ---
 
-## Usuarios (RF-02)
+## Usuarios
 
-| Método | Ruta | Descripción | Request | Response | Roles |
-|--------|------|-------------|---------|----------|-------|
-| GET | `/usuarios` | Listado paginado | query: page, size, activo | Page\<UsuarioDTO\> | ADMIN |
-| GET | `/usuarios/{id}` | Detalle | — | UsuarioDTO | ADMIN |
-| POST | `/usuarios` | Crear | `{ email, password, nombre, apellido?, rolCodigo }` | 201 + id | ADMIN |
-| PUT | `/usuarios/{id}` | Actualizar datos/rol | parcial | UsuarioDTO | ADMIN |
-| PATCH | `/usuarios/{id}/estado` | Activar/desactivar | `{ "activo": boolean }` | UsuarioDTO | ADMIN |
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/usuarios` | ADMIN |
+| GET | `/usuarios/{id}` | ADMIN |
+| POST | `/usuarios` | ADMIN |
+| PUT | `/usuarios/{id}` | ADMIN |
+| PATCH | `/usuarios/{id}/estado` | ADMIN |
 
----
-
-## Catálogo: categorías y productos (RF-03, RF-04)
-
-| Método | Ruta | Descripción | Request | Response | Roles |
-|--------|------|-------------|---------|----------|-------|
-| GET | `/categorias` | Listar | filtros activo | Lista | ADMIN, AUX, COMPRAS, GER (lectura) |
-| POST | `/categorias` | Crear | `{ nombre, descripcion? }` | 201 | ADMIN |
-| PUT | `/categorias/{id}` | Editar | — | CategoriaDTO | ADMIN |
-| GET | `/productos` | Listar paginado | q, categoriaId, activo | Page | Todos autenticados (lectura según política) |
-| GET | `/productos/{id}` | Detalle | — | ProductoDTO | Autenticados |
-| POST | `/productos` | Crear | `{ codigo, nombre, categoriaId, unidadMedida?, stockMinimo? }` | 201 | ADMIN |
-| PUT | `/productos/{id}` | Editar | — | ProductoDTO | ADMIN |
-| PATCH | `/productos/{id}/estado` | Activo/inactivo | `{ activo }` | ProductoDTO | ADMIN |
+**POST** cuerpo: `email`, `password`, `nombre`, `apellido?`, `rolCodigo`. El email se normaliza a minúsculas al guardar.  
+**PATCH** cuerpo: `{ "activo": boolean }`.
 
 ---
 
-## Bodegas y proveedores (RF-05, RF-06)
+## Categorías
 
-| Método | Ruta | Descripción | Request | Response | Roles |
-|--------|------|-------------|---------|----------|-------|
-| GET | `/bodegas` | Listar | activo | Lista | Autenticados |
-| POST | `/bodegas` | Crear | `{ codigo, nombre, direccion? }` | 201 | ADMIN |
-| PUT | `/bodegas/{id}` | Editar | — | BodegaDTO | ADMIN |
-| GET | `/proveedores` | Listar | activo | Lista | ADMIN, COMPRAS, GER |
-| POST | `/proveedores` | Crear | `{ documento, razonSocial, ... }` | 201 | ADMIN |
-| PUT | `/proveedores/{id}` | Editar | — | ProveedorDTO | ADMIN |
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/categorias` | ADMIN, AUX_BODEGA, COMPRAS, GERENCIA |
+| POST | `/categorias` | ADMIN |
+| PUT | `/categorias/{id}` | ADMIN |
 
----
-
-## Inventario y stock inicial (RF-07, RF-11, RF-12)
-
-| Método | Ruta | Descripción | Request | Response | Roles |
-|--------|------|-------------|---------|----------|-------|
-| GET | `/inventario` | Existencias | `productoId?, bodegaId?, page, size` | filas producto+bodega+cantidad | AUX, COMPRAS, GER, ADMIN |
-| POST | `/inventario/stock-inicial` | Carga inicial | `{ lineas: [ { productoId, bodegaId, cantidad, referencia? } ] }` | resumen movimiento | ADMIN (o AUX si política) |
-| GET | `/inventario/alertas` | Bajo mínimo | `bodegaId?` | lista alertas | AUX, COMPRAS, GER, ADMIN |
+**POST/PUT** cuerpo: `{ "nombre": "...", "descripcion": "..." }`
 
 ---
 
-## Movimientos (RF-08, RF-09, RF-10, RF-14)
+## Productos
 
-Unificar en recursos por tipo **o** un solo `POST` con discriminador; aquí se listan rutas explícitas (más claras para permisos).
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/productos` | ADMIN, AUX_BODEGA, COMPRAS, GERENCIA |
+| GET | `/productos/{id}` | Idem |
+| POST | `/productos` | **ADMIN, AUX_BODEGA** |
+| PUT | `/productos/{id}` | **ADMIN, AUX_BODEGA** |
+| PATCH | `/productos/{id}/estado` | **ADMIN, AUX_BODEGA** |
 
-| Método | Ruta | Descripción | Request | Response | Roles |
-|--------|------|-------------|---------|----------|-------|
-| POST | `/movimientos/entradas` | Entrada(s) | `{ motivo, proveedorId?, referenciaDocumento?, observacion?, lineas: [ { productoId, bodegaDestinoId, cantidad } ] }` | movimiento + ids | AUX, COMPRAS, ADMIN |
-| POST | `/movimientos/salidas` | Salida(s) | `{ motivo, referenciaDocumento?, lineas: [ { productoId, bodegaOrigenId, cantidad } ] }` | movimiento | AUX, ADMIN |
-| POST | `/movimientos/transferencias` | Transferencia | `{ referenciaDocumento?, lineas: [ { productoId, bodegaOrigenId, bodegaDestinoId, cantidad } ] }` | movimiento | AUX, ADMIN |
-| POST | `/movimientos/ajustes` | Ajuste / conteo (RF-14) | `{ motivo, lineas: [...] }` según política de ajuste | movimiento | AUX, ADMIN |
-| GET | `/movimientos/{id}` | Detalle cabecera + líneas | — | MovimientoDTO | según rol lectura |
-| GET | `/movimientos` | Historial paginado | fechas, tipo, productoId, bodegaId | Page | GER, ADMIN, AUX, COMPRAS |
+**POST/PUT** cuerpo: `codigo`, `nombre`, `descripcion?`, `categoriaId`, `unidadMedida?`, `stockMinimo?` (numérico).  
+**PATCH** cuerpo: `{ "activo": true }`.
 
----
-
-## Reportes y exportación (RF-13, RF-16)
-
-| Método | Ruta | Descripción | Query | Response | Roles |
-|--------|------|-------------|-------|----------|-------|
-| GET | `/reportes/kardex` | Movimientos por producto | productoId, desde, hasta | lista | GER, ADMIN, AUX, COMPRAS |
-| GET | `/reportes/movimientos` | Listado filtrable | parámetros | Page | GER, ADMIN, AUX, COMPRAS |
-| GET | `/reportes/movimientos/export` | CSV | mismos filtros | archivo | GER, ADMIN, AUX, COMPRAS |
+**Nota:** COMPRAS y GERENCIA reciben **403** en POST/PUT/PATCH.
 
 ---
 
-## Auditoría (RF-15, opcional)
+## Bodegas
 
-| Método | Ruta | Descripción | Roles |
-|--------|------|-------------|-------|
-| GET | `/auditoria/eventos` | Eventos de seguridad (si existen) | ADMIN |
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/bodegas` | ADMIN, AUX_BODEGA, COMPRAS, GERENCIA |
+| POST | `/bodegas` | ADMIN |
+| PUT | `/bodegas/{id}` | ADMIN |
+
+**POST/PUT** cuerpo: `codigo`, `nombre`, `direccion?`.
+
+---
+
+## Proveedores
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/proveedores` | **ADMIN, COMPRAS, GERENCIA** (AUX_BODEGA **no**) |
+| POST | `/proveedores` | ADMIN |
+| PUT | `/proveedores/{id}` | ADMIN |
+
+**POST/PUT** cuerpo: `documento`, `razonSocial`, `contacto?`, `telefono?`, `email?`.
+
+---
+
+## Inventario
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/inventario` | ADMIN, AUX_BODEGA, COMPRAS, GERENCIA |
+| GET | `/inventario/alertas` | Idem |
+| POST | `/inventario/stock-inicial` | **ADMIN** |
+
+**GET `/inventario`** — query opcionales: `productoId`, `bodegaId`, `page`, `size`.  
+**GET `/alertas`** — query opcional: `bodegaId`.  
+**POST `/stock-inicial`** — cuerpo: `{ "lineas": [ { "productoId", "bodegaId", "cantidad", "referencia?" } ] }`.
+
+---
+
+## Movimientos
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| POST | `/movimientos/entradas` | ADMIN, AUX_BODEGA, **COMPRAS** |
+| POST | `/movimientos/salidas` | ADMIN, AUX_BODEGA |
+| POST | `/movimientos/transferencias` | ADMIN, AUX_BODEGA |
+| POST | `/movimientos/ajustes` | ADMIN, AUX_BODEGA |
+| GET | `/movimientos/{id}` | ADMIN, AUX_BODEGA, COMPRAS, GERENCIA |
+| GET | `/movimientos` | Idem |
+
+**GET `/movimientos`** — query obligatorios: `desde`, `hasta` (fecha `YYYY-MM-DD`); opcional: `tipo` (enum), `page`, `size`.
+
+Cuerpos de alta: ver `MovimientoDtos` en el código (`EntradaRequest`, `SalidaRequest`, etc.): líneas con `productoId`, bodegas y `cantidad` > 0.
+
+---
+
+## Reportes
+
+| Método | Ruta | Roles |
+|--------|------|-------|
+| GET | `/reportes/kardex` | ADMIN, AUX_BODEGA, COMPRAS, GERENCIA |
+| GET | `/reportes/movimientos/export` | Idem (CSV) |
+
+**GET `/reportes/kardex`** — query: `productoId`, `desde`, `hasta`, paginación.  
+**GET `/reportes/movimientos/export`** — query: `desde`, `hasta` → descarga CSV.
 
 ---
 
 ## Salud
 
-| GET | `/actuator/health` | Spring Boot Actuator | Público / interno |
+| GET | `/actuator/health` | Público |
 
 ---
 
-### Matriz RF → endpoints (cobertura)
+## No implementado en esta versión
 
-| RF | Endpoints principales |
-|----|------------------------|
-| RF-01 | POST `/auth/login`, GET `/auth/me` |
-| RF-02 | CRUD `/usuarios` |
-| RF-03 | `/categorias` |
-| RF-04 | `/productos` |
-| RF-05 | `/bodegas` |
-| RF-06 | `/proveedores` |
-| RF-07 | POST `/inventario/stock-inicial` |
-| RF-08 | POST `/movimientos/entradas` |
-| RF-09 | POST `/movimientos/salidas` |
-| RF-10 | POST `/movimientos/transferencias` |
-| RF-11 | GET `/inventario` |
-| RF-12 | GET `/inventario/alertas` |
-| RF-13 | GET `/reportes/*` |
-| RF-14 | POST `/movimientos/ajustes` |
-| RF-15 | GET `/auditoria/eventos` (opcional) |
-| RF-16 | GET `.../export` |
+- `POST /auth/logout` (el cliente solo borra token).
+- Listado paginado de movimientos bajo `/reportes/...` (el listado está en `GET /movimientos`).
 
 ---
 
-## Validación crítica de endpoints
+## Referencia viva
 
-| Pregunta | Conclusión |
-|----------|------------|
-| ¿Todo RF tiene cobertura? | Sí, salvo RF-15 opcional (auditoría de seguridad sin tabla dedicada). |
-| ¿Endpoints innecesarios? | No se añadieron recursos duplicados; `/actuator/health` es estándar y opcional. |
-| ¿Falta alguno clave? | No para el flujo MVP: maestros + stock inicial + tres movimientos + consultas + reportes + export. |
-| ¿Se puede completar el negocio solo con API? | Sí: primero maestros y stock inicial, luego entradas/salidas/transferencias, consultas y reportes. |
-| ¿Entradas/salidas/transferencias sin problemas? | Sí, si el backend valida líneas según `tipo_movimiento` y actualiza `inventario` en transacción única. |
-
-**Corrección aplicada:** rutas separadas por tipo de movimiento evitan un único POST genérico difícil de autorizar por rol y de documentar en Swagger.
+La **fuente de verdad** son los controladores en `backend/src/main/java/com/inventario/web/controller/` y **Swagger UI**: `http://localhost:8080/swagger-ui.html` con el API en ejecución.

@@ -362,6 +362,11 @@ table.data tbody tr:hover td {
   border-color: rgba(74, 222, 128, 0.35);
   color: #bbf7d0;
 }
+.alert-info {
+  background: rgba(96, 165, 250, 0.1);
+  border-color: rgba(96, 165, 250, 0.35);
+  color: #dbeafe;
+}
 
 .spinner {
   display: inline-block;

@@ -1,11 +1,22 @@
 import { Routes } from '@angular/router';
+import { ROLES_LECTURA_API, ROLES_PROVEEDOR_LECTURA } from './core/auth/app-roles';
 import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
 import { roleGuard } from './core/auth/role.guard';
 import { syncUserGuard } from './core/auth/sync-user.guard';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'app' },
+  /** Home pública: /app exige JWT; la landing es el punto de entrada sin sesión. */
+  { path: '', pathMatch: 'full', redirectTo: 'landing' },
+  {
+    path: 'landing',
+    loadComponent: () => import('./pages/landing/landing-page.component').then((m) => m.LandingPageComponent)
+  },
+  {
+    path: 'registro',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./pages/register/register-page.component').then((m) => m.RegisterPageComponent)
+  },
   {
     path: 'login',
     canActivate: [guestGuard],
@@ -14,6 +25,8 @@ export const routes: Routes = [
   {
     path: 'app',
     canActivate: [authGuard, syncUserGuard],
+    /** Vuelve a ejecutar guards al cambiar entre hijos (p. ej. dashboard → productos) para alinear rol con `/auth/me` y BD. */
+    runGuardsAndResolvers: 'always',
     loadComponent: () => import('./shared/shell/app-shell.component').then((m) => m.AppShellComponent),
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
@@ -23,6 +36,8 @@ export const routes: Routes = [
       },
       {
         path: 'productos',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_LECTURA_API },
         loadComponent: () => import('./features/productos/productos.page').then((m) => m.ProductosPage)
       },
       {
@@ -33,16 +48,20 @@ export const routes: Routes = [
       },
       {
         path: 'bodegas',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_LECTURA_API },
         loadComponent: () => import('./features/bodegas/bodegas.page').then((m) => m.BodegasPage)
       },
       {
         path: 'proveedores',
         canActivate: [roleGuard],
-        data: { roles: ['ADMIN', 'COMPRAS', 'GERENCIA'] },
+        data: { roles: ROLES_PROVEEDOR_LECTURA },
         loadComponent: () => import('./features/proveedores/proveedores.page').then((m) => m.ProveedoresPage)
       },
       {
         path: 'inventario',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_LECTURA_API },
         loadComponent: () => import('./features/inventario/inventario.page').then((m) => m.InventarioPage)
       },
       {
@@ -53,6 +72,8 @@ export const routes: Routes = [
       },
       {
         path: 'movimientos',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_LECTURA_API },
         children: [
           {
             path: '',
@@ -93,10 +114,14 @@ export const routes: Routes = [
       },
       {
         path: 'reportes/kardex',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_LECTURA_API },
         loadComponent: () => import('./features/reportes/kardex.page').then((m) => m.KardexPage)
       },
       {
         path: 'reportes/export',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_LECTURA_API },
         loadComponent: () => import('./features/reportes/export.page').then((m) => m.ExportReportePage)
       },
       {
@@ -107,5 +132,5 @@ export const routes: Routes = [
       }
     ]
   },
-  { path: '**', redirectTo: 'app' }
+  { path: '**', redirectTo: 'landing' }
 ];

@@ -1,31 +1,40 @@
 {
   "info": {
-    "_postman_id": "a1b2c3d4-inventario-api",
-    "name": "Sistema Inventario API (PASO 4)",
-    "description": "Pruebas de contrato para Spring Boot. Ajustar baseUrl al puerto real.",
+    "_postman_id": "inv-api-v3-paso8",
+    "name": "Sistema Inventario API",
+    "description": "PASO 8: ejecutar carpetas en orden (Auth → Setup → Errores → Flujos → roles). Variables: baseUrl, token (=ADMIN), tokenAdmin, tokenAux, tokenCompras, tokenGerencia, suf, categoriaId, bodegaId, bodegaId2, productoId, proveedorId. Newman: npm run test:api",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:8080/api/v1" },
     { "key": "token", "value": "" },
-    { "key": "productoId", "value": "1" },
-    { "key": "bodegaId", "value": "1" },
-    { "key": "bodegaId2", "value": "2" },
-    { "key": "movimientoEntradaId", "value": "" }
+    { "key": "tokenAdmin", "value": "" },
+    { "key": "tokenAux", "value": "" },
+    { "key": "tokenCompras", "value": "" },
+    { "key": "tokenGerencia", "value": "" },
+    { "key": "suf", "value": "" },
+    { "key": "categoriaId", "value": "" },
+    { "key": "bodegaId", "value": "" },
+    { "key": "bodegaId2", "value": "" },
+    { "key": "productoId", "value": "" },
+    { "key": "proveedorId", "value": "" }
   ],
   "item": [
     {
-      "name": "Auth",
+      "name": "1 Auth (semillas)",
       "item": [
         {
-          "name": "Login correcto",
+          "name": "Login ADMIN",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
                   "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
-                  "try { var j = pm.response.json(); if (j.accessToken) pm.collectionVariables.set('token', j.accessToken); } catch (e) {}"
+                  "var j = pm.response.json();",
+                  "pm.expect(j.accessToken).to.be.a('string');",
+                  "pm.collectionVariables.set('token', j.accessToken);",
+                  "pm.collectionVariables.set('tokenAdmin', j.accessToken);"
                 ],
                 "type": "text/javascript"
               }
@@ -34,21 +43,20 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@empresa.com\",\n  \"password\": \"cambiar\"\n}"
-            },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@inventario.local\",\n  \"password\": \"Admin123!\"\n}" },
             "url": "{{baseUrl}}/auth/login"
           }
         },
         {
-          "name": "Login incorrecto",
+          "name": "Login AUX_BODEGA",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 401 o 400', function () { pm.expect([400,401]).to.include(pm.response.code); });"
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.collectionVariables.set('tokenAux', j.accessToken);"
                 ],
                 "type": "text/javascript"
               }
@@ -57,91 +65,251 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@empresa.com\",\n  \"password\": \"mala\"\n}"
-            },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"aux@inventario.local\",\n  \"password\": \"AuxBodega123!\"\n}" },
             "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login COMPRAS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.collectionVariables.set('tokenCompras', j.accessToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"compras@inventario.local\",\n  \"password\": \"Compras123!\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login GERENCIA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.collectionVariables.set('tokenGerencia', j.accessToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"gerencia@inventario.local\",\n  \"password\": \"Gerencia123!\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Login credenciales incorrectas → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('401', function () { pm.response.to.have.status(401); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@inventario.local\",\n  \"password\": \"incorrecta\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "GET auth/me (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.expect(j.rolCodigo || j.rol || '').to.match(/ADMIN/i);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": "{{baseUrl}}/auth/me"
           }
         }
       ]
     },
     {
-      "name": "Catalogo",
+      "name": "2 Setup datos (solo ADMIN)",
+      "description": "Crea categoría, bodegas, proveedor, producto y stock inicial. Re-ejecutar genera suf nuevo (único).",
       "item": [
         {
-          "name": "Crear producto",
+          "name": "POST categoría",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('suf', Date.now().toString());"],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201', function () { pm.response.to.have.status(201); });",
+                  "var j = pm.response.json();",
+                  "pm.collectionVariables.set('categoriaId', j.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"codigo\": \"SKU-001\",\n  \"nombre\": \"Producto demo\",\n  \"categoriaId\": 1,\n  \"unidadMedida\": \"UND\",\n  \"stockMinimo\": 5\n}"
+              "raw": "{\n  \"nombre\": \"Cat QA {{suf}}\",\n  \"descripcion\": \"Categoría prueba Postman\"\n}"
+            },
+            "url": "{{baseUrl}}/categorias"
+          }
+        },
+        {
+          "name": "POST bodega 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('bodegaId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"B1-{{suf}}\",\n  \"nombre\": \"Bodega principal QA\",\n  \"direccion\": \"Calle 1\"\n}"
+            },
+            "url": "{{baseUrl}}/bodegas"
+          }
+        },
+        {
+          "name": "POST bodega 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('bodegaId2', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"B2-{{suf}}\",\n  \"nombre\": \"Bodega secundaria QA\",\n  \"direccion\": \"Calle 2\"\n}"
+            },
+            "url": "{{baseUrl}}/bodegas"
+          }
+        },
+        {
+          "name": "POST proveedor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('proveedorId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documento\": \"DOC-{{suf}}\",\n  \"razonSocial\": \"Proveedor QA\",\n  \"contacto\": \"QA\",\n  \"telefono\": \"3000000000\"\n}"
+            },
+            "url": "{{baseUrl}}/proveedores"
+          }
+        },
+        {
+          "name": "POST producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('productoId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SKU-{{suf}}\",\n  \"nombre\": \"Producto QA Postman\",\n  \"descripcion\": \"\",\n  \"categoriaId\": {{categoriaId}},\n  \"unidadMedida\": \"UND\",\n  \"stockMinimo\": 5\n}"
             },
             "url": "{{baseUrl}}/productos"
           }
         },
         {
-          "name": "Crear bodega",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"codigo\": \"BOD-01\",\n  \"nombre\": \"Bodega central\"\n}"
-            },
-            "url": "{{baseUrl}}/bodegas"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Movimientos",
-      "item": [
-        {
-          "name": "Registrar entrada",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"motivo\": \"COMPRA\",\n  \"proveedorId\": 1,\n  \"referenciaDocumento\": \"OC-100\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaDestinoId\": {{bodegaId}},\n      \"cantidad\": 100\n    }\n  ]\n}"
-            },
-            "url": "{{baseUrl}}/movimientos/entradas"
-          }
-        },
-        {
-          "name": "Registrar salida con stock",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"motivo\": \"VENTA\",\n  \"referenciaDocumento\": \"PED-1\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": {{bodegaId}},\n      \"cantidad\": 10\n    }\n  ]\n}"
-            },
-            "url": "{{baseUrl}}/movimientos/salidas"
-          }
-        },
-        {
-          "name": "Salida sin stock suficiente (esperado 409)",
+          "name": "POST stock inicial",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Conflicto negocio', function () { pm.expect([409,400]).to.include(pm.response.code); });"
+                  "pm.test('200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().tipoMovimiento).to.eql('ENTRADA');"
                 ],
                 "type": "text/javascript"
               }
@@ -151,41 +319,669 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"motivo\": \"VENTA\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": {{bodegaId}},\n      \"cantidad\": 999999\n    }\n  ]\n}"
+              "raw": "{\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaId\": {{bodegaId}},\n      \"cantidad\": 1000,\n      \"referencia\": \"SI-{{suf}}\"\n    }\n  ]\n}"
             },
-            "url": "{{baseUrl}}/movimientos/salidas"
-          }
-        },
-        {
-          "name": "Transferencia entre bodegas",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"referenciaDocumento\": \"TR-1\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": {{bodegaId}},\n      \"bodegaDestinoId\": {{bodegaId2}},\n      \"cantidad\": 5\n    }\n  ]\n}"
-            },
-            "url": "{{baseUrl}}/movimientos/transferencias"
+            "url": "{{baseUrl}}/inventario/stock-inicial"
           }
         }
       ]
     },
     {
-      "name": "Consultas",
+      "name": "3 Errores HTTP",
       "item": [
         {
-          "name": "Consulta inventario",
+          "name": "GET productos sin Authorization → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('401 sin token', function () { pm.response.to.have.status(401); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "header": [],
+            "url": "{{baseUrl}}/productos?page=0&size=5"
+          }
+        },
+        {
+          "name": "GET productos JWT inválido → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('401 JWT inválido', function () { pm.response.to.have.status(401); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.invalid" }],
+            "url": "{{baseUrl}}/productos?page=0&size=5"
+          }
+        },
+        {
+          "name": "POST login cuerpo inválido → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('400 validación', function () { pm.response.to.have.status(400); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}" },
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "POST producto como COMPRAS → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCompras}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"NO-{{suf}}\",\n  \"nombre\": \"No permitido\",\n  \"categoriaId\": {{categoriaId}},\n  \"unidadMedida\": \"UND\",\n  \"stockMinimo\": 0\n}"
+            },
+            "url": "{{baseUrl}}/productos"
+          }
+        },
+        {
+          "name": "POST entrada como GERENCIA → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenGerencia}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"RECEPCION\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaDestinoId\": {{bodegaId}},\n      \"cantidad\": 1\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/entradas"
+          }
+        },
+        {
+          "name": "GET usuarios como AUX_BODEGA → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAux}}" }],
+            "url": "{{baseUrl}}/usuarios?page=0&size=5"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 Flujo negocio (ADMIN)",
+      "item": [
+        {
+          "name": "GET usuarios",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": "{{baseUrl}}/usuarios?page=0&size=20"
+          }
+        },
+        {
+          "name": "POST entrada COMPRA (proveedor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"COMPRA\",\n  \"proveedorId\": {{proveedorId}},\n  \"referenciaDocumento\": \"OC-QA-1\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaDestinoId\": {{bodegaId}},\n      \"cantidad\": 50\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/entradas"
+          }
+        },
+        {
+          "name": "POST salida válida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"VENTA\",\n  \"referenciaDocumento\": \"PED-QA-1\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": {{bodegaId}},\n      \"cantidad\": 10\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/salidas"
+          }
+        },
+        {
+          "name": "POST salida stock insuficiente → 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('409 conflicto negocio', function () { pm.response.to.have.status(409); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"VENTA\",\n  \"referenciaDocumento\": \"PED-FAIL\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": {{bodegaId}},\n      \"cantidad\": 999999999\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/salidas"
+          }
+        },
+        {
+          "name": "POST transferencia",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referenciaDocumento\": \"TR-QA-1\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": {{bodegaId}},\n      \"bodegaDestinoId\": {{bodegaId2}},\n      \"cantidad\": 5\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/transferencias"
+          }
+        },
+        {
+          "name": "POST ajuste (+ destino)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"CONTEO\",\n  \"referenciaDocumento\": \"AJ-QA-1\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": null,\n      \"bodegaDestinoId\": {{bodegaId2}},\n      \"cantidad\": 2\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/ajustes"
+          }
+        },
+        {
+          "name": "GET inventario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
             "url": "{{baseUrl}}/inventario?bodegaId={{bodegaId}}&page=0&size=20"
+          }
+        },
+        {
+          "name": "GET historial movimientos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": "{{baseUrl}}/movimientos?desde=2020-01-01&hasta=2030-12-31&page=0&size=20"
+          }
+        },
+        {
+          "name": "GET kardex",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": "{{baseUrl}}/reportes/kardex?productoId={{productoId}}&desde=2020-01-01&hasta=2030-12-31&page=0&size=20"
+          }
+        },
+        {
+          "name": "GET export CSV movimientos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200 CSV', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": "{{baseUrl}}/reportes/movimientos/export?desde=2020-01-01&hasta=2030-12-31"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 Rol AUX_BODEGA",
+      "item": [
+        {
+          "name": "GET auth/me → rol AUX_BODEGA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });",
+                  "var j = pm.response.json();",
+                  "pm.expect(JSON.stringify(j)).to.include('AUX');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAux}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "POST producto (crear AUX)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('201', function () { pm.response.to.have.status(201); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAux}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SKU2-{{suf}}\",\n  \"nombre\": \"Producto creado por AUX\",\n  \"categoriaId\": {{categoriaId}},\n  \"unidadMedida\": \"UND\",\n  \"stockMinimo\": 1\n}"
+            },
+            "url": "{{baseUrl}}/productos"
+          }
+        },
+        {
+          "name": "PUT producto (editar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAux}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"SKU-{{suf}}\",\n  \"nombre\": \"Producto QA editado AUX\",\n  \"categoriaId\": {{categoriaId}},\n  \"unidadMedida\": \"UND\",\n  \"stockMinimo\": 5\n}"
+            },
+            "url": "{{baseUrl}}/productos/{{productoId}}"
+          }
+        },
+        {
+          "name": "POST salida (AUX)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenAux}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"VENTA\",\n  \"referenciaDocumento\": \"PED-AUX\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": {{bodegaId}},\n      \"cantidad\": 1\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/salidas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6 Rol COMPRAS",
+      "item": [
+        {
+          "name": "GET auth/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.text()).to.include('COMPRAS');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCompras}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "GET productos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenCompras}}" }],
+            "url": "{{baseUrl}}/productos?page=0&size=10"
+          }
+        },
+        {
+          "name": "POST entrada RECEPCION",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCompras}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"RECEPCION\",\n  \"referenciaDocumento\": \"REC-COMPRAS\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaDestinoId\": {{bodegaId}},\n      \"cantidad\": 3\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/entradas"
+          }
+        },
+        {
+          "name": "POST salida → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCompras}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"VENTA\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": {{bodegaId}},\n      \"cantidad\": 1\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/salidas"
+          }
+        },
+        {
+          "name": "POST transferencia → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCompras}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referenciaDocumento\": \"X\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaOrigenId\": {{bodegaId}},\n      \"bodegaDestinoId\": {{bodegaId2}},\n      \"cantidad\": 1\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/transferencias"
+          }
+        },
+        {
+          "name": "POST ajuste → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenCompras}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"X\",\n  \"lineas\": [\n    {\n      \"productoId\": {{productoId}},\n      \"bodegaDestinoId\": {{bodegaId}},\n      \"cantidad\": 1\n    }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/movimientos/ajustes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7 Rol GERENCIA",
+      "item": [
+        {
+          "name": "GET auth/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.text()).to.include('GERENCIA');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenGerencia}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "GET inventario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenGerencia}}" }],
+            "url": "{{baseUrl}}/inventario?page=0&size=20"
+          }
+        },
+        {
+          "name": "GET kardex",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200', function () { pm.response.to.have.status(200); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenGerencia}}" }],
+            "url": "{{baseUrl}}/reportes/kardex?productoId={{productoId}}&desde=2020-01-01&hasta=2030-12-31&page=0&size=20"
+          }
+        },
+        {
+          "name": "POST producto → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('403', function () { pm.response.to.have.status(403); });"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tokenGerencia}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigo\": \"GER-{{suf}}\",\n  \"nombre\": \"No\",\n  \"categoriaId\": {{categoriaId}},\n  \"unidadMedida\": \"UND\",\n  \"stockMinimo\": 0\n}"
+            },
+            "url": "{{baseUrl}}/productos"
           }
         }
       ]

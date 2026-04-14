@@ -1,7 +1,7 @@
 package com.inventario.web.controller;
 
 import com.inventario.domain.entity.Proveedor;
-import com.inventario.domain.repository.ProveedorRepository;
+import com.inventario.service.catalog.ProveedorCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -20,7 +19,7 @@ import java.util.List;
 @SecurityRequirement(name = "bearer-jwt")
 public class ProveedorController {
 
-    private final ProveedorRepository proveedorRepository;
+    private final ProveedorCatalogService proveedorCatalogService;
 
     public record ProveedorRequest(
             @NotBlank String documento,
@@ -31,39 +30,26 @@ public class ProveedorController {
     ) {}
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','COMPRAS','GERENCIA')")
     @Operation(summary = "Listar proveedores")
     public List<Proveedor> listar() {
-        return proveedorRepository.findAll();
+        return proveedorCatalogService.listar();
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear proveedor")
     public Proveedor crear(@Valid @RequestBody ProveedorRequest req) {
-        Proveedor p = new Proveedor();
-        p.setDocumento(req.documento());
-        p.setRazonSocial(req.razonSocial());
-        p.setContacto(req.contacto());
-        p.setTelefono(req.telefono());
-        p.setEmail(req.email());
-        p.setActivo(true);
-        p.setCreatedAt(Instant.now());
-        return proveedorRepository.save(p);
+        return proveedorCatalogService.crear(
+                req.documento(), req.razonSocial(), req.contacto(), req.telefono(), req.email());
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @Operation(summary = "Actualizar proveedor")
     public Proveedor actualizar(@PathVariable Long id, @Valid @RequestBody ProveedorRequest req) {
-        Proveedor p = proveedorRepository.findById(id).orElseThrow();
-        p.setDocumento(req.documento());
-        p.setRazonSocial(req.razonSocial());
-        p.setContacto(req.contacto());
-        p.setTelefono(req.telefono());
-        p.setEmail(req.email());
-        p.setUpdatedAt(Instant.now());
-        return proveedorRepository.save(p);
+        return proveedorCatalogService.actualizar(
+                id, req.documento(), req.razonSocial(), req.contacto(), req.telefono(), req.email());
     }
 }

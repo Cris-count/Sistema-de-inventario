@@ -1,7 +1,7 @@
 package com.inventario.web.controller;
 
 import com.inventario.domain.entity.Categoria;
-import com.inventario.domain.repository.CategoriaRepository;
+import com.inventario.service.catalog.CategoriaCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -20,38 +19,29 @@ import java.util.List;
 @SecurityRequirement(name = "bearer-jwt")
 public class CategoriaController {
 
-    private final CategoriaRepository categoriaRepository;
+    private final CategoriaCatalogService categoriaCatalogService;
 
     public record CategoriaRequest(@NotBlank String nombre, String descripcion) {}
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
     @Operation(summary = "Listar categorías")
     public List<Categoria> listar() {
-        return categoriaRepository.findAll();
+        return categoriaCatalogService.listar();
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear categoría")
     public Categoria crear(@Valid @RequestBody CategoriaRequest req) {
-        Categoria c = new Categoria();
-        c.setNombre(req.nombre());
-        c.setDescripcion(req.descripcion());
-        c.setActivo(true);
-        c.setCreatedAt(Instant.now());
-        return categoriaRepository.save(c);
+        return categoriaCatalogService.crear(req.nombre(), req.descripcion());
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @Operation(summary = "Actualizar categoría")
     public Categoria actualizar(@PathVariable Long id, @Valid @RequestBody CategoriaRequest req) {
-        Categoria c = categoriaRepository.findById(id).orElseThrow();
-        c.setNombre(req.nombre());
-        c.setDescripcion(req.descripcion());
-        c.setUpdatedAt(Instant.now());
-        return categoriaRepository.save(c);
+        return categoriaCatalogService.actualizar(id, req.nombre(), req.descripcion());
     }
 }
