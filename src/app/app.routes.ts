@@ -6,7 +6,17 @@ import { roleGuard } from './core/auth/role.guard';
 import { syncUserGuard } from './core/auth/sync-user.guard';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'app' },
+  /** Home pública: /app exige JWT; la landing es el punto de entrada sin sesión. */
+  { path: '', pathMatch: 'full', redirectTo: 'landing' },
+  {
+    path: 'landing',
+    loadComponent: () => import('./pages/landing/landing-page.component').then((m) => m.LandingPageComponent)
+  },
+  {
+    path: 'registro',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./pages/register/register-page.component').then((m) => m.RegisterPageComponent)
+  },
   {
     path: 'login',
     canActivate: [guestGuard],
@@ -122,5 +132,5 @@ export const routes: Routes = [
       }
     ]
   },
-  { path: '**', redirectTo: 'app' }
+  { path: '**', redirectTo: 'landing' }
 ];

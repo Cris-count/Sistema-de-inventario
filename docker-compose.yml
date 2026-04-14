@@ -1,5 +1,14 @@
-# PostgreSQL + API Spring Boot (PASO 5)
-# Levantar: docker compose up -d --build
+# PostgreSQL + API Spring Boot
+#
+# Desarrollo local (solo BD; API con npm run backend o IDE):
+#   docker compose up -d db
+#
+# Todo el stack (BD + API en contenedor):
+#   docker compose up -d --build
+#
+# Primera vez: Postgres ejecuta database/schema.sql (esquema completo).
+# BD ya existente con volumen antiguo: aplicar database/migrations/*.sql manualmente si falta algo.
+#
 # API: http://localhost:8080/swagger-ui.html  |  DB: localhost:5432 inventario/inventario
 
 services:

@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+@config '../tailwind.config.mjs';
+
+/* Landing scope: utilities are prefixed with #lp-root via Tailwind `important` option. */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+  }
+}
+
+#lp-root .lp-fade-up {
+  animation: lp-fade-up 0.45s ease-out both;
+}
+
+#lp-root .lp-delay-1 {
+  animation-delay: 60ms;
+}
+
+@keyframes lp-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

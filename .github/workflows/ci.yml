@@ -40,5 +40,6 @@ jobs:
           java-version: "17"
           cache: maven
 
-      - name: Maven verify
-        run: mvn -B -f backend/pom.xml verify
+      - name: Maven verify (wrapper)
+        working-directory: backend
+        run: chmod +x mvnw && ./mvnw -B verify
