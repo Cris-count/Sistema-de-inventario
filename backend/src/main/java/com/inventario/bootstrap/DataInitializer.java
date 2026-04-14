@@ -2,9 +2,11 @@ package com.inventario.bootstrap;
 
 import com.inventario.domain.entity.Empresa;
 import com.inventario.domain.entity.EstadoEmpresa;
+import com.inventario.domain.entity.SaasPlan;
 import com.inventario.domain.entity.Usuario;
 import com.inventario.domain.repository.EmpresaRepository;
 import com.inventario.domain.repository.RolRepository;
+import com.inventario.domain.repository.SaasPlanRepository;
 import com.inventario.domain.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Locale;
 
@@ -40,6 +43,7 @@ public class DataInitializer implements CommandLineRunner {
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final EmpresaRepository empresaRepository;
+    private final SaasPlanRepository saasPlanRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.seed.admin-email}")
@@ -77,12 +81,60 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        ensureSaasPlans();
         Empresa empresa = ensureEmpresaSemilla();
         ensureUser(adminEmail, adminPassword, "Administrador", "Sistema", "ADMIN", empresa);
         ensureUser(orDefaultEmail(auxEmail, DEF_AUX_EMAIL), orDefaultPassword(auxPassword, DEF_AUX_PASSWORD), "Auxiliar", "Bodega", "AUX_BODEGA", empresa);
         ensureUser(orDefaultEmail(comprasEmail, DEF_COMPRAS_EMAIL), orDefaultPassword(comprasPassword, DEF_COMPRAS_PASSWORD), "Compras", "Demo", "COMPRAS", empresa);
         ensureUser(orDefaultEmail(gerenciaEmail, DEF_GERENCIA_EMAIL), orDefaultPassword(gerenciaPassword, DEF_GERENCIA_PASSWORD), "Gerencia", "Demo", "GERENCIA", empresa);
         ensureSuperAdmin(empresa);
+    }
+
+    private void ensureSaasPlans() {
+        if (saasPlanRepository.count() > 0) {
+            return;
+        }
+        Instant now = Instant.now();
+        saasPlanRepository.save(SaasPlan.builder()
+                .codigo("STARTER")
+                .nombre("Starter")
+                .descripcion("Para equipos que ordenan el inventario por primera vez.")
+                .precioMensual(new BigDecimal("29.00"))
+                .moneda("USD")
+                .maxBodegas(2)
+                .maxUsuarios(5)
+                .features("Hasta 2 bodegas|Usuarios esenciales|Movimientos en rango base|Soporte por correo")
+                .orden(1)
+                .activo(true)
+                .createdAt(now)
+                .build());
+        saasPlanRepository.save(SaasPlan.builder()
+                .codigo("PROFESIONAL")
+                .nombre("Profesional")
+                .descripcion("Operaciones con varias ubicaciones y roles.")
+                .precioMensual(new BigDecimal("79.00"))
+                .moneda("USD")
+                .maxBodegas(10)
+                .maxUsuarios(25)
+                .features("Bodegas extendidas|Roles avanzados|Reportes kardex y exportación|Límites configurables")
+                .orden(2)
+                .activo(true)
+                .createdAt(now)
+                .build());
+        saasPlanRepository.save(SaasPlan.builder()
+                .codigo("EMPRESA")
+                .nombre("Empresa")
+                .descripcion("Multi-sede e integraciones.")
+                .precioMensual(BigDecimal.ZERO)
+                .moneda("USD")
+                .maxBodegas(999)
+                .maxUsuarios(999)
+                .features("SSO roadmap|SLA prioritario|Customer success dedicado")
+                .orden(3)
+                .activo(true)
+                .createdAt(now)
+                .build());
+        log.info("Planes SaaS semilla creados (STARTER, PROFESIONAL, EMPRESA).");
     }
 
     private Empresa ensureEmpresaSemilla() {

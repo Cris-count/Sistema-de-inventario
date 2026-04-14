@@ -32,8 +32,8 @@ public class CurrentUserService {
         if (e == null) {
             throw new BusinessException(HttpStatus.FORBIDDEN, "Usuario sin empresa asignada");
         }
-        if (e.getEstado() != EstadoEmpresa.ACTIVA) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "Empresa inactiva");
+        if (!e.getEstado().permiteAccesoUsuarios()) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "Empresa no disponible para operaciones");
         }
         return e;
     }

@@ -28,6 +28,16 @@ server:
     context-path: /
 
 app:
+  billing:
+    # Misma clave para webhook y confirmación manual (sustituir en producción; usar longitud fija para comparación constante).
+    api-secret: ${BILLING_API_SECRET:dev-billing-secret-key-32chars!}
+    # Tras pago aprobado: ACTIVA | EN_PRUEBA
+    post-payment-empresa-estado: ${BILLING_POST_PAYMENT_EMPRESA:ACTIVA}
+  onboarding:
+    # TRIAL | PENDING_PAYMENT | ACTIVE — define el estado comercial inicial tras POST /onboarding/register-company
+    activation-default: ${APP_ONBOARDING_ACTIVATION:TRIAL}
+    trial-days: ${APP_ONBOARDING_TRIAL_DAYS:14}
+    generate-pin-on-pending-payment: ${APP_ONBOARDING_GENERATE_PIN:true}
   jwt:
     secret: ${JWT_SECRET:cambiarEnProduccionMinimo256BitsParaHS256AlgoritmoSeguro!!}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}

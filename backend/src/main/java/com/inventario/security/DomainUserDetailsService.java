@@ -21,7 +21,8 @@ public class DomainUserDetailsService implements UserDetailsService {
         var u = usuarioRepository
                 .findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new UsernameNotFoundException(email));
-        boolean empresaBloquea = u.getEmpresa() == null || u.getEmpresa().getEstado() != EstadoEmpresa.ACTIVA;
+        boolean empresaBloquea =
+                u.getEmpresa() == null || !u.getEmpresa().getEstado().permiteAccesoUsuarios();
         return User.builder()
                 .username(u.getEmail())
                 .password(u.getPasswordHash())

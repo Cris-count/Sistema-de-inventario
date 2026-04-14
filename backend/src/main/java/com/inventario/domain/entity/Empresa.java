@@ -45,6 +45,15 @@ public class Empresa {
     @Column(length = 40)
     private String telefono;
 
+    @Column(length = 100)
+    private String sector;
+
+    @Column(length = 80)
+    private String pais;
+
+    @Column(length = 120)
+    private String ciudad;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private EstadoEmpresa estado;

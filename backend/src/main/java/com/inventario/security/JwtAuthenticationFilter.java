@@ -63,7 +63,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 writeUnauthorized(request, response);
                 return;
             }
-            if (usuario.getEmpresa() == null || usuario.getEmpresa().getEstado() != EstadoEmpresa.ACTIVA) {
+            if (usuario.getEmpresa() == null
+                    || !usuario.getEmpresa().getEstado().permiteAccesoUsuarios()) {
                 writeUnauthorized(request, response);
                 return;
             }

@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
@@ -19,4 +20,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Page<Usuario> findByEmpresaId(Long empresaId, Pageable pageable);
 
     Optional<Usuario> findByIdAndEmpresaId(Long id, Long empresaId);
+
+    List<Usuario> findByEmpresa_IdAndRol_CodigoAndActivoIsFalse(Long empresaId, String rolCodigo);
 }

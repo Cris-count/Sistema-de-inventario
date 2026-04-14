@@ -7,3 +7,12 @@ VALUES ('SUPER_ADMIN', 'Super administrador', 'Test', CURRENT_TIMESTAMP);
 
 INSERT INTO rol (codigo, nombre, descripcion, created_at)
 VALUES ('ADMIN', 'Administrador', 'Test', CURRENT_TIMESTAMP);
+
+INSERT INTO rol (codigo, nombre, descripcion, created_at)
+VALUES ('AUX_BODEGA', 'Auxiliar de bodega', 'Test', CURRENT_TIMESTAMP);
+
+INSERT INTO rol (codigo, nombre, descripcion, created_at)
+VALUES ('COMPRAS', 'Compras', 'Test', CURRENT_TIMESTAMP);
+
+INSERT INTO rol (codigo, nombre, descripcion, created_at)
+VALUES ('GERENCIA', 'Gerencia', 'Test', CURRENT_TIMESTAMP);
