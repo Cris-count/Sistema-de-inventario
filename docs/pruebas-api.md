@@ -3,18 +3,18 @@
 ## Resumen
 
 - **Colección Postman:** `tests/postman/inventory-api.postman_collection.json` (v3, carpetas ordenadas: Auth → Setup → Errores → Flujos ADMIN → roles AUX/COMPRAS/GERENCIA).
-- **Automatización:** `npm run test:api` (Newman), requiere API levantada.
+- **Automatización:** `npm run test:api` (smoke test Node.js), requiere API levantada.
 - **Usuarios semilla** (por defecto): `admin@inventario.local` / `Admin123!`, `aux@inventario.local` / `AuxBodega123!`, `compras@inventario.local` / `Compras123!`, `gerencia@inventario.local` / `Gerencia123!`.
 
 ## Corrección aplicada durante la validación
 
 Al serializar entidades JPA con relaciones lazy (`Page<Producto>` con `categoria`, etc.), Jackson fallaba con proxies Hibernate. Se añadió `@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})` en las entidades de dominio expuestas por los controladores. Sin esto, algunos GET devolvían error en cadena de filtros y el cliente veía **401** en lugar del JSON esperado.
 
-## Newman — ejecución real (evidencia)
+## Colección Postman — ejecución real (evidencia histórica)
 
 **Entorno:** Windows, Docker Compose, API `http://localhost:8080/api/v1`.
 
-**Comando:** `npm run test:api`
+**Comando usado en esa corrida:** `npm run test:api` (cuando estaba implementado con Newman)
 
 **Resultado:** 42 peticiones, 42 aserciones, **0 fallos** (duración ~13 s).
 
@@ -52,7 +52,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/actuator/health" -Method GET
 
 - `mvn -f backend/pom.xml verify` — tests unitarios/integración del backend según el proyecto.
 - `npm run ci` — build Angular + tests del front.
-- **Newman no está en CI** por defecto (requiere API + BD en ejecución). Opción: job separado con servicios Docker.
+- El smoke test API no está en CI por defecto (requiere API + BD en ejecución). Opción: job separado con servicios Docker.
 
 ## Frontend vs backend
 
@@ -73,5 +73,5 @@ Invoke-RestMethod -Uri "http://localhost:8080/actuator/health" -Method GET
 
 ## Veredicto entrega académica
 
-- **Listo para entrega académica** con documentación y evidencia de API: sí, con la condición de ejecutar `docker compose up` y `npm run test:api` (o repetir manualmente el checklist).
+- **Listo para entrega académica** con documentación y evidencia de API: sí, con la condición de ejecutar `docker compose up` y `npm run test:api` (smoke) o repetir manualmente el checklist/colección Postman.
 - **Cerrado técnicamente al 100%:** no declarable sin pipeline CI que ejecute Newman contra un entorno efímero; el núcleo funcional y la colección Postman están validados en ejecución real.

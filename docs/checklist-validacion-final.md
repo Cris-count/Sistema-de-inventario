@@ -46,7 +46,7 @@ Usar con API en `http://localhost:8080` y front en `http://localhost:4200` (o el
 
 ## Automatización API
 
-- [ ] `npm run test:api` (Newman) — 42 aserciones en la colección v3 PASO 8.
+- [ ] `npm run test:api` (smoke API Node.js) — health + login admin.
 
 ## Frontend (smoke)
 
