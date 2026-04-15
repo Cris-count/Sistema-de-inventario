@@ -5,7 +5,8 @@ import { ProductoService, ProductoRequest } from '../../core/api/producto.servic
 import { AuthService } from '../../core/auth/auth.service';
 import { ROLES_GESTION_PRODUCTOS } from '../../core/auth/app-roles';
 import { Producto } from '../../core/models/entities.model';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 /** Códigos cortos (VARCHAR 20 en API). Etiquetas para la UI. */
@@ -34,7 +35,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
 
 @Component({
   selector: 'app-productos',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
       <header class="page-header">
@@ -62,7 +63,10 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
         </div>
       }
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -190,6 +194,7 @@ export class ProductosPage implements OnInit {
   readonly editingId = signal<number | null>(null);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   readonly unidadesForSelect = signal(CATALOGO_UNIDADES);
 
@@ -214,14 +219,17 @@ export class ProductosPage implements OnInit {
   load(): void {
     this.loading.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     this.productoApi.list(this.page(), 20).subscribe({
       next: (p) => {
         this.rows.set(p.content);
         this.totalPages.set(p.totalPages);
+        this.error.set(null);
+        this.planFollowup.set(null);
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.loading.set(false)
     });
@@ -242,6 +250,7 @@ export class ProductosPage implements OnInit {
   startCreate(): void {
     this.message.set(null);
     this.error.set(null);
+    this.planFollowup.set(null);
     this.formMode.set('create');
     this.editingId.set(null);
     this.unidadesForSelect.set(CATALOGO_UNIDADES);
@@ -251,6 +260,7 @@ export class ProductosPage implements OnInit {
   startEdit(p: Producto): void {
     this.message.set(null);
     this.error.set(null);
+    this.planFollowup.set(null);
     this.formMode.set('edit');
     this.editingId.set(p.id);
     const u = p.unidadMedida;
@@ -276,6 +286,7 @@ export class ProductosPage implements OnInit {
     if (clearFeedback) {
       this.message.set(null);
       this.error.set(null);
+      this.planFollowup.set(null);
     }
   }
 
@@ -295,12 +306,14 @@ export class ProductosPage implements OnInit {
     };
     this.saving.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     const id = this.editingId();
     const esAlta = this.formMode() === 'create';
     const req = esAlta ? this.productoApi.create(body) : this.productoApi.update(id!, body);
     req.subscribe({
       next: () => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set(
           esAlta
             ? 'Producto nuevo registrado en el catálogo. Ya puede usarlo en movimientos y existencias.'
@@ -312,7 +325,7 @@ export class ProductosPage implements OnInit {
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.saving.set(false)
     });
@@ -320,17 +333,19 @@ export class ProductosPage implements OnInit {
 
   toggleActivo(p: Producto): void {
     this.error.set(null);
+    this.planFollowup.set(null);
     this.message.set(null);
     this.productoApi.setActivo(p.id, !p.activo).subscribe({
       next: () => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set('Estado actualizado.');
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.load();
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
   }

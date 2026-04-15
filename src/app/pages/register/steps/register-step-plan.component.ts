@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import type { PublicPlanDto } from '../register.models';
 import { UiButtonComponent } from '../../../shared/components/ui/button/ui-button.component';
+import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/format-plan-price';
 
 @Component({
   selector: 'app-register-step-plan',
@@ -9,7 +10,9 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
   template: `
     <div class="space-y-2">
       <h2 class="text-xl font-semibold tracking-tight text-primary">1. Elige tu plan</h2>
-      <p class="text-sm text-secondary">Compara límites y servicios. Podrás cambiar de plan más adelante según política comercial.</p>
+      <p class="text-sm text-secondary">
+        Mismos precios que en la página principal. Podrás escalar sin límites según política comercial cuando lo necesites.
+      </p>
     </div>
 
     <div class="mt-6 grid gap-4 sm:grid-cols-1">
@@ -25,11 +28,7 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
           <div class="flex flex-wrap items-baseline justify-between gap-2">
             <span class="font-semibold text-primary">{{ p.nombre }}</span>
             <span class="text-sm font-medium text-primary">
-              @if (p.precioMensual > 0) {
-                {{ p.moneda }} {{ p.precioMensual }}/mes
-              } @else {
-                A medida
-              }
+              {{ etiquetaPrecio(p) }}
             </span>
           </div>
           @if (p.descripcion) {
@@ -52,7 +51,7 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
     }
 
     <div class="mt-8 flex flex-wrap justify-end gap-2">
-      <app-ui-button variant="ghost" routerLink="/landing">Volver</app-ui-button>
+      <app-ui-button variant="ghost" linkTo="/landing">Volver</app-ui-button>
       <app-ui-button variant="gradient" [disabled]="!selectedCodigo()" (click)="advance.emit()">Continuar</app-ui-button>
     </div>
   `
@@ -63,4 +62,10 @@ export class RegisterStepPlanComponent {
   readonly hint = input<string | null>(null);
   readonly pick = output<string>();
   readonly advance = output<void>();
+
+  etiquetaPrecio(p: PublicPlanDto): string {
+    const base = formatPlanPrecioMensual(p);
+    const suf = planMensualCadence(p);
+    return suf ? `${base}${suf}` : base;
+  }
 }

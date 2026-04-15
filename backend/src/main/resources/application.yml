@@ -33,6 +33,13 @@ app:
     api-secret: ${BILLING_API_SECRET:dev-billing-secret-key-32chars!}
     # Tras pago aprobado: ACTIVA | EN_PRUEBA
     post-payment-empresa-estado: ${BILLING_POST_PAYMENT_EMPRESA:ACTIVA}
+    # Horas máximas para mantener un cambio de plan en espera de pago antes de expirar automáticamente.
+    plan-change-pending-ttl-hours: ${BILLING_PLAN_CHANGE_PENDING_TTL_HOURS:72}
+    # Tras expiración automática del cambio (pago RECHAZADO + EXPIRADO_SISTEMA, compra CANCELADA), horas máximas
+    # desde pago.createdAt (o compra.createdAt si faltara) para aceptar la confirmación de la pasarela.
+    # Por defecto 72 h (3 días), alineado con plan-change-pending-ttl-hours: acota cobros dudosos y deja casos límite a soporte.
+    # En producción ajustar con BILLING_PLAN_CHANGE_LATE_CONFIRM_MAX_HOURS según acuerdos con la pasarela y riesgo operativo.
+    plan-change-late-confirm-max-hours: ${BILLING_PLAN_CHANGE_LATE_CONFIRM_MAX_HOURS:72}
   onboarding:
     # TRIAL | PENDING_PAYMENT | ACTIVE — define el estado comercial inicial tras POST /onboarding/register-company
     activation-default: ${APP_ONBOARDING_ACTIVATION:TRIAL}

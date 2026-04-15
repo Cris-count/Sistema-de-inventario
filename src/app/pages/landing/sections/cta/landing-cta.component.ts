@@ -17,23 +17,23 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
           Pon tu inventario en orden esta semana
         </h2>
         <p class="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-200 sm:text-lg">
-          Crea tu espacio de trabajo, invita al equipo y empieza con movimientos reales. Si ya tienes cuenta, entra directo al panel.
+          Crea tu espacio de trabajo, invita al equipo y empieza con movimientos reales. Si ya tienes cuenta, inicia sesión para entrar al panel.
         </p>
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <app-ui-button variant="gradient" size="lg" routerLink="/registro">Crear cuenta</app-ui-button>
+        <div class="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <app-ui-button variant="landing-primary" class="w-full sm:w-auto" linkTo="/registro"
+            >Crear mi cuenta</app-ui-button
+          >
           <app-ui-button
-            variant="secondary"
-            size="lg"
-            class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/15"
-            routerLink="/login"
+            variant="landing-secondary"
+            class="w-full !border-white/30 !bg-white/10 !text-white hover:!bg-white/15 sm:w-auto"
+            linkTo="/login"
             >Iniciar sesión</app-ui-button
           >
           <app-ui-button
-            variant="ghost"
-            size="lg"
-            class="!text-slate-100 hover:!bg-white/10"
-            routerLink="/app"
-            >Ir al panel</app-ui-button
+            variant="landing-navbar"
+            class="w-full !min-h-[44px] !bg-white/10 !text-slate-100 hover:!bg-white/20 sm:w-auto"
+            linkTo="/app"
+            >Ir al panel (si ya iniciaste sesión)</app-ui-button
           >
         </div>
       </div>

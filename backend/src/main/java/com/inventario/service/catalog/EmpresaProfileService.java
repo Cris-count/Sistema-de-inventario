@@ -3,6 +3,8 @@ package com.inventario.service.catalog;
 import com.inventario.domain.entity.Empresa;
 import com.inventario.domain.repository.EmpresaRepository;
 import com.inventario.service.CurrentUserService;
+import com.inventario.service.saas.PlanEntitlementCodes;
+import com.inventario.service.saas.PlanEntitlementService;
 import com.inventario.web.dto.EmpresaMiDtos.EmpresaMiUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ public class EmpresaProfileService {
 
     private final CurrentUserService currentUserService;
     private final EmpresaRepository empresaRepository;
+    private final PlanEntitlementService planEntitlementService;
 
     @Transactional(readOnly = true)
     public Empresa miEmpresa() {
@@ -25,6 +28,7 @@ public class EmpresaProfileService {
     @Transactional
     public Empresa actualizarMiEmpresa(EmpresaMiUpdateRequest req) {
         Empresa e = currentUserService.requireEmpresa();
+        planEntitlementService.requireModulo(e.getId(), PlanEntitlementCodes.CONFIGURACION_EMPRESA);
         e.setNombre(req.getNombre().trim());
         String mail = req.getEmailContacto();
         e.setEmailContacto(mail != null && !mail.isBlank() ? mail.trim() : null);

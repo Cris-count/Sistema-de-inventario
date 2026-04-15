@@ -104,7 +104,10 @@ CREATE INDEX IF NOT EXISTS idx_onboarding_pin_empresa ON onboarding_pin (empresa
 CREATE TABLE IF NOT EXISTS saas_compra (
     id              BIGSERIAL PRIMARY KEY,
     empresa_id      BIGINT         NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
-    suscripcion_id  BIGINT         NOT NULL UNIQUE REFERENCES suscripcion (id) ON DELETE RESTRICT,
+    suscripcion_id  BIGINT         NOT NULL REFERENCES suscripcion (id) ON DELETE RESTRICT,
+    tipo            VARCHAR(32)    NOT NULL DEFAULT 'ONBOARDING'
+        CHECK (tipo IN ('ONBOARDING', 'CAMBIO_PLAN')),
+    plan_destino_id BIGINT         NULL REFERENCES saas_plan (id) ON DELETE RESTRICT,
     estado          VARCHAR(24)    NOT NULL
         CHECK (estado IN ('PENDIENTE_PAGO', 'COMPLETADA', 'CANCELADA')),
     monto           NUMERIC(12, 2) NOT NULL DEFAULT 0,
@@ -113,6 +116,7 @@ CREATE TABLE IF NOT EXISTS saas_compra (
 );
 
 CREATE INDEX IF NOT EXISTS idx_saas_compra_empresa ON saas_compra (empresa_id);
+CREATE INDEX IF NOT EXISTS idx_saas_compra_suscripcion ON saas_compra (suscripcion_id);
 
 CREATE TABLE IF NOT EXISTS saas_pago (
     id BIGSERIAL PRIMARY KEY,
@@ -291,30 +295,30 @@ FROM (
     VALUES
         ('STARTER',
          'Starter',
-         'Para equipos que ordenan el inventario por primera vez.',
-         29.00,
-         'USD',
+         'Control profesional de inventario desde el primer día.',
+         19900.00,
+         'COP',
          2,
          5,
-         'Hasta 2 bodegas|Usuarios esenciales|Movimientos en rango base|Soporte por correo',
+         'Productos y categorías|Movimientos de entrada y salida|Consulta de existencias y alertas|Soporte por correo',
          1),
         ('PROFESIONAL',
-         'Profesional',
-         'Operaciones con varias ubicaciones y roles.',
-         79.00,
-         'USD',
+         'Pro',
+         'Diseñado para crecer con tu empresa: más bodegas, equipo ampliado y reportes.',
+         69900.00,
+         'COP',
          10,
          25,
-         'Bodegas extendidas|Roles avanzados|Reportes kardex y exportación|Límites configurables',
+         'Más bodegas y usuarios|Transferencias y ajustes|Proveedores y roles ampliados|Reportes kardex y exportación CSV',
          2),
         ('EMPRESA',
-         'Empresa',
-         'Multi-sede e integraciones.',
-         0.00,
-         'USD',
+         'Empresarial',
+         'Escala sin límites para operaciones que exigen el máximo control.',
+         149900.00,
+         'COP',
          999,
          999,
-         'SSO roadmap|SLA prioritario|Customer success dedicado',
+         'Límites ampliados en bodegas y usuarios|Módulos avanzados del plan|Prioridad en soporte|Hoja de ruta multi-sede e integraciones',
          3)
 ) AS v(codigo, nombre, descripcion, precio, moneda, max_bodegas, max_usuarios, features, orden)
 WHERE NOT EXISTS (SELECT 1 FROM saas_plan p WHERE p.codigo = v.codigo);

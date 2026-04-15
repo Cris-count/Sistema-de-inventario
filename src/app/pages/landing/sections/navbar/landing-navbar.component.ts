@@ -27,12 +27,16 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
             <a href="#faq" class="no-underline transition hover:text-primary">FAQ</a>
           </nav>
 
-          <div class="flex flex-none items-center gap-1.5 sm:gap-3">
-            <app-ui-button variant="ghost" size="sm" class="!px-2 sm:!px-3.5" routerLink="/login"
-              ><span class="hidden min-[400px]:inline">Iniciar sesión</span
-              ><span class="min-[400px]:hidden">Entrar</span></app-ui-button
+          <div class="flex flex-none items-center gap-2 sm:gap-3">
+            <app-ui-button
+              variant="landing-secondary"
+              class="!min-h-[40px] !min-w-0 !px-3.5 !py-2 !text-sm sm:!px-5"
+              linkTo="/login"
+              >Iniciar sesión</app-ui-button
             >
-            <app-ui-button variant="gradient" size="sm" routerLink="/registro">Crear cuenta</app-ui-button>
+            <app-ui-button variant="landing-navbar" class="!min-w-0 sm:!min-w-[140px]" linkTo="/registro"
+              >Crear cuenta</app-ui-button
+            >
           </div>
         </div>
 

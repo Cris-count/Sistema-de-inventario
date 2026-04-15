@@ -3,6 +3,8 @@ package com.inventario.service.catalog;
 import com.inventario.domain.entity.Bodega;
 import com.inventario.domain.repository.BodegaRepository;
 import com.inventario.service.CurrentUserService;
+import com.inventario.service.saas.PlanEntitlementCodes;
+import com.inventario.service.saas.PlanEntitlementService;
 import com.inventario.service.tenant.TenantEntityLoader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,15 +20,20 @@ public class BodegaCatalogService {
     private final BodegaRepository bodegaRepository;
     private final CurrentUserService currentUserService;
     private final TenantEntityLoader tenantEntityLoader;
+    private final PlanEntitlementService planEntitlementService;
 
     @Transactional(readOnly = true)
     public List<Bodega> listar() {
-        return bodegaRepository.findByEmpresaIdOrderByNombreAsc(currentUserService.requireEmpresaId());
+        Long empresaId = currentUserService.requireEmpresaId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
+        return bodegaRepository.findByEmpresaIdOrderByNombreAsc(empresaId);
     }
 
     @Transactional
     public Bodega crear(String codigo, String nombre, String direccion) {
         var empresa = currentUserService.requireEmpresa();
+        planEntitlementService.requireModulo(empresa.getId(), PlanEntitlementCodes.INVENTARIO_BASICO);
+        planEntitlementService.assertPuedeAgregarBodega(empresa.getId());
         Bodega b = new Bodega();
         b.setEmpresa(empresa);
         b.setCodigo(codigo.trim());
@@ -41,6 +48,7 @@ public class BodegaCatalogService {
     @Transactional
     public Bodega actualizar(Long id, String codigo, String nombre, String direccion) {
         Long empresaId = currentUserService.requireEmpresaId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
         Bodega b = tenantEntityLoader.requireBodegaInTenant(id, empresaId);
         b.setCodigo(codigo.trim());
         b.setNombre(nombre);

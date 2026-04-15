@@ -18,6 +18,9 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleBusiness(BusinessException ex) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
         pd.setTitle("Error de negocio");
+        if (ex.getBlockCode() != null && !ex.getBlockCode().isBlank()) {
+            pd.setProperty("blockCode", ex.getBlockCode());
+        }
         return pd;
     }
 

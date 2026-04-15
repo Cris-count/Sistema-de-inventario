@@ -2,6 +2,8 @@ package com.inventario.service;
 
 import com.inventario.domain.entity.*;
 import com.inventario.domain.repository.*;
+import com.inventario.service.saas.PlanEntitlementCodes;
+import com.inventario.service.saas.PlanEntitlementService;
 import com.inventario.service.tenant.TenantEntityLoader;
 import com.inventario.service.tenant.TenantIntegrityService;
 import com.inventario.web.dto.MovimientoDtos.*;
@@ -32,11 +34,16 @@ public class MovimientoService {
     private final CurrentUserService currentUserService;
     private final TenantEntityLoader tenantEntityLoader;
     private final TenantIntegrityService tenantIntegrityService;
+    private final PlanEntitlementService planEntitlementService;
 
     @Transactional(rollbackFor = Exception.class)
     public MovimientoResponse registrarEntrada(EntradaRequest req) {
         Usuario usuario = currentUserService.requireUsuario();
         Long empresaId = usuario.getEmpresa().getId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.MOVIMIENTOS_BASICOS);
+        if (req.proveedorId() != null) {
+            planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.PROVEEDORES);
+        }
         if ("COMPRA".equalsIgnoreCase(req.motivo()) && req.proveedorId() == null) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Proveedor obligatorio para motivo COMPRA");
         }
@@ -61,6 +68,7 @@ public class MovimientoService {
     public MovimientoResponse registrarSalida(SalidaRequest req) {
         Usuario usuario = currentUserService.requireUsuario();
         Long empresaId = usuario.getEmpresa().getId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.MOVIMIENTOS_BASICOS);
         Movimiento m = baseCabecera(TipoMovimiento.SALIDA, req.motivo(), usuario, null, req.referenciaDocumento(), req.observacion());
 
         for (LineaSalida linea : req.lineas()) {
@@ -77,6 +85,7 @@ public class MovimientoService {
     public MovimientoResponse registrarTransferencia(TransferenciaRequest req) {
         Usuario usuario = currentUserService.requireUsuario();
         Long empresaId = usuario.getEmpresa().getId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.TRANSFERENCIAS);
         Movimiento m = baseCabecera(TipoMovimiento.TRANSFERENCIA, "TRANSFERENCIA", usuario, null, req.referenciaDocumento(), req.observacion());
 
         for (LineaTransferencia linea : req.lineas()) {
@@ -105,6 +114,7 @@ public class MovimientoService {
     public MovimientoResponse registrarAjuste(AjusteRequest req) {
         Usuario usuario = currentUserService.requireUsuario();
         Long empresaId = usuario.getEmpresa().getId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.AJUSTES_INVENTARIO);
         Movimiento m = baseCabecera(TipoMovimiento.AJUSTE, req.motivo(), usuario, null, req.referenciaDocumento(), null);
 
         for (LineaAjuste linea : req.lineas()) {
@@ -132,6 +142,7 @@ public class MovimientoService {
     public MovimientoResponse stockInicial(StockInicialRequest req) {
         Usuario usuario = currentUserService.requireUsuario();
         Long empresaId = usuario.getEmpresa().getId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
         Movimiento m = baseCabecera(TipoMovimiento.ENTRADA, "STOCK_INICIAL", usuario, null, null, null);
 
         for (LineaStockInicial linea : req.lineas()) {
@@ -222,6 +233,7 @@ public class MovimientoService {
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public MovimientoResponse obtener(Long id, Long empresaId) {
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.HISTORIAL_MOVIMIENTOS);
         Movimiento m = movimientoRepository.findByIdAndEmpresaId(id, empresaId)
                 .orElseThrow(() -> new BusinessException(org.springframework.http.HttpStatus.NOT_FOUND, "Movimiento no encontrado"));
         return toResponse(m);

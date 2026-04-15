@@ -19,6 +19,7 @@ app:
   billing:
     api-secret: test-billing-secret-key-for-integration-tests
     post-payment-empresa-estado: ACTIVA
+    plan-change-late-confirm-max-hours: 72
   seed:
     empresa-identificacion: TEST-001
     superadmin-email: ""

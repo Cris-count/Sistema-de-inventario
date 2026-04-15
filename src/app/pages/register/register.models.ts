@@ -1,13 +1,5 @@
-export interface PublicPlanDto {
-  codigo: string;
-  nombre: string;
-  descripcion: string;
-  precioMensual: number;
-  moneda: string;
-  maxBodegas: number;
-  maxUsuarios: number;
-  features: string[];
-}
+import type { PublicPlanDto } from '../../core/models/public-plan.model';
+export type { PublicPlanDto };
 
 export interface EmpresaForm {
   nombre: string;

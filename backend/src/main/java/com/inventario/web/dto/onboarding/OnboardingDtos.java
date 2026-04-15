@@ -35,14 +35,19 @@ public final class OnboardingDtos {
             @NotBlank String confirmPassword) {}
 
     public record PublicPlanResponse(
+            String id,
             String codigo,
             String nombre,
+            String descripcionCorta,
+            BigDecimal precio,
             String descripcion,
             BigDecimal precioMensual,
             String moneda,
             int maxBodegas,
             int maxUsuarios,
-            List<String> features) {}
+            List<String> features,
+            boolean recomendado,
+            String tipo) {}
 
     public record OnboardingRegisterResponse(
             Long empresaId,

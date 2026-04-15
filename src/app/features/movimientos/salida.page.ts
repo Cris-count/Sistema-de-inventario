@@ -3,18 +3,22 @@ import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Va
 import { BodegaService } from '../../core/api/bodega.service';
 import { MovimientoApiService } from '../../core/api/movimiento.service';
 import { ProductoService } from '../../core/api/producto.service';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-mov-salida',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
       <h1>Salida de inventario</h1>
       <p class="muted">Si el stock es insuficiente, el API responde 409 con mensaje de negocio.</p>
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -81,6 +85,7 @@ export class MovSalidaPage {
   readonly saving = signal(false);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     motivo: ['', Validators.required],
@@ -121,6 +126,7 @@ export class MovSalidaPage {
 
   submit(): void {
     this.error.set(null);
+    this.planFollowup.set(null);
     this.message.set(null);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -136,6 +142,7 @@ export class MovSalidaPage {
     for (const l of lineas) {
       if (parseFloat(String(l.cantidad)) <= 0) {
         this.message.set(null);
+        this.planFollowup.set(null);
         this.error.set('Las cantidades deben ser mayores a cero.');
         return;
       }
@@ -151,6 +158,7 @@ export class MovSalidaPage {
       .subscribe({
         next: (m) => {
           this.error.set(null);
+          this.planFollowup.set(null);
           this.message.set(`Salida #${m.id} registrada.`);
           flashSuccess(this.destroyRef, () => this.message.set(null));
           this.lines.clear();
@@ -159,7 +167,7 @@ export class MovSalidaPage {
         },
         error: (e) => {
           this.message.set(null);
-          this.error.set(getApiErrorMessage(e));
+          patchPlanErrorSignals(e, this.error, this.planFollowup);
         },
         complete: () => this.saving.set(false)
       });

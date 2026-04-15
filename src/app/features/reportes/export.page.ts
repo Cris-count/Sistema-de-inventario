@@ -2,18 +2,22 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ReporteService } from '../../core/api/reporte.service';
 import { defaultDesdeHasta } from '../../core/util/dates';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-reporte-export',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
       <h1>Exportar movimientos (CSV)</h1>
       <p class="muted">Endpoint real: <code>GET /reportes/movimientos/export?desde&amp;hasta</code></p>
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -49,6 +53,7 @@ export class ExportReportePage {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly message = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   constructor() {
     const { desde, hasta } = defaultDesdeHasta();
@@ -59,6 +64,7 @@ export class ExportReportePage {
     const { desde, hasta } = this.form.getRawValue();
     if (!desde || !hasta) return;
     this.error.set(null);
+    this.planFollowup.set(null);
     this.message.set(null);
     this.loading.set(true);
     this.api.exportMovimientosCsv(desde, hasta).subscribe({
@@ -70,12 +76,13 @@ export class ExportReportePage {
         a.click();
         URL.revokeObjectURL(url);
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set('Descarga iniciada.');
         flashSuccess(this.destroyRef, () => this.message.set(null));
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.loading.set(false)
     });

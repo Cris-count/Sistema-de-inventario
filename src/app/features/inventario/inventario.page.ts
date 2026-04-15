@@ -4,11 +4,12 @@ import { BodegaService } from '../../core/api/bodega.service';
 import { InventarioService } from '../../core/api/inventario.service';
 import { ProductoService } from '../../core/api/producto.service';
 import { InventarioRow } from '../../core/models/entities.model';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 
 @Component({
   selector: 'app-inventario',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
       <h1>Inventario</h1>
@@ -38,7 +39,10 @@ import { getApiErrorMessage } from '../../core/util/api-error';
         </form>
       </div>
       @if (error()) {
-        <div class="alert alert-error">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       }
       @if (alertasMode()) {
         <h2>Alertas (bajo mínimo)</h2>
@@ -85,6 +89,7 @@ export class InventarioPage implements OnInit {
   readonly page = signal(0);
   readonly totalPages = signal(1);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
   readonly alertasMode = signal(false);
 
   readonly filterForm = this.fb.nonNullable.group({
@@ -103,6 +108,7 @@ export class InventarioPage implements OnInit {
 
   loadPage(): void {
     this.error.set(null);
+    this.planFollowup.set(null);
     const { productoId, bodegaId } = this.filterForm.getRawValue();
     const f =
       productoId != null || bodegaId != null ? { productoId: productoId ?? undefined, bodegaId: bodegaId ?? undefined } : undefined;
@@ -110,8 +116,10 @@ export class InventarioPage implements OnInit {
       next: (p) => {
         this.rows.set(p.content);
         this.totalPages.set(Math.max(1, p.totalPages));
+        this.error.set(null);
+        this.planFollowup.set(null);
       },
-      error: (e) => this.error.set(getApiErrorMessage(e))
+      error: (e) => patchPlanErrorSignals(e, this.error, this.planFollowup)
     });
   }
 
@@ -124,10 +132,15 @@ export class InventarioPage implements OnInit {
   loadAlertas(): void {
     this.alertasMode.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     const bodegaId = this.filterForm.getRawValue().bodegaId;
     this.api.alertas(bodegaId ?? undefined).subscribe({
-      next: (a) => this.rows.set(a),
-      error: (e) => this.error.set(getApiErrorMessage(e))
+      next: (a) => {
+        this.rows.set(a);
+        this.error.set(null);
+        this.planFollowup.set(null);
+      },
+      error: (e) => patchPlanErrorSignals(e, this.error, this.planFollowup)
     });
   }
 

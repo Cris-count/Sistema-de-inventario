@@ -5,17 +5,21 @@ import { MovimientoApiService } from '../../core/api/movimiento.service';
 import { ProductoService } from '../../core/api/producto.service';
 import { ProveedorService } from '../../core/api/proveedor.service';
 import { AuthService } from '../../core/auth/auth.service';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-mov-entrada',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
       <h1>Entrada de inventario</h1>
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -104,9 +108,10 @@ export class MovEntradaPage {
   readonly saving = signal(false);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   canPickProveedor(): boolean {
-    return this.auth.hasAnyRole(['ADMIN', 'COMPRAS', 'GERENCIA']);
+    return this.auth.hasAnyRole(['ADMIN', 'SUPER_ADMIN', 'COMPRAS', 'GERENCIA']);
   }
 
   readonly form = this.fb.nonNullable.group({
@@ -156,6 +161,7 @@ export class MovEntradaPage {
 
   submit(): void {
     this.error.set(null);
+    this.planFollowup.set(null);
     this.message.set(null);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -171,6 +177,7 @@ export class MovEntradaPage {
     for (const l of lineas) {
       if (parseFloat(String(l.cantidad)) <= 0) {
         this.message.set(null);
+        this.planFollowup.set(null);
         this.error.set('Las cantidades deben ser mayores a cero.');
         return;
       }
@@ -190,6 +197,7 @@ export class MovEntradaPage {
     this.api.entrada(body).subscribe({
       next: (m) => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set(`Entrada #${m.id} registrada.`);
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.lines.clear();
@@ -198,7 +206,7 @@ export class MovEntradaPage {
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.saving.set(false)
     });

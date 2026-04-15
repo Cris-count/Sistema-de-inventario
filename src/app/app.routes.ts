@@ -1,5 +1,11 @@
 import { Routes } from '@angular/router';
-import { ROLES_LECTURA_API, ROLES_PROVEEDOR_LECTURA } from './core/auth/app-roles';
+import {
+  ROLES_ADMIN,
+  ROLES_ENTRADA,
+  ROLES_LECTURA_API,
+  ROLES_MOVIMIENTO_BODEGA,
+  ROLES_PROVEEDOR_LECTURA
+} from './core/auth/app-roles';
 import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
 import { roleGuard } from './core/auth/role.guard';
@@ -35,6 +41,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage)
       },
       {
+        path: 'mi-empresa',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_ADMIN },
+        loadComponent: () => import('./features/empresa/mi-empresa.page').then((m) => m.MiEmpresaPage)
+      },
+      {
         path: 'productos',
         canActivate: [roleGuard],
         data: { roles: ROLES_LECTURA_API },
@@ -43,7 +55,7 @@ export const routes: Routes = [
       {
         path: 'categorias',
         canActivate: [roleGuard],
-        data: { roles: ['ADMIN'] },
+        data: { roles: ROLES_ADMIN },
         loadComponent: () => import('./features/categorias/categorias.page').then((m) => m.CategoriasPage)
       },
       {
@@ -67,7 +79,7 @@ export const routes: Routes = [
       {
         path: 'stock-inicial',
         canActivate: [roleGuard],
-        data: { roles: ['ADMIN'] },
+        data: { roles: ROLES_ADMIN },
         loadComponent: () => import('./features/inventario/stock-inicial.page').then((m) => m.StockInicialPage)
       },
       {
@@ -88,26 +100,26 @@ export const routes: Routes = [
           {
             path: 'entrada',
             canActivate: [roleGuard],
-            data: { roles: ['ADMIN', 'AUX_BODEGA', 'COMPRAS'] },
+            data: { roles: ROLES_ENTRADA },
             loadComponent: () => import('./features/movimientos/entrada.page').then((m) => m.MovEntradaPage)
           },
           {
             path: 'salida',
             canActivate: [roleGuard],
-            data: { roles: ['ADMIN', 'AUX_BODEGA'] },
+            data: { roles: ROLES_MOVIMIENTO_BODEGA },
             loadComponent: () => import('./features/movimientos/salida.page').then((m) => m.MovSalidaPage)
           },
           {
             path: 'transferencia',
             canActivate: [roleGuard],
-            data: { roles: ['ADMIN', 'AUX_BODEGA'] },
+            data: { roles: ROLES_MOVIMIENTO_BODEGA },
             loadComponent: () =>
               import('./features/movimientos/transferencia.page').then((m) => m.MovTransferenciaPage)
           },
           {
             path: 'ajuste',
             canActivate: [roleGuard],
-            data: { roles: ['ADMIN', 'AUX_BODEGA'] },
+            data: { roles: ROLES_MOVIMIENTO_BODEGA },
             loadComponent: () => import('./features/movimientos/ajuste.page').then((m) => m.MovAjustePage)
           }
         ]
@@ -127,7 +139,7 @@ export const routes: Routes = [
       {
         path: 'usuarios',
         canActivate: [roleGuard],
-        data: { roles: ['ADMIN'] },
+        data: { roles: ROLES_ADMIN },
         loadComponent: () => import('./features/usuarios/usuarios.page').then((m) => m.UsuariosPage)
       }
     ]

@@ -5,6 +5,8 @@ import com.inventario.domain.entity.Producto;
 import com.inventario.domain.repository.ProductoRepository;
 import com.inventario.domain.tenant.TenantSpecifications;
 import com.inventario.service.CurrentUserService;
+import com.inventario.service.saas.PlanEntitlementCodes;
+import com.inventario.service.saas.PlanEntitlementService;
 import com.inventario.service.tenant.TenantEntityLoader;
 import com.inventario.service.tenant.TenantIntegrityService;
 import com.inventario.web.error.BusinessException;
@@ -26,16 +28,19 @@ public class ProductoCatalogService {
     private final CurrentUserService currentUserService;
     private final TenantEntityLoader tenantEntityLoader;
     private final TenantIntegrityService tenantIntegrityService;
+    private final PlanEntitlementService planEntitlementService;
 
     @Transactional(readOnly = true)
     public Page<Producto> listar(Pageable pageable) {
         Long empresaId = currentUserService.requireEmpresaId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
         return productoRepository.findAll(TenantSpecifications.belongsToEmpresa(empresaId), pageable);
     }
 
     @Transactional(readOnly = true)
     public Producto obtener(Long id) {
         Long empresaId = currentUserService.requireEmpresaId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
         return tenantEntityLoader.requireProductoInTenant(id, empresaId);
     }
 
@@ -44,6 +49,8 @@ public class ProductoCatalogService {
                           String unidadMedida, BigDecimal stockMinimo) {
         var empresa = currentUserService.requireEmpresa();
         Long empresaId = empresa.getId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
+        planEntitlementService.assertPuedeCrearProducto(empresaId);
         String cod = codigo.trim();
         if (productoRepository.existsByEmpresaIdAndCodigo(empresaId, cod)) {
             throw new BusinessException(HttpStatus.CONFLICT, "Código de producto ya existe en la empresa");
@@ -68,6 +75,7 @@ public class ProductoCatalogService {
     public Producto actualizar(Long id, String codigo, String nombre, String descripcion, Long categoriaId,
                                String unidadMedida, BigDecimal stockMinimo) {
         Long empresaId = currentUserService.requireEmpresaId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
         Producto p = tenantEntityLoader.requireProductoInTenant(id, empresaId);
         String cod = codigo.trim();
         if (!p.getCodigo().equalsIgnoreCase(cod) && productoRepository.existsByEmpresaIdAndCodigo(empresaId, cod)) {
@@ -88,6 +96,7 @@ public class ProductoCatalogService {
     @Transactional
     public Producto cambiarEstado(Long id, boolean activo) {
         Long empresaId = currentUserService.requireEmpresaId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
         Producto p = tenantEntityLoader.requireProductoInTenant(id, empresaId);
         p.setActivo(activo);
         p.setUpdatedAt(Instant.now());

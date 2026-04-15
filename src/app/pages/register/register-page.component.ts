@@ -21,6 +21,7 @@ import { RegisterStepAdminComponent } from './steps/register-step-admin.componen
 import { RegisterStepReviewComponent } from './steps/register-step-review.component';
 import { RegisterStepResultComponent } from './steps/register-step-result.component';
 import { HttpErrorResponse } from '@angular/common/http';
+import { PlanesService } from '../../core/services/planes.service';
 
 interface RegisterDraft {
   planCodigo: string | null;
@@ -113,6 +114,7 @@ interface RegisterDraft {
 })
 export class RegisterPageComponent implements OnInit {
   private readonly api = inject(RegisterApiService);
+  private readonly planesApi = inject(PlanesService);
   private readonly route = inject(ActivatedRoute);
 
   readonly step = signal(1);
@@ -136,12 +138,15 @@ export class RegisterPageComponent implements OnInit {
   readonly progressPct = computed(() => (this.step() / 4) * 100);
 
   ngOnInit(): void {
-    this.api.listPlanes().subscribe({
+    this.planesApi.listPublicPlanes().subscribe({
       next: (list) => {
         this.plans.set(list);
         const q = this.route.snapshot.queryParamMap.get('plan');
-        if (q && list.some((p) => p.codigo === q)) {
-          this.draft.update((d) => ({ ...d, planCodigo: q }));
+        if (q) {
+          const match = list.find((p) => p.id === q || p.codigo === q);
+          if (match) {
+            this.draft.update((d) => ({ ...d, planCodigo: match.codigo }));
+          }
         }
       },
       error: () =>

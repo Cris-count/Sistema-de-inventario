@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { BodegaService } from '../../core/api/bodega.service';
 import { InventarioService } from '../../core/api/inventario.service';
 import { ProductoService } from '../../core/api/producto.service';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-stock-inicial',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
       <h1>Stock inicial</h1>
@@ -17,7 +18,10 @@ import { flashSuccess } from '../../core/util/page-flash';
         Carga inicial por producto y bodega. El backend rechaza si ya existe cantidad &gt; 0 en esa pareja (409).
       </p>
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -74,6 +78,7 @@ export class StockInicialPage {
   readonly saving = signal(false);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     lineas: this.fb.array<FormGroup>([])
@@ -112,6 +117,7 @@ export class StockInicialPage {
 
   submit(): void {
     this.error.set(null);
+    this.planFollowup.set(null);
     this.message.set(null);
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -128,6 +134,7 @@ export class StockInicialPage {
     for (const l of lineas) {
       if (parseFloat(l.cantidad) <= 0) {
         this.message.set(null);
+        this.planFollowup.set(null);
         this.error.set('Cada cantidad debe ser mayor a cero.');
         return;
       }
@@ -136,6 +143,7 @@ export class StockInicialPage {
     this.api.stockInicial(lineas).subscribe({
       next: (m) => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set(`Movimiento registrado #${m.id} (${m.tipoMovimiento}).`);
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.lines.clear();
@@ -143,7 +151,7 @@ export class StockInicialPage {
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.saving.set(false)
     });

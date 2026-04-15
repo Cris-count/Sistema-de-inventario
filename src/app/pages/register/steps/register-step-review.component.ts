@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import type { EmpresaForm, PublicPlanDto, SuperAdminForm } from '../register.models';
 import { UiButtonComponent } from '../../../shared/components/ui/button/ui-button.component';
+import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/format-plan-price';
 
 @Component({
   selector: 'app-register-step-review',
@@ -16,6 +17,12 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
       <div>
         <p class="text-xs font-semibold uppercase tracking-wide text-secondary">Plan</p>
         <p class="mt-1 font-medium text-primary">{{ plan()?.nombre ?? planCodigo() }}</p>
+        @if (plan(); as pl) {
+          <p class="mt-1 text-secondary">
+            <span class="text-primary/80">Precio mensual:</span>
+            {{ resumenPrecio(pl) }}
+          </p>
+        }
       </div>
       <div class="border-t border-slate-100 pt-4">
         <p class="text-xs font-semibold uppercase tracking-wide text-secondary">Empresa</p>
@@ -64,4 +71,10 @@ export class RegisterStepReviewComponent {
   readonly hint = input<string | null>(null);
   readonly confirm = output<void>();
   readonly back = output<void>();
+
+  resumenPrecio(p: PublicPlanDto): string {
+    const base = formatPlanPrecioMensual(p);
+    const suf = planMensualCadence(p);
+    return suf ? `${base}${suf}` : base;
+  }
 }

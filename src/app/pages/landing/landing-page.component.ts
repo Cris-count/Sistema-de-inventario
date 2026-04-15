@@ -53,10 +53,15 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
         aria-label="Acciones rápidas"
       >
         <div
-          class="flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-surface/95 px-3 py-2 shadow-lg backdrop-blur"
+          class="flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-surface/95 px-3 py-2.5 shadow-lg backdrop-blur"
         >
-          <app-ui-button variant="ghost" size="sm" routerLink="/login">Entrar</app-ui-button>
-          <app-ui-button variant="gradient" size="sm" routerLink="/registro">Registrarse</app-ui-button>
+          <app-ui-button
+            variant="landing-secondary"
+            class="!min-h-[44px] !min-w-[120px] !px-[18px] !py-2.5 !text-sm"
+            linkTo="/login"
+            >Iniciar sesión</app-ui-button
+          >
+          <app-ui-button variant="landing-floating" linkTo="/registro">Empezar</app-ui-button>
         </div>
       </div>
 
@@ -64,9 +69,13 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
         class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-surface/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden"
         aria-label="Acciones rápidas móvil"
       >
-        <div class="mx-auto flex max-w-lg items-stretch gap-2">
-          <app-ui-button variant="secondary" class="flex-1" routerLink="/login">Entrar</app-ui-button>
-          <app-ui-button variant="gradient" class="flex-1" routerLink="/registro">Crear cuenta</app-ui-button>
+        <div class="mx-auto flex max-w-lg items-stretch gap-2.5">
+          <app-ui-button variant="landing-secondary" class="flex-1 !min-h-[48px]" linkTo="/login"
+            >Iniciar sesión</app-ui-button
+          >
+          <app-ui-button variant="landing-primary" class="flex-1 !min-h-[48px]" linkTo="/registro"
+            >Empezar</app-ui-button
+          >
         </div>
       </div>
 

@@ -33,14 +33,15 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
             Un panel claro para equipos que necesitan precisión operativa: entradas, salidas,
             transferencias y trazabilidad — con roles y límites listos para escalar.
           </p>
-          <div class="mt-8 flex flex-wrap items-center gap-3">
-            <app-ui-button variant="gradient" size="lg" routerLink="/registro">Empezar gratis</app-ui-button>
+          <div class="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <app-ui-button variant="landing-primary" class="w-full sm:w-auto" linkTo="/registro"
+              >Empezar gratis</app-ui-button
+            >
             <app-ui-button
-              variant="secondary"
-              size="lg"
-              class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/15"
-              routerLink="/login"
-              >Ver demo en vivo</app-ui-button
+              variant="landing-secondary"
+              class="w-full !border-white/30 !bg-white/10 !text-white hover:!bg-white/15 sm:w-auto"
+              linkTo="/login"
+              >Iniciar sesión</app-ui-button
             >
           </div>
           <p class="mt-4 text-xs text-slate-400">Sin tarjeta para explorar · Migración guiada disponible</p>

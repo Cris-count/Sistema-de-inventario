@@ -1,9 +1,16 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
+import { catchError, filter, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
-import { matchNavItemByUrl, NAV_ITEMS, navExactActive, navVisibleForRole } from '../../core/navigation';
+import {
+  matchNavItemByUrl,
+  NAV_ITEMS,
+  navExactActive,
+  navVisibleForPlan,
+  navVisibleForRole
+} from '../../core/navigation';
+import { EmpresaActualService } from '../../core/services/empresa-actual.service';
 
 const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
 
@@ -513,8 +520,12 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
 export class AppShellComponent {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly empresaApi = inject(EmpresaActualService);
   readonly navExactActive = navExactActive;
   readonly navOpen = signal(false);
+
+  /** Módulos del plan actual (`GET /empresa/mi`); null = sin cargar o error al cargar. */
+  private readonly planModules = signal<Set<string> | null>(null);
 
   /** Modo solo iconos (barra estrecha); preferencia del usuario, persistida. */
   readonly railMode = signal(false);
@@ -552,6 +563,19 @@ export class AppShellComponent {
         this.urlPath.set(this.router.url);
         this.navOpen.set(false);
       });
+
+    toObservable(this.auth.user)
+      .pipe(
+        switchMap((u) => {
+          if (!u) return of<Set<string> | null>(null);
+          return this.empresaApi.getMiEmpresa().pipe(
+            map((e) => new Set(e.modulosHabilitados ?? [])),
+            catchError(() => of<Set<string> | null>(null))
+          );
+        }),
+        takeUntilDestroyed()
+      )
+      .subscribe((mods) => this.planModules.set(mods));
   }
 
   private persistRail(narrow: boolean): void {
@@ -588,6 +612,7 @@ export class AppShellComponent {
 
   readonly visibleNav = computed(() => {
     const role = this.auth.role();
-    return NAV_ITEMS.filter((i) => navVisibleForRole(role, i));
+    const mods = this.planModules();
+    return NAV_ITEMS.filter((i) => navVisibleForRole(role, i) && navVisibleForPlan(i, mods));
   });
 }

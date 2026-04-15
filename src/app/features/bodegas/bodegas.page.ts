@@ -3,17 +3,21 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { BodegaService } from '../../core/api/bodega.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { Bodega } from '../../core/models/entities.model';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-bodegas',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
       <h1>Bodegas</h1>
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -79,13 +83,14 @@ export class BodegasPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   readonly auth = inject(AuthService);
 
-  isAdmin = () => this.auth.hasAnyRole(['ADMIN']);
+  isAdmin = () => this.auth.hasAnyRole(['ADMIN', 'SUPER_ADMIN']);
 
   readonly rows = signal<Bodega[]>([]);
   readonly editingId = signal<number | null>(null);
   readonly saving = signal(false);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     codigo: ['', Validators.required],
@@ -99,10 +104,14 @@ export class BodegasPage implements OnInit {
 
   reload(): void {
     this.api.list().subscribe({
-      next: (r) => this.rows.set(r),
+      next: (r) => {
+        this.rows.set(r);
+        this.error.set(null);
+        this.planFollowup.set(null);
+      },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
   }
@@ -121,12 +130,14 @@ export class BodegasPage implements OnInit {
     if (this.form.invalid) return;
     this.saving.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     const v = this.form.getRawValue();
     const id = this.editingId();
     const req = id ? this.api.update(id, v) : this.api.create(v);
     req.subscribe({
       next: () => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set('Bodega guardada.');
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.cancel();
@@ -134,7 +145,7 @@ export class BodegasPage implements OnInit {
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.saving.set(false)
     });

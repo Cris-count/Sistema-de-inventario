@@ -2,12 +2,12 @@ package com.inventario.bootstrap;
 
 import com.inventario.domain.entity.Empresa;
 import com.inventario.domain.entity.EstadoEmpresa;
-import com.inventario.domain.entity.SaasPlan;
 import com.inventario.domain.entity.Usuario;
 import com.inventario.domain.repository.EmpresaRepository;
 import com.inventario.domain.repository.RolRepository;
 import com.inventario.domain.repository.SaasPlanRepository;
 import com.inventario.domain.repository.UsuarioRepository;
+import com.inventario.service.saas.SaasPlanPublicCatalog;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Locale;
 
@@ -91,50 +90,30 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void ensureSaasPlans() {
-        if (saasPlanRepository.count() > 0) {
-            return;
-        }
         Instant now = Instant.now();
-        saasPlanRepository.save(SaasPlan.builder()
-                .codigo("STARTER")
-                .nombre("Starter")
-                .descripcion("Para equipos que ordenan el inventario por primera vez.")
-                .precioMensual(new BigDecimal("29.00"))
-                .moneda("USD")
-                .maxBodegas(2)
-                .maxUsuarios(5)
-                .features("Hasta 2 bodegas|Usuarios esenciales|Movimientos en rango base|Soporte por correo")
-                .orden(1)
-                .activo(true)
-                .createdAt(now)
-                .build());
-        saasPlanRepository.save(SaasPlan.builder()
-                .codigo("PROFESIONAL")
-                .nombre("Profesional")
-                .descripcion("Operaciones con varias ubicaciones y roles.")
-                .precioMensual(new BigDecimal("79.00"))
-                .moneda("USD")
-                .maxBodegas(10)
-                .maxUsuarios(25)
-                .features("Bodegas extendidas|Roles avanzados|Reportes kardex y exportación|Límites configurables")
-                .orden(2)
-                .activo(true)
-                .createdAt(now)
-                .build());
-        saasPlanRepository.save(SaasPlan.builder()
-                .codigo("EMPRESA")
-                .nombre("Empresa")
-                .descripcion("Multi-sede e integraciones.")
-                .precioMensual(BigDecimal.ZERO)
-                .moneda("USD")
-                .maxBodegas(999)
-                .maxUsuarios(999)
-                .features("SSO roadmap|SLA prioritario|Customer success dedicado")
-                .orden(3)
-                .activo(true)
-                .createdAt(now)
-                .build());
-        log.info("Planes SaaS semilla creados (STARTER, PROFESIONAL, EMPRESA).");
+        if (saasPlanRepository.count() == 0) {
+            for (SaasPlanPublicCatalog.Row row : SaasPlanPublicCatalog.ROWS) {
+                saasPlanRepository.save(SaasPlanPublicCatalog.toNewEntity(row, now));
+            }
+            log.info("Planes SaaS semilla creados desde SaasPlanPublicCatalog (STARTER, PROFESIONAL, EMPRESA).");
+        }
+        syncSaasPlansWithCatalog();
+    }
+
+    /**
+     * Mantiene precios COP y textos públicos alineados con {@link SaasPlanPublicCatalog}
+     * sin borrar filas (compatibilidad con suscripciones existentes).
+     */
+    private void syncSaasPlansWithCatalog() {
+        for (SaasPlanPublicCatalog.Row row : SaasPlanPublicCatalog.ROWS) {
+            saasPlanRepository
+                    .findByCodigoIgnoreCase(row.codigo())
+                    .ifPresent(
+                            plan -> {
+                                SaasPlanPublicCatalog.applyCatalogTo(plan, row);
+                                saasPlanRepository.save(plan);
+                            });
+        }
     }
 
     private Empresa ensureEmpresaSemilla() {

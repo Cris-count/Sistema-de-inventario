@@ -2,7 +2,8 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UsuarioService } from '../../core/api/usuario.service';
 import { UsuarioRow } from '../../core/models/entities.model';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 const ROLES = [
@@ -14,12 +15,15 @@ const ROLES = [
 
 @Component({
   selector: 'app-usuarios',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
       <h1>Usuarios</h1>
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -115,6 +119,7 @@ export class UsuariosPage implements OnInit {
   readonly saving = signal(false);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.email, Validators.required]],
@@ -137,10 +142,12 @@ export class UsuariosPage implements OnInit {
       next: (p) => {
         this.rows.set(p.content);
         this.totalPages.set(Math.max(1, p.totalPages));
+        this.error.set(null);
+        this.planFollowup.set(null);
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
   }
@@ -186,6 +193,7 @@ export class UsuariosPage implements OnInit {
     }
     this.saving.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     const id = this.editingId();
     if (id) {
       const v = this.form.getRawValue();
@@ -194,6 +202,7 @@ export class UsuariosPage implements OnInit {
         .subscribe({
           next: () => {
             this.error.set(null);
+            this.planFollowup.set(null);
             this.message.set('Usuario actualizado.');
             flashSuccess(this.destroyRef, () => this.message.set(null));
             this.cancel();
@@ -201,7 +210,7 @@ export class UsuariosPage implements OnInit {
           },
           error: (e) => {
             this.message.set(null);
-            this.error.set(getApiErrorMessage(e));
+            patchPlanErrorSignals(e, this.error, this.planFollowup);
           },
           complete: () => this.saving.set(false)
         });
@@ -218,6 +227,7 @@ export class UsuariosPage implements OnInit {
         .subscribe({
           next: () => {
             this.error.set(null);
+            this.planFollowup.set(null);
             this.message.set('Usuario creado.');
             flashSuccess(this.destroyRef, () => this.message.set(null));
             this.cancel();
@@ -225,7 +235,7 @@ export class UsuariosPage implements OnInit {
           },
           error: (e) => {
             this.message.set(null);
-            this.error.set(getApiErrorMessage(e));
+            patchPlanErrorSignals(e, this.error, this.planFollowup);
           },
           complete: () => this.saving.set(false)
         });
@@ -236,13 +246,14 @@ export class UsuariosPage implements OnInit {
     this.api.setActivo(u.id, !u.activo).subscribe({
       next: () => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set('Estado actualizado.');
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.load();
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
   }
