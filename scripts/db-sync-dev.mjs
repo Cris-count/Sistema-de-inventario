@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
- * Aplica migraciones SQL idempotentes (004, 005) dentro del contenedor Postgres vía `docker compose exec`.
- * Sirve cuando el volumen de Docker se creó antes de tablas nuevas (p. ej. billing_event): el init de Postgres
- * solo corre en la primera creación del volumen.
+ * Aplica migraciones SQL idempotentes (001→005) dentro del contenedor Postgres vía `docker compose exec`.
+ * Incluye 002 en volúmenes antiguos sin tabla `empresa` y 004/005 cuando el init no repitió el esquema completo.
  *
  * Estrategia `psql -h 127.0.0.1`: fuerza TCP al servidor dentro del contenedor; el socket Unix
  * (/var/run/postgresql) puede no estar listo o no usarse como espera el cliente sin `-h`.
@@ -20,6 +19,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 
 const MIGRATIONS = [
+  'database/migrations/001_add_movimiento_motivo.sql',
+  'database/migrations/002_multiempresa.sql',
+  'database/migrations/003_empresa_updated_by.sql',
   'database/migrations/004_onboarding_saas.sql',
   'database/migrations/005_billing_compra_pago.sql'
 ];
@@ -171,35 +173,55 @@ async function waitPostgresSqlReady(maxWaitMs = 90_000, intervalMs = 1000) {
 }
 
 /**
- * Espera a que exista una tabla creada por database/schema.sql (init en volumen nuevo).
- * Evita aplicar 004/005 antes de que termine el bootstrap del entrypoint.
+ * `psql -c "SELECT …"` devuelve código 0 aunque el resultado sea 0 filas: hay que usar `-t -A` y exigir salida.
+ * Espera hasta que:
+ * - `ready`: existe `usuario` y `empresa` (init de schema.sql terminó esa parte o BD ya alineada).
+ * - `legacy`: existe `usuario` pero no `empresa` (volumen pre-002); conviene aplicar 002 antes de 004.
  */
-async function waitForBaseSchemaMarker(maxWaitMs = 120_000, intervalMs = 1000) {
-  const stmt =
-    "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'rol' LIMIT 1;";
+async function waitForMigrationsGate(maxWaitMs = 120_000, intervalMs = 1000) {
+  const stmt = `SELECT CASE
+    WHEN EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'usuario'
+    ) AND EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'empresa'
+    ) THEN 'ready'
+    WHEN EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'usuario'
+    ) AND NOT EXISTS (
+      SELECT 1 FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'empresa'
+    ) THEN 'legacy'
+    ELSE 'wait'
+  END;`;
   const start = Date.now();
   let attempt = 0;
   while (Date.now() - start < maxWaitMs) {
     attempt++;
-    const r = execPsqlInDb(['-c', stmt]);
+    const r = execPsqlInDb(['-t', '-A', '-c', stmt]);
     if (r.status === 0) {
-      if (attempt > 1) {
-        console.log(
-          `[db-sync] Tabla base "rol" presente tras ${attempt} intento(s) (~${Math.round((Date.now() - start) / 1000)}s).`
-        );
+      const gate = (r.stdout || '').trim();
+      if (gate === 'ready' || gate === 'legacy') {
+        if (attempt > 1) {
+          console.log(
+            `[db-sync] Puerta de migraciones "${gate}" tras ${attempt} intento(s) (~${Math.round((Date.now() - start) / 1000)}s).`
+          );
+        }
+        return gate;
       }
-      return;
-    }
-    const kind = classifyFailure(r);
-    if (kind === 'auth' || kind === 'container') {
-      throwMeaningfulError(kind, 'comprobación de esquema base (rol)', r);
+    } else {
+      const kind = classifyFailure(r);
+      if (kind === 'auth' || kind === 'container') {
+        throwMeaningfulError(kind, 'comprobación de puerta de migraciones', r);
+      }
     }
     await delay(intervalMs);
   }
   throw new Error(
-    `[db-sync] Tras ${maxWaitMs} ms no existe la tabla pública "rol". ` +
-      'Probable fallo o demora extrema al aplicar database/schema.sql en el init. ' +
-      'Revisá: docker compose logs db · Volumen corrupto: docker compose down -v y volver a subir db.'
+    `[db-sync] Tras ${maxWaitMs} ms la BD no alcanzó estado listo (usuario+empresa) ni legado (usuario sin empresa). ` +
+      'Revisá: docker compose logs db · Init atascado o volumen raro: docker compose down -v y npm run up de nuevo.'
   );
 }
 
@@ -238,8 +260,8 @@ export async function applyDevMigrations() {
   console.log('[db-sync] Esperando que Postgres acepte SQL vía TCP (127.0.0.1 dentro del contenedor)…');
   await waitPostgresSqlReady();
 
-  console.log('[db-sync] Esperando tabla base `rol` (marca de que database/schema.sql del init terminó)…');
-  await waitForBaseSchemaMarker();
+  console.log('[db-sync] Esperando BD lista o legado detectable (usuario+empresa, o usuario sin empresa)…');
+  await waitForMigrationsGate();
 
   for (const rel of MIGRATIONS) {
     const full = path.join(root, rel);
@@ -251,7 +273,7 @@ export async function applyDevMigrations() {
     console.log(`[db-sync] Aplicando ${rel} …`);
     await runMigrationWithRetries(rel, sql);
   }
-  console.log('[db-sync] Listo (004 + 005 son idempotentes; seguro repetir).');
+  console.log('[db-sync] Listo (001–005 idempotentes donde aplica; seguro repetir).');
 }
 
 const isDirectRun =

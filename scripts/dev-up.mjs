@@ -31,7 +31,7 @@ function runDockerUpDb() {
 
 /**
  * Espera a que algo escuche en TCP en el host (el puerto publicado puede abrirse antes del init completo dentro del contenedor;
- * db-sync-dev.mjs añade SELECT 1 y comprobación de tabla `rol` vía psql dentro del contenedor).
+ * db-sync-dev.mjs aplica migraciones 001–005 vía psql en el contenedor cuando hace falta).
  */
 function waitForPort(port, options = {}) {
   const host = options.host ?? '127.0.0.1';
@@ -71,13 +71,21 @@ async function main() {
   await waitForPort(5432);
 
   console.log(
-    '[dev-up] 3/4  Alineando esquema (migraciones 004/005 idempotentes; corrige BDs creadas antes de billing/SaaS)'
+    '[dev-up] 3/4  Alineando esquema (migraciones 001–005 idempotentes; legado sin empresa + billing/SaaS)'
   );
   const { applyDevMigrations } = await import('./db-sync-dev.mjs');
   await applyDevMigrations();
 
   console.log('[dev-up] 4/4  Backend + frontend en paralelo (Ctrl+C detiene ambos procesos hijos).');
-  const { default: concurrently } = await import('concurrently');
+  let concurrently;
+  try {
+    ({ default: concurrently } = await import('concurrently'));
+  } catch {
+    console.error(
+      '[dev-up] No se encontró el paquete `concurrently` (devDependency). En la raíz del repo ejecutá: npm install'
+    );
+    process.exit(1);
+  }
   const { result } = concurrently(['npm run backend', 'npm run frontend'], {
     cwd: root,
     prefix: 'name',
