@@ -3,6 +3,12 @@ export interface EmpresaActualDto {
   nombre: string;
   identificacion: string | null;
   emailContacto: string | null;
+  /** Copia en alertas automáticas de pedido a proveedor; si falta, usa email de contacto. */
+  emailNotificacionesInventario?: string | null;
+  /** Activar o desactivar envío de correos al proveedor cuando el stock está en el mínimo. */
+  alertasPedidoProveedorActivas?: boolean;
+  /** Tope de unidades sugeridas por correo (null = sin tope en base de datos). */
+  pedidoProveedorCantidadMaxima?: number | null;
   telefono: string | null;
   estado: string | null;
   planCodigo: string | null;
@@ -22,6 +28,16 @@ export interface EmpresaActualDto {
   cambioPlanPendienteExpiraAt?: string | null;
   /** Mensaje de normalización (ej. expiración automática) entregado por backend. */
   cambioPlanMensaje?: string | null;
+}
+
+export interface EmpresaMiUpdateRequest {
+  nombre: string;
+  emailContacto?: string | null;
+  telefono?: string | null;
+  emailNotificacionesInventario?: string | null;
+  alertasPedidoProveedorActivas?: boolean;
+  /** 0 o vacío vía UI se envía como 0 para quitar tope en el servidor. */
+  pedidoProveedorCantidadMaxima?: number | null;
 }
 
 export interface CambioPlanSolicitudResponseDto {

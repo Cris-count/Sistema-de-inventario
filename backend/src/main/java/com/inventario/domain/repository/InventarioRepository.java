@@ -38,4 +38,7 @@ public interface InventarioRepository extends JpaRepository<Inventario, Inventar
               AND (:bodegaId IS NULL OR i.id.bodegaId = :bodegaId)
             """)
     List<Inventario> findBajoMinimoPorEmpresa(@Param("empresaId") Long empresaId, @Param("bodegaId") Long bodegaId);
+
+    @Query("SELECT i.id.bodegaId FROM Inventario i WHERE i.id.productoId = :productoId")
+    List<Long> findBodegaIdsByProductoId(@Param("productoId") Long productoId);
 }

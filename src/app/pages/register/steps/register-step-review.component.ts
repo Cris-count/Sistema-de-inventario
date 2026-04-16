@@ -9,45 +9,47 @@ import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/
   imports: [UiButtonComponent],
   template: `
     <div class="space-y-2">
-      <h2 class="text-xl font-semibold tracking-tight text-primary">4. Confirmación</h2>
-      <p class="text-sm text-secondary">Revisa los datos antes de crear la empresa y la suscripción inicial.</p>
+      <h2 class="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">4. Confirmación</h2>
+      <p class="text-sm text-slate-600 dark:text-slate-400">Revisa los datos antes de crear la empresa y la suscripción inicial.</p>
     </div>
 
-    <div class="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-surface p-5 text-sm shadow-soft">
+    <div
+      class="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-surface p-5 text-sm shadow-soft dark:border-slate-600 dark:bg-slate-900/90"
+    >
       <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-secondary">Plan</p>
-        <p class="mt-1 font-medium text-primary">{{ plan()?.nombre ?? planCodigo() }}</p>
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Plan</p>
+        <p class="mt-1 font-medium text-slate-900 dark:text-slate-100">{{ plan()?.nombre ?? planCodigo() }}</p>
         @if (plan(); as pl) {
-          <p class="mt-1 text-secondary">
-            <span class="text-primary/80">Precio mensual:</span>
+          <p class="mt-1 text-slate-600 dark:text-slate-400">
+            <span class="font-medium text-slate-700 dark:text-slate-300">Precio mensual:</span>
             {{ resumenPrecio(pl) }}
           </p>
         }
       </div>
-      <div class="border-t border-slate-100 pt-4">
-        <p class="text-xs font-semibold uppercase tracking-wide text-secondary">Empresa</p>
-        <ul class="mt-2 space-y-1 text-secondary">
-          <li><span class="text-primary/80">Nombre:</span> {{ empresa().nombre }}</li>
-          <li><span class="text-primary/80">ID:</span> {{ empresa().identificacion }}</li>
-          <li><span class="text-primary/80">Sector:</span> {{ empresa().sector }}</li>
-          <li><span class="text-primary/80">Correo:</span> {{ empresa().emailContacto }}</li>
-          <li><span class="text-primary/80">Teléfono:</span> {{ empresa().telefono || '—' }}</li>
-          <li><span class="text-primary/80">Ubicación:</span> {{ empresa().ciudad || '—' }}, {{ empresa().pais || '—' }}</li>
+      <div class="border-t border-slate-100 pt-4 dark:border-slate-700">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Empresa</p>
+        <ul class="mt-2 space-y-1 text-slate-600 dark:text-slate-400">
+          <li><span class="font-medium text-slate-700 dark:text-slate-300">Nombre:</span> {{ empresa().nombre }}</li>
+          <li><span class="font-medium text-slate-700 dark:text-slate-300">ID:</span> {{ empresa().identificacion }}</li>
+          <li><span class="font-medium text-slate-700 dark:text-slate-300">Sector:</span> {{ empresa().sector }}</li>
+          <li><span class="font-medium text-slate-700 dark:text-slate-300">Correo:</span> {{ empresa().emailContacto }}</li>
+          <li><span class="font-medium text-slate-700 dark:text-slate-300">Teléfono:</span> {{ empresa().telefono || '—' }}</li>
+          <li><span class="font-medium text-slate-700 dark:text-slate-300">Ubicación:</span> {{ empresa().ciudad || '—' }}, {{ empresa().pais || '—' }}</li>
         </ul>
       </div>
-      <div class="border-t border-slate-100 pt-4">
-        <p class="text-xs font-semibold uppercase tracking-wide text-secondary">Super admin</p>
-        <ul class="mt-2 space-y-1 text-secondary">
+      <div class="border-t border-slate-100 pt-4 dark:border-slate-700">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Super admin</p>
+        <ul class="mt-2 space-y-1 text-slate-600 dark:text-slate-400">
           <li>
-            <span class="text-primary/80">Nombre:</span> {{ admin().nombre }} {{ admin().apellido }}
+            <span class="font-medium text-slate-700 dark:text-slate-300">Nombre:</span> {{ admin().nombre }} {{ admin().apellido }}
           </li>
-          <li><span class="text-primary/80">Correo:</span> {{ admin().email }}</li>
+          <li><span class="font-medium text-slate-700 dark:text-slate-300">Correo:</span> {{ admin().email }}</li>
         </ul>
       </div>
     </div>
 
     @if (hint()) {
-      <p class="mt-4 text-sm text-amber-800">{{ hint() }}</p>
+      <p class="mt-4 text-sm text-amber-800 dark:text-amber-200">{{ hint() }}</p>
     }
 
     <div class="mt-8 flex flex-wrap justify-between gap-2">

@@ -1,6 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  important: '#lp-root',
+  darkMode: 'class',
+  /* true: las utilidades aplican con !important y no fallan por encapsulación / herencia del body oscuro. */
+  important: true,
   corePlugins: {
     preflight: false
   },

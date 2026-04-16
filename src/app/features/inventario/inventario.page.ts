@@ -3,6 +3,8 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BodegaService } from '../../core/api/bodega.service';
 import { InventarioService } from '../../core/api/inventario.service';
 import { ProductoService } from '../../core/api/producto.service';
+import { AuthService } from '../../core/auth/auth.service';
+import { ROLES_GESTION_PRODUCTOS } from '../../core/auth/app-roles';
 import { InventarioRow } from '../../core/models/entities.model';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
@@ -54,6 +56,7 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
               <th>Producto</th>
               <th>Bodega</th>
               <th>Cantidad</th>
+              <th>Stock mín.</th>
               <th>Actualizado</th>
             </tr>
           </thead>
@@ -63,6 +66,31 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
                 <td>{{ r.producto.codigo }} {{ r.producto.nombre }}</td>
                 <td>{{ r.bodega.nombre }}</td>
                 <td>{{ r.cantidad }}</td>
+                <td>
+                  @if (minEditKey() === r.id.productoId + '-' + r.id.bodegaId) {
+                    <span class="row" style="gap: 0.35rem; align-items: center; flex-wrap: wrap">
+                      <input
+                        type="number"
+                        step="any"
+                        min="0"
+                        [ngModel]="minEditDraft()"
+                        (ngModelChange)="onMinDraftChange($event)"
+                        style="width: 6rem"
+                      />
+                      <button type="button" class="btn btn-primary" [disabled]="minSaving()" (click)="guardarMinimo(r)">
+                        Guardar
+                      </button>
+                      <button type="button" class="btn" [disabled]="minSaving()" (click)="cancelMinEdit()">Cancelar</button>
+                    </span>
+                  } @else {
+                    <span class="row" style="gap: 0.35rem; align-items: center; flex-wrap: wrap">
+                      {{ r.producto.stockMinimo }}
+                      @if (puedeEditarMinimo()) {
+                        <button type="button" class="btn btn-ghost" (click)="startMinEdit(r)">Editar mínimo</button>
+                      }
+                    </span>
+                  }
+                </td>
                 <td>{{ fmt(r.updatedAt) }}</td>
               </tr>
             }
@@ -81,6 +109,7 @@ export class InventarioPage implements OnInit {
   private readonly api = inject(InventarioService);
   private readonly productoApi = inject(ProductoService);
   private readonly bodegaApi = inject(BodegaService);
+  private readonly auth = inject(AuthService);
   private readonly fb = inject(FormBuilder);
 
   readonly rows = signal<InventarioRow[]>([]);
@@ -91,6 +120,11 @@ export class InventarioPage implements OnInit {
   readonly error = signal<string | null>(null);
   readonly planFollowup = signal<PlanBlockFollowup | null>(null);
   readonly alertasMode = signal(false);
+  readonly minEditKey = signal<string | null>(null);
+  readonly minEditDraft = signal('');
+  readonly minSaving = signal(false);
+
+  readonly puedeEditarMinimo = () => this.auth.hasAnyRole(ROLES_GESTION_PRODUCTOS);
 
   readonly filterForm = this.fb.nonNullable.group({
     productoId: null as number | null,
@@ -124,12 +158,14 @@ export class InventarioPage implements OnInit {
   }
 
   applyFilters(): void {
+    this.cancelMinEdit();
     this.alertasMode.set(false);
     this.page.set(0);
     this.loadPage();
   }
 
   loadAlertas(): void {
+    this.cancelMinEdit();
     this.alertasMode.set(true);
     this.error.set(null);
     this.planFollowup.set(null);
@@ -158,5 +194,49 @@ export class InventarioPage implements OnInit {
 
   fmt(iso: string): string {
     return iso?.slice(0, 19)?.replace('T', ' ') ?? '';
+  }
+
+  onMinDraftChange(value: unknown): void {
+    this.minEditDraft.set(value != null ? String(value) : '');
+  }
+
+  startMinEdit(r: InventarioRow): void {
+    this.error.set(null);
+    this.planFollowup.set(null);
+    this.minEditKey.set(`${r.id.productoId}-${r.id.bodegaId}`);
+    this.minEditDraft.set(String(r.producto.stockMinimo));
+  }
+
+  cancelMinEdit(): void {
+    this.minEditKey.set(null);
+    this.minEditDraft.set('');
+    this.minSaving.set(false);
+  }
+
+  guardarMinimo(r: InventarioRow): void {
+    const raw = String(this.minEditDraft()).trim();
+    const n = Number(raw);
+    if (raw === '' || Number.isNaN(n) || n < 0) {
+      this.error.set('Indique un stock mínimo válido (número ≥ 0).');
+      return;
+    }
+    this.minSaving.set(true);
+    this.error.set(null);
+    this.planFollowup.set(null);
+    this.productoApi.patchStockMinimo(r.producto.id, n).subscribe({
+      next: () => {
+        this.minSaving.set(false);
+        this.cancelMinEdit();
+        if (this.alertasMode()) {
+          this.loadAlertas();
+        } else {
+          this.loadPage();
+        }
+      },
+      error: (e) => {
+        this.minSaving.set(false);
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
+      }
+    });
   }
 }

@@ -7,7 +7,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
   template: `
     <div
       [class]="
-        'h-full rounded-2xl border border-slate-200/80 bg-surface shadow-soft transition duration-200 hover:border-slate-200 hover:shadow-md ' +
+        'h-full rounded-2xl border border-slate-200/80 bg-surface shadow-soft transition duration-200 hover:border-slate-200 hover:shadow-md dark:border-slate-600/70 dark:bg-slate-900/85 dark:hover:border-slate-500/80 ' +
         paddingClass() +
         ' ' +
         class()

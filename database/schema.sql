@@ -29,7 +29,10 @@ CREATE TABLE IF NOT EXISTS empresa (
     id             BIGSERIAL PRIMARY KEY,
     nombre         VARCHAR(200) NOT NULL,
     identificacion VARCHAR(32)  NOT NULL UNIQUE,
-    email_contacto VARCHAR(255),
+    email_contacto                     VARCHAR(255),
+    email_notificaciones_inventario    VARCHAR(255),
+    alertas_pedido_proveedor_activas   BOOLEAN       NOT NULL DEFAULT TRUE,
+    pedido_proveedor_cantidad_maxima   NUMERIC(14, 4),
     telefono       VARCHAR(40),
     sector         VARCHAR(100),
     pais           VARCHAR(80),
@@ -166,8 +169,9 @@ CREATE TABLE IF NOT EXISTS producto (
     descripcion    TEXT,
     categoria_id   BIGINT       NOT NULL REFERENCES categoria (id) ON DELETE RESTRICT,
     unidad_medida  VARCHAR(20)  NOT NULL DEFAULT 'UND',
-    stock_minimo   NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (stock_minimo >= 0),
-    activo         BOOLEAN      NOT NULL DEFAULT TRUE,
+    stock_minimo          NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (stock_minimo >= 0),
+    proveedor_preferido_id BIGINT       REFERENCES proveedor (id) ON DELETE SET NULL,
+    activo                BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ,
     created_by     BIGINT       REFERENCES usuario (id) ON DELETE SET NULL,
@@ -178,6 +182,7 @@ CREATE TABLE IF NOT EXISTS producto (
 CREATE INDEX IF NOT EXISTS idx_producto_empresa ON producto (empresa_id);
 CREATE INDEX IF NOT EXISTS idx_producto_categoria ON producto (categoria_id);
 CREATE INDEX IF NOT EXISTS idx_producto_activo ON producto (activo);
+CREATE INDEX IF NOT EXISTS idx_producto_proveedor_pref ON producto (proveedor_preferido_id);
 
 CREATE TABLE IF NOT EXISTS bodega (
     id          BIGSERIAL PRIMARY KEY,
@@ -214,8 +219,9 @@ CREATE INDEX IF NOT EXISTS idx_proveedor_empresa ON proveedor (empresa_id);
 CREATE TABLE IF NOT EXISTS inventario (
     producto_id  BIGINT        NOT NULL REFERENCES producto (id) ON DELETE RESTRICT,
     bodega_id    BIGINT        NOT NULL REFERENCES bodega (id) ON DELETE RESTRICT,
-    cantidad     NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (cantidad >= 0),
-    updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    cantidad                   NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (cantidad >= 0),
+    updated_at                 TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    ultima_alerta_proveedor_at TIMESTAMPTZ,
     PRIMARY KEY (producto_id, bodega_id)
 );
 

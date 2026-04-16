@@ -2,9 +2,10 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoriaService } from '../../core/api/categoria.service';
 import { ProductoService, ProductoRequest } from '../../core/api/producto.service';
+import { ProveedorService } from '../../core/api/proveedor.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ROLES_GESTION_PRODUCTOS } from '../../core/auth/app-roles';
-import { Producto } from '../../core/models/entities.model';
+import { Producto, Proveedor } from '../../core/models/entities.model';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
@@ -115,6 +116,15 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                 <label>Stock mínimo</label>
                 <input formControlName="stockMinimo" type="text" />
               </div>
+              <div class="field" style="flex: 1; min-width: 220px">
+                <label>Proveedor preferido (reposición)</label>
+                <select formControlName="proveedorPreferidoId">
+                  <option [ngValue]="null">— Ninguno —</option>
+                  @for (pr of proveedores(); track pr.id) {
+                    <option [ngValue]="pr.id">{{ pr.razonSocial }}</option>
+                  }
+                </select>
+              </div>
             </div>
             <div class="row">
               <button type="submit" class="btn btn-primary" [disabled]="saving() || form.invalid">Guardar</button>
@@ -172,6 +182,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
 })
 export class ProductosPage implements OnInit {
   private readonly productoApi = inject(ProductoService);
+  private readonly proveedorApi = inject(ProveedorService);
   private readonly categoriaApi = inject(CategoriaService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
@@ -188,6 +199,7 @@ export class ProductosPage implements OnInit {
   readonly saving = signal(false);
   readonly rows = signal<Producto[]>([]);
   readonly categorias = signal<{ id: number; nombre: string }[]>([]);
+  readonly proveedores = signal<Proveedor[]>([]);
   readonly page = signal(0);
   readonly totalPages = signal(1);
   readonly formMode = signal<'create' | 'edit' | null>(null);
@@ -204,11 +216,16 @@ export class ProductosPage implements OnInit {
     descripcion: [''],
     categoriaId: [0, [Validators.required, Validators.min(1)]],
     unidadMedida: ['UND'],
-    stockMinimo: ['0']
+    stockMinimo: ['0'],
+    proveedorPreferidoId: null as number | null
   });
 
   ngOnInit(): void {
     this.categoriaApi.list().subscribe((c) => this.categorias.set(c));
+    this.proveedorApi.list().subscribe({
+      next: (list) => this.proveedores.set(list),
+      error: () => this.proveedores.set([])
+    });
     this.load();
   }
 
@@ -254,7 +271,15 @@ export class ProductosPage implements OnInit {
     this.formMode.set('create');
     this.editingId.set(null);
     this.unidadesForSelect.set(CATALOGO_UNIDADES);
-    this.form.reset({ codigo: '', nombre: '', descripcion: '', categoriaId: 0, unidadMedida: 'UND', stockMinimo: '0' });
+    this.form.reset({
+      codigo: '',
+      nombre: '',
+      descripcion: '',
+      categoriaId: 0,
+      unidadMedida: 'UND',
+      stockMinimo: '0',
+      proveedorPreferidoId: null
+    });
   }
 
   startEdit(p: Producto): void {
@@ -275,7 +300,8 @@ export class ProductosPage implements OnInit {
       descripcion: p.descripcion ?? '',
       categoriaId: p.categoria.id,
       unidadMedida: p.unidadMedida,
-      stockMinimo: String(p.stockMinimo)
+      stockMinimo: String(p.stockMinimo),
+      proveedorPreferidoId: p.proveedorPreferidoId ?? null
     });
   }
 
@@ -302,7 +328,8 @@ export class ProductosPage implements OnInit {
       descripcion: v.descripcion || undefined,
       categoriaId: v.categoriaId,
       unidadMedida: v.unidadMedida || undefined,
-      stockMinimo: v.stockMinimo || undefined
+      stockMinimo: v.stockMinimo || undefined,
+      proveedorPreferidoId: v.proveedorPreferidoId ?? null
     };
     this.saving.set(true);
     this.error.set(null);

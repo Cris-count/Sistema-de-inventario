@@ -63,17 +63,17 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
               <div class="mt-4 grid gap-3 sm:grid-cols-3">
                 <div class="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
                   <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Existencias</p>
-                  <p class="mt-1 text-2xl font-semibold text-primary">12.4k</p>
+                  <p class="mt-1 text-2xl font-semibold text-slate-900">12.4k</p>
                   <p class="text-xs text-accent">+3.1% vs. mes</p>
                 </div>
                 <div class="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
                   <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Alertas</p>
-                  <p class="mt-1 text-2xl font-semibold text-primary">18</p>
+                  <p class="mt-1 text-2xl font-semibold text-slate-900">18</p>
                   <p class="text-xs text-amber-700">Stock mínimo</p>
                 </div>
                 <div class="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
                   <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Movimientos</p>
-                  <p class="mt-1 text-2xl font-semibold text-primary">642</p>
+                  <p class="mt-1 text-2xl font-semibold text-slate-900">642</p>
                   <p class="text-xs text-secondary">Últimos 7 días</p>
                 </div>
               </div>
@@ -85,7 +85,7 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
                 </div>
                 @for (row of rows; track row.sku) {
                   <div
-                    class="grid grid-cols-4 gap-2 px-3 py-2.5 text-xs text-primary odd:bg-white even:bg-slate-50/50"
+                    class="grid grid-cols-4 gap-2 px-3 py-2.5 text-xs text-slate-900 odd:bg-white even:bg-slate-50/50"
                   >
                     <span class="font-mono text-secondary">{{ row.sku }}</span>
                     <span class="col-span-2">{{ row.name }}</span>

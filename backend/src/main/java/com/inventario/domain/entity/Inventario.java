@@ -35,4 +35,7 @@ public class Inventario {
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
+
+    @Column(name = "ultima_alerta_proveedor_at")
+    private Instant ultimaAlertaProveedorAt;
 }

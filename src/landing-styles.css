@@ -1,6 +1,15 @@
 @import 'tailwindcss';
 @config '../tailwind.config.mjs';
 
+/* Base copy color for marketing/register: evita heredar el gris claro del body (styles.css) y perder contraste en fondos blancos. */
+#lp-root {
+  color: #0f172a;
+}
+
+html.dark #lp-root {
+  color: #f1f5f9;
+}
+
 /* Landing scope: utilities are prefixed with #lp-root via Tailwind `important` option. */
 
 @media (prefers-reduced-motion: no-preference) {

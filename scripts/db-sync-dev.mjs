@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Aplica migraciones SQL idempotentes (004, 005) dentro del contenedor Postgres vía `docker compose exec`.
+ * Aplica migraciones SQL idempotentes (003–005) dentro del contenedor Postgres vía `docker compose exec`.
  * Sirve cuando el volumen de Docker se creó antes de tablas nuevas (p. ej. billing_event): el init de Postgres
  * solo corre en la primera creación del volumen.
  *
@@ -20,6 +20,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 
 const MIGRATIONS = [
+  'database/migrations/003_stock_alerta_proveedor.sql',
   'database/migrations/004_onboarding_saas.sql',
   'database/migrations/005_billing_compra_pago.sql'
 ];
@@ -251,7 +252,7 @@ export async function applyDevMigrations() {
     console.log(`[db-sync] Aplicando ${rel} …`);
     await runMigrationWithRetries(rel, sql);
   }
-  console.log('[db-sync] Listo (004 + 005 son idempotentes; seguro repetir).');
+  console.log('[db-sync] Listo (003–005 son idempotentes; seguro repetir).');
 }
 
 const isDirectRun =

@@ -9,6 +9,7 @@
     "backend": "node scripts/run-backend.mjs",
     "db": "docker compose up -d db",
     "db:sync": "node scripts/db-sync-dev.mjs",
+    "db:reset": "node scripts/reset-dev-db.mjs",
     "up": "node scripts/dev-up.mjs",
     "down": "node scripts/dev-down.mjs",
     "db:up": "docker compose up -d",

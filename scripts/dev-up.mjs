@@ -67,12 +67,10 @@ async function main() {
   console.log('[dev-up] 1/4  docker compose up -d db   (solo servicio db; no se levanta api del compose)');
   runDockerUpDb();
 
-  console.log('[dev-up] 2/4  Esperando PostgreSQL en 127.0.0.1:5432 …');
-  await waitForPort(5432);
+  console.log('[dev-up] 2/4  Esperando PostgreSQL en 127.0.0.1:5433 …');
+  await waitForPort(5433);
 
-  console.log(
-    '[dev-up] 3/4  Alineando esquema (migraciones 004/005 idempotentes; corrige BDs creadas antes de billing/SaaS)'
-  );
+  console.log('[dev-up] 3/4  Alineando esquema (migraciones 003–005 idempotentes en bases ya existentes)');
   const { applyDevMigrations } = await import('./db-sync-dev.mjs');
   await applyDevMigrations();
 

@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.time.Instant;
@@ -51,7 +52,10 @@ public class EmpresaController {
             String cambioPlanPendientePlanNombre,
             Instant cambioPlanPendienteCreadoAt,
             Instant cambioPlanPendienteExpiraAt,
-            String cambioPlanMensaje
+            String cambioPlanMensaje,
+            String emailNotificacionesInventario,
+            boolean alertasPedidoProveedorActivas,
+            BigDecimal pedidoProveedorCantidadMaxima
     ) {}
 
     @GetMapping("/mi")
@@ -118,7 +122,10 @@ public class EmpresaController {
                 pend != null ? pend.planNombreDestino() : null,
                 pend != null ? pend.createdAt() : null,
                 pend != null ? pend.expiresAt() : null,
-                cambioPlanMensaje
+                cambioPlanMensaje,
+                e.getEmailNotificacionesInventario(),
+                e.isAlertasPedidoProveedorActivas(),
+                e.getPedidoProveedorCantidadMaxima()
         );
     }
 }

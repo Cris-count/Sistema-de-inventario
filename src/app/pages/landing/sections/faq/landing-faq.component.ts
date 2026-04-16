@@ -4,33 +4,33 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   selector: 'app-landing-faq',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section id="faq" class="bg-surface py-section">
+    <section id="faq" class="bg-surface py-section dark:bg-slate-900">
       <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <h2 class="text-center text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
+        <h2 class="text-center text-3xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-4xl">
           Preguntas frecuentes
         </h2>
-        <p class="mx-auto mt-4 max-w-2xl text-center text-lg text-secondary">
+        <p class="mx-auto mt-4 max-w-2xl text-center text-lg text-secondary dark:text-slate-400">
           Respuestas cortas para decidir rápido. Si necesitas algo más específico, el equipo te acompaña en la puesta en marcha.
         </p>
 
         <div class="mt-10 space-y-3">
           @for (item of faqs; track item.q) {
             <details
-              class="group rounded-2xl border border-slate-200/80 bg-background px-4 py-3 shadow-sm open:shadow-soft"
+              class="group rounded-2xl border border-slate-200/80 bg-background px-4 py-3 shadow-sm open:shadow-soft dark:border-slate-700/80 dark:bg-slate-950"
             >
               <summary
-                class="cursor-pointer list-none text-left text-sm font-semibold text-primary outline-none marker:content-none [&::-webkit-details-marker]:hidden"
+                class="cursor-pointer list-none text-left text-sm font-semibold text-primary dark:text-slate-100 outline-none marker:content-none [&::-webkit-details-marker]:hidden"
               >
                 <span class="flex items-center justify-between gap-3">
                   {{ item.q }}
                   <span
-                    class="text-secondary transition group-open:rotate-45"
+                    class="text-secondary transition group-open:rotate-45 dark:text-slate-500"
                     aria-hidden="true"
                     >+</span
                   >
                 </span>
               </summary>
-              <p class="mt-3 text-sm leading-relaxed text-secondary">{{ item.a }}</p>
+              <p class="mt-3 text-sm leading-relaxed text-secondary dark:text-slate-400">{{ item.a }}</p>
             </details>
           }
         </div>

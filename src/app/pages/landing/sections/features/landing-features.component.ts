@@ -8,13 +8,13 @@ type FeatureIcon = 'box' | 'layers' | 'arrow' | 'shield' | 'chart' | 'spark';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [UiCardComponent],
   template: `
-    <section id="funciones" class="bg-surface py-section">
+    <section id="funciones" class="bg-surface py-section dark:bg-slate-900">
       <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div class="max-w-2xl">
-          <h2 class="text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
+          <h2 class="text-3xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-4xl">
             Todo lo esencial para operar inventario con rigor
           </h2>
-          <p class="mt-4 text-lg text-secondary">
+          <p class="mt-4 text-lg text-secondary dark:text-slate-400">
             Menos fricción para el equipo de bodega, más control para administración — sin sacrificar velocidad.
           </p>
         </div>
@@ -23,7 +23,7 @@ type FeatureIcon = 'box' | 'layers' | 'arrow' | 'shield' | 'chart' | 'spark';
           @for (f of features; track f.title) {
             <app-ui-card class="h-full">
               <div
-                class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-accent ring-1 ring-slate-100"
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-accent ring-1 ring-slate-100 dark:bg-slate-800 dark:ring-slate-600"
               >
                 @switch (f.icon) {
                   @case ('box') {
@@ -137,8 +137,8 @@ type FeatureIcon = 'box' | 'layers' | 'arrow' | 'shield' | 'chart' | 'spark';
                   }
                 }
               </div>
-              <h3 class="mt-4 text-base font-semibold text-primary">{{ f.title }}</h3>
-              <p class="mt-2 text-sm leading-relaxed text-secondary">{{ f.body }}</p>
+              <h3 class="mt-4 text-base font-semibold text-primary dark:text-slate-100">{{ f.title }}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-secondary dark:text-slate-400">{{ f.body }}</p>
             </app-ui-card>
           }
         </div>

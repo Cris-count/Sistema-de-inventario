@@ -1,6 +1,6 @@
 -- Esquema creado por Hibernate; datos mínimos antes de DataInitializer (empresa + roles).
-INSERT INTO empresa (nombre, identificacion, email_contacto, estado, created_at)
-VALUES ('Empresa test', 'TEST-001', NULL, 'ACTIVA', CURRENT_TIMESTAMP);
+INSERT INTO empresa (nombre, identificacion, email_contacto, estado, created_at, alertas_pedido_proveedor_activas)
+VALUES ('Empresa test', 'TEST-001', NULL, 'ACTIVA', CURRENT_TIMESTAMP, TRUE);
 
 INSERT INTO rol (codigo, nombre, descripcion, created_at)
 VALUES ('SUPER_ADMIN', 'Super administrador', 'Test', CURRENT_TIMESTAMP);

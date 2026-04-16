@@ -2,7 +2,7 @@ spring:
   application:
     name: inventario-api
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/inventario}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5433/inventario}
     username: ${SPRING_DATASOURCE_USERNAME:inventario}
     password: ${SPRING_DATASOURCE_PASSWORD:inventario}
     hikari:
@@ -21,6 +21,16 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     time-zone: UTC
+  # Correo (Gmail u otro SMTP). Dejar host vacío en local si no envías alertas; usar variables de entorno para secretos.
+  mail:
+    host: ${SPRING_MAIL_HOST:}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.starttls.required: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -60,6 +70,10 @@ app:
     compras-password: ${APP_SEED_COMPRAS_PASSWORD:Compras123!}
     gerencia-email: ${APP_SEED_GERENCIA_EMAIL:gerencia@inventario.local}
     gerencia-password: ${APP_SEED_GERENCIA_PASSWORD:Gerencia123!}
+  inventory:
+    stock-alerts:
+      send-email: ${APP_INVENTORY_STOCK_ALERTS_SEND_EMAIL:false}
+      cooldown-hours: ${APP_INVENTORY_STOCK_ALERTS_COOLDOWN_HOURS:24}
 
 springdoc:
   api-docs:

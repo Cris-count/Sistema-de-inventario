@@ -4,11 +4,13 @@ import com.inventario.domain.entity.*;
 import com.inventario.domain.repository.*;
 import com.inventario.service.saas.PlanEntitlementCodes;
 import com.inventario.service.saas.PlanEntitlementService;
+import com.inventario.service.inventory.StockBajoEvaluarEvent;
 import com.inventario.service.tenant.TenantEntityLoader;
 import com.inventario.service.tenant.TenantIntegrityService;
 import com.inventario.web.dto.MovimientoDtos.*;
 import com.inventario.web.error.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Registro de movimientos e inventario. Operaciones de escritura son atómicas: validación de líneas,
@@ -35,6 +39,7 @@ public class MovimientoService {
     private final TenantEntityLoader tenantEntityLoader;
     private final TenantIntegrityService tenantIntegrityService;
     private final PlanEntitlementService planEntitlementService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(rollbackFor = Exception.class)
     public MovimientoResponse registrarEntrada(EntradaRequest req) {
@@ -54,13 +59,16 @@ public class MovimientoService {
 
         Movimiento m = baseCabecera(TipoMovimiento.ENTRADA, req.motivo(), usuario, proveedor, req.referenciaDocumento(), req.observacion());
 
+        Set<String> stockEvalKeys = new HashSet<>();
         for (LineaEntrada linea : req.lineas()) {
             Producto p = tenantEntityLoader.requireProductoActivo(linea.productoId(), empresaId);
             Bodega b = tenantEntityLoader.requireBodegaActiva(linea.bodegaDestinoId(), empresaId);
             agregarDetalle(m, p, linea.cantidad(), null, b);
             sumarStock(p.getId(), b.getId(), linea.cantidad());
+            agregarClaveStockEval(stockEvalKeys, p.getId(), b.getId());
         }
         movimientoRepository.save(m);
+        publicarEvaluacionesStock(empresaId, stockEvalKeys);
         return toResponse(m);
     }
 
@@ -71,13 +79,16 @@ public class MovimientoService {
         planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.MOVIMIENTOS_BASICOS);
         Movimiento m = baseCabecera(TipoMovimiento.SALIDA, req.motivo(), usuario, null, req.referenciaDocumento(), req.observacion());
 
+        Set<String> stockEvalKeys = new HashSet<>();
         for (LineaSalida linea : req.lineas()) {
             Producto p = tenantEntityLoader.requireProductoActivo(linea.productoId(), empresaId);
             Bodega b = tenantEntityLoader.requireBodegaActiva(linea.bodegaOrigenId(), empresaId);
             agregarDetalle(m, p, linea.cantidad(), b, null);
             restarStock(p.getId(), b.getId(), linea.cantidad());
+            agregarClaveStockEval(stockEvalKeys, p.getId(), b.getId());
         }
         movimientoRepository.save(m);
+        publicarEvaluacionesStock(empresaId, stockEvalKeys);
         return toResponse(m);
     }
 
@@ -88,6 +99,7 @@ public class MovimientoService {
         planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.TRANSFERENCIAS);
         Movimiento m = baseCabecera(TipoMovimiento.TRANSFERENCIA, "TRANSFERENCIA", usuario, null, req.referenciaDocumento(), req.observacion());
 
+        Set<String> stockEvalKeys = new HashSet<>();
         for (LineaTransferencia linea : req.lineas()) {
             if (linea.bodegaOrigenId().equals(linea.bodegaDestinoId())) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "Origen y destino deben ser distintos");
@@ -98,6 +110,8 @@ public class MovimientoService {
             tenantIntegrityService.assertMovimientoLineCoherent(m, p, origen, destino);
             restarStock(p.getId(), origen.getId(), linea.cantidad());
             sumarStock(p.getId(), destino.getId(), linea.cantidad());
+            agregarClaveStockEval(stockEvalKeys, p.getId(), origen.getId());
+            agregarClaveStockEval(stockEvalKeys, p.getId(), destino.getId());
             MovimientoDetalle d = new MovimientoDetalle();
             d.setMovimiento(m);
             d.setProducto(p);
@@ -107,6 +121,7 @@ public class MovimientoService {
             m.getDetalles().add(d);
         }
         movimientoRepository.save(m);
+        publicarEvaluacionesStock(empresaId, stockEvalKeys);
         return toResponse(m);
     }
 
@@ -117,6 +132,7 @@ public class MovimientoService {
         planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.AJUSTES_INVENTARIO);
         Movimiento m = baseCabecera(TipoMovimiento.AJUSTE, req.motivo(), usuario, null, req.referenciaDocumento(), null);
 
+        Set<String> stockEvalKeys = new HashSet<>();
         for (LineaAjuste linea : req.lineas()) {
             boolean tieneOrigen = linea.bodegaOrigenId() != null;
             boolean tieneDestino = linea.bodegaDestinoId() != null;
@@ -128,13 +144,16 @@ public class MovimientoService {
                 Bodega b = tenantEntityLoader.requireBodegaActiva(linea.bodegaDestinoId(), empresaId);
                 agregarDetalle(m, p, linea.cantidad(), null, b);
                 sumarStock(p.getId(), b.getId(), linea.cantidad());
+                agregarClaveStockEval(stockEvalKeys, p.getId(), b.getId());
             } else {
                 Bodega b = tenantEntityLoader.requireBodegaActiva(linea.bodegaOrigenId(), empresaId);
                 agregarDetalle(m, p, linea.cantidad(), b, null);
                 restarStock(p.getId(), b.getId(), linea.cantidad());
+                agregarClaveStockEval(stockEvalKeys, p.getId(), b.getId());
             }
         }
         movimientoRepository.save(m);
+        publicarEvaluacionesStock(empresaId, stockEvalKeys);
         return toResponse(m);
     }
 
@@ -145,6 +164,7 @@ public class MovimientoService {
         planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
         Movimiento m = baseCabecera(TipoMovimiento.ENTRADA, "STOCK_INICIAL", usuario, null, null, null);
 
+        Set<String> stockEvalKeys = new HashSet<>();
         for (LineaStockInicial linea : req.lineas()) {
             if (linea.cantidad().compareTo(BigDecimal.ZERO) <= 0) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "Cantidad inicial debe ser > 0");
@@ -161,6 +181,7 @@ public class MovimientoService {
                         "Ya existe stock para producto " + p.getCodigo() + " en la bodega indicada; use ajuste");
             }
             sumarStock(p.getId(), b.getId(), linea.cantidad());
+            agregarClaveStockEval(stockEvalKeys, p.getId(), b.getId());
             MovimientoDetalle d = new MovimientoDetalle();
             d.setMovimiento(m);
             d.setProducto(p);
@@ -172,6 +193,7 @@ public class MovimientoService {
             m.getDetalles().add(d);
         }
         movimientoRepository.save(m);
+        publicarEvaluacionesStock(empresaId, stockEvalKeys);
         return toResponse(m);
     }
 
@@ -229,6 +251,19 @@ public class MovimientoService {
         }
         inv.setCantidad(inv.getCantidad().subtract(qty));
         inv.setUpdatedAt(Instant.now());
+    }
+
+    private static void agregarClaveStockEval(Set<String> claves, long productoId, long bodegaId) {
+        claves.add(productoId + ":" + bodegaId);
+    }
+
+    private void publicarEvaluacionesStock(Long empresaId, Set<String> claves) {
+        for (String clave : claves) {
+            int sep = clave.indexOf(':');
+            long productoId = Long.parseLong(clave.substring(0, sep));
+            long bodegaId = Long.parseLong(clave.substring(sep + 1));
+            eventPublisher.publishEvent(new StockBajoEvaluarEvent(empresaId, productoId, bodegaId));
+        }
     }
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)

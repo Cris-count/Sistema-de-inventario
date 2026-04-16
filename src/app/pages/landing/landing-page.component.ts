@@ -12,6 +12,7 @@ import { LandingFaqComponent } from './sections/faq/landing-faq.component';
 import { LandingCtaComponent } from './sections/cta/landing-cta.component';
 import { LandingFooterComponent } from './sections/footer/landing-footer.component';
 import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.component';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-landing-page',
@@ -29,10 +30,14 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
     LandingFaqComponent,
     LandingCtaComponent,
     LandingFooterComponent,
-    UiButtonComponent
+    UiButtonComponent,
+    ThemeToggleComponent
   ],
   template: `
-    <div id="lp-root" class="min-h-screen bg-background font-sans text-primary antialiased">
+    <div
+      id="lp-root"
+      class="min-h-screen bg-background font-sans text-primary antialiased dark:bg-slate-950 dark:text-slate-100"
+    >
       <app-landing-navbar />
       <main>
         <app-landing-hero />
@@ -53,7 +58,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
         aria-label="Acciones rápidas"
       >
         <div
-          class="flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-surface/95 px-3 py-2.5 shadow-lg backdrop-blur"
+          class="flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-surface/95 px-3 py-2.5 shadow-lg backdrop-blur dark:border-slate-600/60 dark:bg-slate-900/90"
         >
           <app-ui-button
             variant="landing-secondary"
@@ -66,9 +71,12 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
       </div>
 
       <div
-        class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-surface/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden"
+        class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-surface/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-600/60 dark:bg-slate-900/95 sm:hidden"
         aria-label="Acciones rápidas móvil"
       >
+        <div class="mx-auto mb-2 flex max-w-lg justify-end sm:hidden">
+          <app-theme-toggle />
+        </div>
         <div class="mx-auto flex max-w-lg items-stretch gap-2.5">
           <app-ui-button variant="landing-secondary" class="flex-1 !min-h-[48px]" linkTo="/login"
             >Iniciar sesión</app-ui-button

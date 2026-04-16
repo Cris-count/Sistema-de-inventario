@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Service
@@ -34,6 +35,17 @@ public class EmpresaProfileService {
         e.setEmailContacto(mail != null && !mail.isBlank() ? mail.trim() : null);
         String tel = req.getTelefono();
         e.setTelefono(tel != null && !tel.isBlank() ? tel.trim() : null);
+        if (req.getEmailNotificacionesInventario() != null) {
+            String en = req.getEmailNotificacionesInventario();
+            e.setEmailNotificacionesInventario(en != null && !en.isBlank() ? en.trim() : null);
+        }
+        if (req.getAlertasPedidoProveedorActivas() != null) {
+            e.setAlertasPedidoProveedorActivas(req.getAlertasPedidoProveedorActivas());
+        }
+        if (req.getPedidoProveedorCantidadMaxima() != null) {
+            BigDecimal m = req.getPedidoProveedorCantidadMaxima();
+            e.setPedidoProveedorCantidadMaxima(m.compareTo(BigDecimal.ZERO) > 0 ? m : null);
+        }
         e.setUpdatedAt(Instant.now());
         e.setUpdatedBy(currentUserService.requireUsuario());
         return empresaRepository.save(e);

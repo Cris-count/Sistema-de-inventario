@@ -1,10 +1,13 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import type { EmpresaActualDto } from '../../core/models/empresa-actual.model';
 import type { EmpresaCapacidadSnapshot } from '../../core/models/empresa-capacidad.model';
 import type { PublicPlanDto } from '../../core/models/public-plan.model';
 import { EmpresaCapacidadService } from '../../core/services/empresa-capacidad.service';
 import { EmpresaActualService } from '../../core/services/empresa-actual.service';
 import { PlanesService } from '../../core/services/planes.service';
+import { ROLES_ADMIN } from '../../core/auth/app-roles';
+import { AuthService } from '../../core/auth/auth.service';
 import { resolvePlanBlockUx } from '../../core/util/api-error';
 import { formatPlanPrecioMensual, planMensualCadence } from '../../core/util/format-plan-price';
 
@@ -31,6 +34,7 @@ const MODULO_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'app-mi-empresa',
+  imports: [ReactiveFormsModule],
   template: `
     <div class="page stack">
       <header class="page-header">
@@ -316,6 +320,48 @@ const MODULO_LABELS: Record<string, string> = {
             </div>
           </div>
         </section>
+
+        @if (canConfigurarAlertas()) {
+          <section class="card stack">
+            <h2>Alertas de inventario (pedidos a proveedor)</h2>
+            <p class="muted" style="margin-top: 0">
+              Correo a la empresa en copia cuando el stock llega al mínimo; el mensaje va al proveedor del producto (o al
+              de la última entrada). Requiere módulo de proveedores y correo del proveedor configurado.
+            </p>
+            @if (alertasMsg()) {
+              <div class="alert alert-success" role="status">{{ alertasMsg() }}</div>
+            }
+            @if (alertasErr()) {
+              <div class="alert alert-error" role="alert">{{ alertasErr() }}</div>
+            }
+            <form [formGroup]="alertasForm" (ngSubmit)="guardarAlertas()" class="stack">
+              <div class="field">
+                <label>Email de notificaciones (copia en el correo al proveedor)</label>
+                <input type="email" formControlName="emailNotificacionesInventario" placeholder="ej. compras@miempresa.com" />
+                <p class="muted" style="margin: 0.25rem 0 0">
+                  Si lo deja vacío, se usa el email de contacto de la empresa. Debe ser un correo de la empresa, no del
+                  usuario que inicia sesión.
+                </p>
+              </div>
+              <div class="field">
+                <label class="row" style="align-items: center; gap: 0.5rem">
+                  <input type="checkbox" formControlName="alertasPedidoProveedorActivas" />
+                  Enviar alertas automáticas al proveedor cuando el stock esté en o bajo el mínimo
+                </label>
+              </div>
+              <div class="field" style="max-width: 280px">
+                <label>Cantidad máxima por pedido sugerido (opcional)</label>
+                <input type="number" step="any" min="0" formControlName="pedidoProveedorCantidadMaxima" placeholder="Sin tope" />
+                <p class="muted" style="margin: 0.25rem 0 0">
+                  Tope de unidades en un solo correo. Vacío o 0 = sin límite explícito (el texto del correo lo indica).
+                </p>
+              </div>
+              <div class="row">
+                <button type="submit" class="btn btn-primary" [disabled]="alertasGuardando()">Guardar ajustes</button>
+              </div>
+            </form>
+          </section>
+        }
       }
     </div>
   `
@@ -324,6 +370,8 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
   private readonly empresaApi = inject(EmpresaActualService);
   private readonly capacidadApi = inject(EmpresaCapacidadService);
   private readonly planesApi = inject(PlanesService);
+  private readonly auth = inject(AuthService);
+  private readonly fb = inject(FormBuilder);
 
   /** Actualiza cada minuto mientras hay cambio pendiente con expiración (texto de urgencia). */
   private readonly clockTick = signal(Date.now());
@@ -344,6 +392,17 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
   readonly cambioPlanMsg = signal<string | null>(null);
   readonly cambioPlanErr = signal<string | null>(null);
   readonly referenciaCopiadaFlashing = signal(false);
+  readonly alertasGuardando = signal(false);
+  readonly alertasMsg = signal<string | null>(null);
+  readonly alertasErr = signal<string | null>(null);
+
+  readonly canConfigurarAlertas = () => this.auth.hasAnyRole(ROLES_ADMIN);
+
+  readonly alertasForm = this.fb.nonNullable.group({
+    emailNotificacionesInventario: [''],
+    alertasPedidoProveedorActivas: [true],
+    pedidoProveedorCantidadMaxima: ['']
+  });
 
   readonly statusInfo = computed(() => mapEmpresaStatus(this.empresa()?.estado));
   readonly accessInfo = computed(() => (this.statusInfo().kind === 'ok' ? 'Habilitado para ingresar' : 'Pendiente o restringido'));
@@ -450,6 +509,12 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
         this.loading.set(false);
         this.error.set(null);
         this.empresa.set(res);
+        this.alertasForm.patchValue({
+          emailNotificacionesInventario: res.emailNotificacionesInventario ?? '',
+          alertasPedidoProveedorActivas: res.alertasPedidoProveedorActivas !== false,
+          pedidoProveedorCantidadMaxima:
+            res.pedidoProveedorCantidadMaxima != null ? String(res.pedidoProveedorCantidadMaxima) : ''
+        });
         this.syncPendingClock(res);
         this.loadCapacity(res);
         this.loadPublicPlanes();
@@ -464,6 +529,47 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
         );
       }
     });
+  }
+
+  guardarAlertas(): void {
+    const e = this.empresa();
+    if (!e) return;
+    const f = this.alertasForm.getRawValue();
+    const maxStr = f.pedidoProveedorCantidadMaxima.trim();
+    const maxNum = maxStr === '' ? 0 : Number(maxStr);
+    if (maxStr !== '' && Number.isNaN(maxNum)) {
+      this.alertasErr.set('La cantidad máxima no es un número válido.');
+      return;
+    }
+    this.alertasGuardando.set(true);
+    this.alertasErr.set(null);
+    this.alertasMsg.set(null);
+    this.empresaApi
+      .actualizarMiEmpresa({
+        nombre: e.nombre,
+        emailContacto: e.emailContacto ?? '',
+        telefono: e.telefono ?? '',
+        emailNotificacionesInventario: f.emailNotificacionesInventario.trim(),
+        alertasPedidoProveedorActivas: f.alertasPedidoProveedorActivas,
+        pedidoProveedorCantidadMaxima: maxNum
+      })
+      .subscribe({
+        next: (res) => {
+          this.alertasGuardando.set(false);
+          this.empresa.set(res);
+          this.alertasForm.patchValue({
+            emailNotificacionesInventario: res.emailNotificacionesInventario ?? '',
+            alertasPedidoProveedorActivas: res.alertasPedidoProveedorActivas !== false,
+            pedidoProveedorCantidadMaxima:
+              res.pedidoProveedorCantidadMaxima != null ? String(res.pedidoProveedorCantidadMaxima) : ''
+          });
+          this.alertasMsg.set('Ajustes de alertas guardados.');
+        },
+        error: (err) => {
+          this.alertasGuardando.set(false);
+          this.alertasErr.set(resolvePlanBlockUx(err, false).message);
+        }
+      });
   }
 
   etiquetaModulo(codigo: string): string {

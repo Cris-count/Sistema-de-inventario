@@ -22,6 +22,7 @@ import { RegisterStepReviewComponent } from './steps/register-step-review.compon
 import { RegisterStepResultComponent } from './steps/register-step-result.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PlanesService } from '../../core/services/planes.service';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 
 interface RegisterDraft {
   planCodigo: string | null;
@@ -34,6 +35,7 @@ interface RegisterDraft {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
+    ThemeToggleComponent,
     RegisterStepPlanComponent,
     RegisterStepCompanyComponent,
     RegisterStepAdminComponent,
@@ -41,19 +43,30 @@ interface RegisterDraft {
     RegisterStepResultComponent
   ],
   template: `
-    <div id="lp-root" class="min-h-screen bg-background font-sans text-primary antialiased">
-      <header class="border-b border-slate-200/80 bg-surface/90 backdrop-blur">
+    <div
+      id="lp-root"
+      class="min-h-screen bg-background font-sans text-primary antialiased dark:bg-slate-950 dark:text-slate-100"
+    >
+      <header
+        class="border-b border-slate-200/80 bg-surface/90 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/90"
+      >
         <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <a routerLink="/landing" class="text-sm font-semibold text-secondary no-underline hover:text-primary">
+          <a
+            routerLink="/landing"
+            class="text-sm font-semibold text-secondary no-underline hover:text-primary dark:text-slate-300 dark:hover:text-white"
+          >
             ← Inventario Pro
           </a>
-          @if (step() < 5) {
-            <span class="text-xs font-medium text-secondary">Paso {{ step() }} de 4</span>
-          }
+          <div class="flex items-center gap-2">
+            <app-theme-toggle />
+            @if (step() < 5) {
+              <span class="text-xs font-medium text-secondary dark:text-slate-400">Paso {{ step() }} de 4</span>
+            }
+          </div>
         </div>
         @if (step() < 5) {
           <div class="mx-auto max-w-3xl px-4 pb-3 sm:px-6">
-            <div class="h-1.5 overflow-hidden rounded-full bg-slate-100">
+            <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
                 class="h-full rounded-full bg-gradient-to-r from-accent to-teal-600 transition-all duration-300"
                 [style.width.%]="progressPct()"
@@ -65,7 +78,9 @@ interface RegisterDraft {
 
       <main class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
         @if (loadError()) {
-          <p class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p
+            class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/55 dark:text-amber-100"
+          >
             {{ loadError() }}
           </p>
         } @else if (step() === 1) {

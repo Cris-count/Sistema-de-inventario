@@ -14,13 +14,38 @@ const mvnw = isWin ? path.join(backendDir, 'mvnw.cmd') : path.join(backendDir, '
 const args = process.argv.slice(2);
 const mvnArgs = args.length > 0 ? args : ['spring-boot:run'];
 
-// shell: true en Windows permite ejecutar mvnw.cmd de forma fiable con spawn.
-const result = spawnSync(mvnw, mvnArgs, {
-  cwd: backendDir,
-  stdio: 'inherit',
-  shell: isWin,
-  env: process.env,
-  windowsHide: true
-});
+/** Si SPRING_DATASOURCE_* viene vacío en el shell, Spring usa "" y Postgres rechaza; alineamos con docker-compose. */
+function backendEnv() {
+  const env = { ...process.env };
+  const defaults = {
+    SPRING_DATASOURCE_URL: 'jdbc:postgresql://127.0.0.1:5433/inventario',
+    SPRING_DATASOURCE_USERNAME: 'inventario',
+    SPRING_DATASOURCE_PASSWORD: 'inventario'
+  };
+  for (const [key, def] of Object.entries(defaults)) {
+    const v = env[key];
+    if (v === undefined || v === null || String(v).trim() === '') {
+      env[key] = def;
+    }
+  }
+  return env;
+}
+
+const env = backendEnv();
+
+// En Windows, shell:true con spawnSync no entrecomilla mvnw.cmd; rutas con espacios fallan.
+// `call` + argv por separado: Node entrecomilla al construir la línea de comandos para CreateProcess.
+const result = isWin
+  ? spawnSync(process.env.ComSpec || 'cmd.exe', ['/d', '/s', '/c', 'call', mvnw, ...mvnArgs], {
+      cwd: backendDir,
+      stdio: 'inherit',
+      env,
+      windowsHide: true
+    })
+  : spawnSync(mvnw, mvnArgs, {
+      cwd: backendDir,
+      stdio: 'inherit',
+      env
+    });
 
 process.exit(result.status === null ? 1 : result.status);

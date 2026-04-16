@@ -5,7 +5,8 @@ import { environment } from '../../../environments/environment';
 import type {
   CambioPlanCancelacionResponseDto,
   CambioPlanSolicitudResponseDto,
-  EmpresaActualDto
+  EmpresaActualDto,
+  EmpresaMiUpdateRequest
 } from '../models/empresa-actual.model';
 
 @Injectable({ providedIn: 'root' })
@@ -15,6 +16,10 @@ export class EmpresaActualService {
 
   getMiEmpresa(): Observable<EmpresaActualDto> {
     return this.http.get<EmpresaActualDto>(`${this.base}/empresa/mi`);
+  }
+
+  actualizarMiEmpresa(body: EmpresaMiUpdateRequest): Observable<EmpresaActualDto> {
+    return this.http.put<EmpresaActualDto>(`${this.base}/empresa/mi`, body);
   }
 
   solicitarCambioPlan(planCodigo: string): Observable<CambioPlanSolicitudResponseDto> {

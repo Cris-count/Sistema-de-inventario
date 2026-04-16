@@ -1,6 +1,8 @@
 package com.inventario.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -47,6 +49,12 @@ public class Producto {
     @Column(name = "stock_minimo", nullable = false, precision = 14, scale = 4)
     private BigDecimal stockMinimo;
 
+    /** Proveedor habitual para reposición (alertas de stock bajo). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proveedor_preferido_id")
+    @JsonIgnore
+    private Proveedor proveedorPreferido;
+
     @Column(nullable = false)
     private Boolean activo;
 
@@ -59,4 +67,9 @@ public class Producto {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private Usuario createdBy;
+
+    @JsonProperty("proveedorPreferidoId")
+    public Long getProveedorPreferidoId() {
+        return proveedorPreferido != null ? proveedorPreferido.getId() : null;
+    }
 }

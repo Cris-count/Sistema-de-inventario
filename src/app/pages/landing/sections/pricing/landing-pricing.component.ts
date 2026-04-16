@@ -22,18 +22,22 @@ interface LandingPlanView {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [UiButtonComponent, UiBadgeComponent],
   template: `
-    <section id="planes" class="bg-background py-section">
+    <section id="planes" class="bg-background py-section dark:bg-slate-950">
       <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-2xl text-center">
-          <h2 class="text-3xl font-semibold tracking-tight text-primary sm:text-4xl">Control profesional de inventario</h2>
-          <p class="mt-4 text-lg text-secondary">
+          <h2 class="text-3xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-4xl">
+            Control profesional de inventario
+          </h2>
+          <p class="mt-4 text-lg text-secondary dark:text-slate-300">
             Diseñado para crecer con tu empresa. Precios transparentes en pesos colombianos, misma oferta en toda la
             plataforma.
           </p>
         </div>
 
         @if (error()) {
-          <p class="mx-auto mt-5 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p
+            class="mx-auto mt-5 max-w-2xl rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/55 dark:text-amber-100"
+          >
             {{ error() }}
           </p>
         }
@@ -42,8 +46,10 @@ interface LandingPlanView {
           @for (p of plans(); track p.id) {
             <article
               [class]="
-                'relative flex flex-col rounded-2xl border bg-surface p-6 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-md ' +
-                (p.highlight ? 'border-teal-200 ring-2 ring-teal-100' : 'border-slate-200/80')
+                'relative flex flex-col rounded-2xl border bg-surface p-6 shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-slate-900 dark:ring-slate-700 ' +
+                (p.highlight
+                  ? 'border-teal-200 ring-2 ring-teal-100 dark:border-teal-500/40 dark:ring-teal-900/50'
+                  : 'border-slate-200/80 dark:border-slate-700/80')
               "
             >
               @if (p.highlight) {
@@ -51,13 +57,13 @@ interface LandingPlanView {
                   >Más popular</app-ui-badge
                 >
               }
-              <h3 class="text-lg font-semibold text-primary">{{ p.name }}</h3>
-              <p class="mt-2 text-sm text-secondary">{{ p.blurb }}</p>
+              <h3 class="text-lg font-semibold text-primary dark:text-slate-100">{{ p.name }}</h3>
+              <p class="mt-2 text-sm text-secondary dark:text-slate-400">{{ p.blurb }}</p>
               <p class="mt-6 flex items-baseline gap-1">
-                <span class="text-4xl font-semibold tracking-tight text-primary">{{ p.price }}</span>
-                <span class="text-sm text-secondary">{{ p.cadence }}</span>
+                <span class="text-4xl font-semibold tracking-tight text-primary dark:text-slate-100">{{ p.price }}</span>
+                <span class="text-sm text-secondary dark:text-slate-400">{{ p.cadence }}</span>
               </p>
-              <ul class="mt-6 space-y-2 text-sm text-secondary">
+              <ul class="mt-6 space-y-2 text-sm text-secondary dark:text-slate-400">
                 @for (f of p.features; track f) {
                   <li class="flex gap-2">
                     <span class="mt-1 h-1.5 w-1.5 flex-none rounded-full bg-accent"></span>
