@@ -20,19 +20,19 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
           Crea tu espacio de trabajo, invita al equipo y empieza con movimientos reales. Si ya tienes cuenta, entra directo al panel.
         </p>
         <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <app-ui-button variant="gradient" size="lg" routerLink="/registro">Crear cuenta</app-ui-button>
+          <app-ui-button variant="gradient" size="lg" to="/registro">Crear cuenta</app-ui-button>
           <app-ui-button
             variant="secondary"
             size="lg"
             class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/15"
-            routerLink="/login"
+            to="/login"
             >Iniciar sesión</app-ui-button
           >
           <app-ui-button
             variant="ghost"
             size="lg"
             class="!text-slate-100 hover:!bg-white/10"
-            routerLink="/app"
+            to="/app"
             >Ir al panel</app-ui-button
           >
         </div>

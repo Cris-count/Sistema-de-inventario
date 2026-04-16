@@ -28,11 +28,11 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
           </nav>
 
           <div class="flex flex-none items-center gap-1.5 sm:gap-3">
-            <app-ui-button variant="ghost" size="sm" class="!px-2 sm:!px-3.5" routerLink="/login"
+            <app-ui-button variant="ghost" size="sm" class="!px-2 sm:!px-3.5" to="/login"
               ><span class="hidden min-[400px]:inline">Iniciar sesión</span
               ><span class="min-[400px]:hidden">Entrar</span></app-ui-button
             >
-            <app-ui-button variant="gradient" size="sm" routerLink="/registro">Crear cuenta</app-ui-button>
+            <app-ui-button variant="gradient" size="sm" to="/registro">Crear cuenta</app-ui-button>
           </div>
         </div>
 

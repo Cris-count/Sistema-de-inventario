@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { OnboardingRegisterResponseDto } from '../register.models';
 import { UiButtonComponent } from '../../../shared/components/ui/button/ui-button.component';
 
@@ -8,7 +8,7 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
   imports: [UiButtonComponent],
   template: `
     <div class="space-y-2">
-      <h2 class="text-xl font-semibold tracking-tight text-primary">5. Listo</h2>
+      <h2 class="text-xl font-semibold tracking-tight text-primary">6. Listo</h2>
       <p class="text-sm text-secondary">{{ result().message }}</p>
     </div>
 
@@ -49,28 +49,49 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
           }
         </div>
       }
-      @if (result().purchasePin) {
-        <div class="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100">
-          <p class="text-xs font-semibold uppercase tracking-wide text-secondary">PIN de compra / referencia</p>
-          <p class="mt-2 font-mono text-lg font-semibold tracking-widest text-primary">{{ result().purchasePin }}</p>
-          <p class="mt-1 text-xs text-secondary">Solo referencia operativa; no sustituye la autenticación.</p>
+      @if (result().totpOtpauthUri) {
+        <div class="rounded-xl border border-teal-100 bg-teal-50/50 p-4 ring-1 ring-teal-100/80">
+          <p class="text-xs font-semibold uppercase tracking-wide text-secondary">Google Authenticator</p>
+          <p class="mt-1 text-xs text-secondary">
+            Los códigos de un solo uso los genera tu app (TOTP), no el servidor. Escanea el QR o copia el secreto Base32.
+          </p>
+          @if (totpQrSrc(); as src) {
+            <img
+              [src]="src"
+              width="240"
+              height="240"
+              alt="Código QR para Google Authenticator"
+              class="mx-auto mt-3 rounded-lg border border-slate-200 bg-white p-2"
+            />
+          }
+          @if (result().totpSecretBase32) {
+            <p class="mt-3 break-all font-mono text-xs text-primary">{{ result().totpSecretBase32 }}</p>
+          }
         </div>
       }
     </div>
 
-    <div class="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+    <div class="mt-8 flex flex-col gap-3 border-t border-slate-200/80 pt-6 sm:flex-row sm:flex-wrap">
       @if (result().nextStep === 'LOGIN') {
-        <app-ui-button variant="gradient" class="sm:flex-1" routerLink="/login">Ir a iniciar sesión</app-ui-button>
-        <app-ui-button variant="secondary" class="sm:flex-1" routerLink="/app">Abrir panel</app-ui-button>
+        <app-ui-button variant="gradient" class="w-full sm:flex-1" to="/login">Iniciar sesión</app-ui-button>
+        <app-ui-button variant="outline" class="w-full sm:flex-1" to="/app">Ir al panel (app)</app-ui-button>
       } @else if (result().nextStep === 'PAYMENT') {
-        <app-ui-button variant="gradient" class="sm:flex-1" routerLink="/login">Ir a login (tras activación)</app-ui-button>
-        <app-ui-button variant="secondary" class="sm:flex-1" routerLink="/landing">Volver al inicio</app-ui-button>
+        <app-ui-button variant="gradient" class="w-full sm:flex-1" to="/login">Ir a login cuando actives el pago</app-ui-button>
+        <app-ui-button variant="outline" class="w-full sm:flex-1" to="/landing">Volver al inicio</app-ui-button>
       } @else {
-        <app-ui-button variant="gradient" routerLink="/login">Continuar</app-ui-button>
+        <app-ui-button variant="gradient" class="w-full sm:min-w-[12rem]" to="/login">Ir a iniciar sesión</app-ui-button>
       }
     </div>
   `
 })
 export class RegisterStepResultComponent {
   readonly result = input.required<OnboardingRegisterResponseDto>();
+
+  readonly totpQrSrc = computed(() => {
+    const uri = this.result().totpOtpauthUri;
+    if (!uri) {
+      return null;
+    }
+    return 'https://quickchart.io/chart?cht=qr&chs=240x240&chl=' + encodeURIComponent(uri);
+  });
 }

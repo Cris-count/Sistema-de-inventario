@@ -4,17 +4,32 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 public final class OnboardingDtos {
 
     private OnboardingDtos() {}
 
+    public record SendEmailVerificationRequest(
+            @NotBlank @Email @Size(max = 255) String email, @NotBlank @Size(max = 40) String planCodigo) {}
+
+    public record SendEmailVerificationResponse(String message, Instant codeExpiresAt) {}
+
+    public record VerifyEmailRequest(
+            @NotBlank @Email @Size(max = 255) String email,
+            @NotBlank @Size(max = 40) String planCodigo,
+            @NotBlank @Pattern(regexp = "\\d{6}") String code) {}
+
+    public record VerifyEmailResponse(String verificationToken, Instant sessionExpiresAt, String message) {}
+
     public record OnboardingRegisterRequest(
             @NotBlank @Size(max = 40) String planCodigo,
+            @NotBlank @Size(max = 48) String emailVerificationToken,
             @Valid @NotNull EmpresaOnboardingDto empresa,
             @Valid @NotNull SuperAdminOnboardingDto superAdmin) {}
 
@@ -59,5 +74,7 @@ public final class OnboardingDtos {
             String message,
             /** Solo si activation es pendiente de pago: referencia para webhook o confirmación manual. */
             Long compraId,
-            Long pagoId) {}
+            Long pagoId,
+            String totpOtpauthUri,
+            String totpSecretBase32) {}
 }

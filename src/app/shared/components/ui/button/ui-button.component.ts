@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-export type UiButtonVariant = 'gradient' | 'primary' | 'secondary' | 'ghost';
+export type UiButtonVariant = 'gradient' | 'primary' | 'secondary' | 'ghost' | 'outline';
 export type UiButtonSize = 'sm' | 'md' | 'lg';
 
 @Component({
@@ -17,9 +17,9 @@ export type UiButtonSize = 'sm' | 'md' | 'lg';
       >
         <ng-content />
       </a>
-    } @else if (routerLink(); as link) {
+    } @else if (to(); as route) {
       <a
-        [routerLink]="link"
+        [routerLink]="route"
         [queryParams]="queryParams()"
         [fragment]="fragment()"
         [class]="classes()"
@@ -44,7 +44,8 @@ export class UiButtonComponent {
   readonly size = input<UiButtonSize>('md');
   /** In-page anchor, e.g. `#pricing` */
   readonly href = input<string | undefined>(undefined);
-  readonly routerLink = input<string | undefined>(undefined);
+  /** Internal navigation; named `to` so host `routerLink` does not bind RouterLink to this component. */
+  readonly to = input<string | undefined>(undefined);
   readonly queryParams = input<Record<string, string> | undefined>(undefined);
   readonly fragment = input<string | undefined>(undefined);
   readonly type = input<'button' | 'submit'>('button');
@@ -72,6 +73,8 @@ export class UiButtonComponent {
         return `${base} border border-slate-200 bg-surface text-primary shadow-sm hover:border-slate-300 hover:bg-slate-50`;
       case 'ghost':
         return `${base} text-secondary hover:bg-slate-100 hover:text-primary`;
+      case 'outline':
+        return `${base} border-2 border-slate-300 bg-surface text-primary shadow-sm hover:border-teal-500/50 hover:bg-slate-50`;
       default:
         return base;
     }

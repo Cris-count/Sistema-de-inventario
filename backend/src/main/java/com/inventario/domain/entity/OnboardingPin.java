@@ -20,8 +20,13 @@ public class OnboardingPin {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 16)
+    /** Referencia legada; el flujo actual usa {@link #totpSecret} (Google Authenticator). */
+    @Column(unique = true, length = 16)
     private String pin;
+
+    /** Secreto Base32 para TOTP (RFC 6238), compatible con Google Authenticator. */
+    @Column(name = "totp_secret", length = 64)
+    private String totpSecret;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "empresa_id", nullable = false)

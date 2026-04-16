@@ -34,12 +34,12 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
             transferencias y trazabilidad — con roles y límites listos para escalar.
           </p>
           <div class="mt-8 flex flex-wrap items-center gap-3">
-            <app-ui-button variant="gradient" size="lg" routerLink="/registro">Empezar gratis</app-ui-button>
+            <app-ui-button variant="gradient" size="lg" to="/registro">Empezar gratis</app-ui-button>
             <app-ui-button
               variant="secondary"
               size="lg"
               class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/15"
-              routerLink="/login"
+              to="/login"
               >Ver demo en vivo</app-ui-button
             >
           </div>

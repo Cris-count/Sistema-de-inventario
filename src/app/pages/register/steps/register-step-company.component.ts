@@ -8,7 +8,7 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
   imports: [UiButtonComponent],
   template: `
     <div class="space-y-2">
-      <h2 class="text-xl font-semibold tracking-tight text-primary">2. Datos de la empresa</h2>
+      <h2 class="text-xl font-semibold tracking-tight text-primary">3. Datos de la empresa</h2>
       <p class="text-sm text-secondary">Identificación única (NIT, RUC, etc.) y datos de contacto.</p>
     </div>
 
@@ -77,9 +77,13 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
       <p class="mt-4 text-sm text-amber-800">{{ hint() }}</p>
     }
 
-    <div class="mt-8 flex flex-wrap justify-between gap-2">
-      <app-ui-button variant="secondary" (click)="back.emit()">Atrás</app-ui-button>
-      <app-ui-button variant="gradient" (click)="next.emit()">Continuar</app-ui-button>
+    <div class="mt-8 flex flex-col gap-3 border-t border-slate-200/80 pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <app-ui-button variant="outline" class="w-full sm:w-auto sm:min-w-[11rem]" (click)="back.emit()">
+        Atrás: verificar correo
+      </app-ui-button>
+      <app-ui-button variant="gradient" class="w-full sm:w-auto sm:min-w-[14rem]" (click)="next.emit()">
+        Siguiente: super administrador
+      </app-ui-button>
     </div>
   `
 })

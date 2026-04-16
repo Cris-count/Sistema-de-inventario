@@ -1,8 +1,13 @@
 package com.inventario.web.controller;
 
+import com.inventario.service.onboarding.OnboardingEmailVerificationService;
 import com.inventario.service.onboarding.OnboardingService;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterRequest;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterResponse;
+import com.inventario.web.dto.onboarding.OnboardingDtos.SendEmailVerificationRequest;
+import com.inventario.web.dto.onboarding.OnboardingDtos.SendEmailVerificationResponse;
+import com.inventario.web.dto.onboarding.OnboardingDtos.VerifyEmailRequest;
+import com.inventario.web.dto.onboarding.OnboardingDtos.VerifyEmailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
@@ -20,12 +25,29 @@ import org.springframework.web.bind.annotation.RestController;
 public class OnboardingController {
 
     private final OnboardingService onboardingService;
+    private final OnboardingEmailVerificationService emailVerificationService;
+
+    @PostMapping("/send-email-verification")
+    @SecurityRequirements
+    @Operation(summary = "Enviar código de verificación al correo", description = "Paso previo al registro: valida que el correo exista enviando un código de 6 dígitos (en desarrollo se registra en log).")
+    public ResponseEntity<SendEmailVerificationResponse> sendEmailVerification(
+            @Valid @RequestBody SendEmailVerificationRequest body) {
+        return ResponseEntity.ok(emailVerificationService.sendVerificationCode(body.email(), body.planCodigo()));
+    }
+
+    @PostMapping("/verify-email")
+    @SecurityRequirements
+    @Operation(summary = "Confirmar código de correo", description = "Devuelve un token de sesión que debes enviar en POST /register-company como emailVerificationToken.")
+    public ResponseEntity<VerifyEmailResponse> verifyEmail(@Valid @RequestBody VerifyEmailRequest body) {
+        return ResponseEntity.ok(
+                emailVerificationService.verifyCode(body.email(), body.planCodigo(), body.code()));
+    }
 
     @PostMapping("/register-company")
     @SecurityRequirements
     @Operation(
             summary = "Registro transaccional de empresa",
-            description = "Crea empresa, suscripción inicial, SUPER_ADMIN y opcionalmente PIN de compra en una sola transacción.")
+            description = "Requiere emailVerificationToken de /verify-email. Crea empresa, suscripción, SUPER_ADMIN y, si aplica, secreto TOTP (Google Authenticator) en lugar de PIN aleatorio.")
     public ResponseEntity<OnboardingRegisterResponse> register(@Valid @RequestBody OnboardingRegisterRequest body) {
         return ResponseEntity.status(HttpStatus.CREATED).body(onboardingService.register(body));
     }

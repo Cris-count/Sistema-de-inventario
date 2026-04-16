@@ -55,8 +55,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
         <div
           class="flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-surface/95 px-3 py-2 shadow-lg backdrop-blur"
         >
-          <app-ui-button variant="ghost" size="sm" routerLink="/login">Entrar</app-ui-button>
-          <app-ui-button variant="gradient" size="sm" routerLink="/registro">Registrarse</app-ui-button>
+          <app-ui-button variant="ghost" size="sm" to="/login">Entrar</app-ui-button>
+          <app-ui-button variant="gradient" size="sm" to="/registro">Registrarse</app-ui-button>
         </div>
       </div>
 
@@ -65,8 +65,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
         aria-label="Acciones rápidas móvil"
       >
         <div class="mx-auto flex max-w-lg items-stretch gap-2">
-          <app-ui-button variant="secondary" class="flex-1" routerLink="/login">Entrar</app-ui-button>
-          <app-ui-button variant="gradient" class="flex-1" routerLink="/registro">Crear cuenta</app-ui-button>
+          <app-ui-button variant="secondary" class="flex-1" to="/login">Entrar</app-ui-button>
+          <app-ui-button variant="gradient" class="flex-1" to="/registro">Crear cuenta</app-ui-button>
         </div>
       </div>
 

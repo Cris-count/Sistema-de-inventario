@@ -38,6 +38,9 @@ app:
     activation-default: ${APP_ONBOARDING_ACTIVATION:TRIAL}
     trial-days: ${APP_ONBOARDING_TRIAL_DAYS:14}
     generate-pin-on-pending-payment: ${APP_ONBOARDING_GENERATE_PIN:true}
+    # Verificación por correo antes del registro (código en log si no hay SMTP)
+    email-code-ttl-minutes: ${APP_ONBOARDING_EMAIL_CODE_TTL:15}
+    email-session-ttl-hours: ${APP_ONBOARDING_EMAIL_SESSION_TTL:24}
   jwt:
     secret: ${JWT_SECRET:cambiarEnProduccionMinimo256BitsParaHS256AlgoritmoSeguro!!}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}

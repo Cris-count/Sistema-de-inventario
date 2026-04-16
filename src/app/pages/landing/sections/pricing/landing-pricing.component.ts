@@ -47,7 +47,7 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
                 <app-ui-button
                   [variant]="p.highlight ? 'gradient' : 'secondary'"
                   class="w-full"
-                  routerLink="/registro"
+                  to="/registro"
                   [queryParams]="{ plan: p.codigo }"
                   >{{ p.cta }}</app-ui-button
                 >
