@@ -6,7 +6,8 @@ import org.springframework.stereotype.Component;
 
 /**
  * Si el JWT incluye el claim {@code empresaId}, debe coincidir con la empresa vigente del usuario en BD.
- * Tokens antiguos sin el claim siguen siendo válidos (compatibilidad); la fuente de verdad sigue siendo la BD.
+ * Si el claim falta, este validador no falla (compatibilidad); la obligación de exigir el claim la aplica
+ * {@link JwtAuthenticationFilter} salvo {@code app.jwt.allow-legacy-access-without-empresa-claim=true}.
  */
 @Component
 public class TenantJwtClaimsValidator {

@@ -28,6 +28,19 @@ function backendEnv() {
       env[key] = def;
     }
   }
+  /**
+   * En producción JWT_SECRET debe venir del entorno (application.yml sin default).
+   * Para `npm run backend` / `npm run up` sin .env, se usa solo este valor local si falta la variable.
+   */
+  const DEV_JWT_SECRET_FALLBACK =
+    'dev-only-JWT-secret-min-32-bytes-for-local-npm-run-up!!';
+  if (!env.JWT_SECRET || String(env.JWT_SECRET).trim() === '') {
+    env.JWT_SECRET = DEV_JWT_SECRET_FALLBACK;
+    console.warn(
+      '[run-backend] JWT_SECRET no definido: usando secreto de desarrollo local (no usar en producción). ' +
+        'Define JWT_SECRET en el entorno para alinear con despliegue real.'
+    );
+  }
   return env;
 }
 

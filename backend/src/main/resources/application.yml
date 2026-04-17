@@ -56,8 +56,72 @@ app:
     trial-days: ${APP_ONBOARDING_TRIAL_DAYS:14}
     generate-pin-on-pending-payment: ${APP_ONBOARDING_GENERATE_PIN:true}
   jwt:
-    secret: ${JWT_SECRET:cambiarEnProduccionMinimo256BitsParaHS256AlgoritmoSeguro!!}
-    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+    # Obligatorio: definir JWT_SECRET en el entorno (mínimo 32 bytes UTF-8). Sin valor por defecto en código.
+    secret: ${JWT_SECRET}
+    # Access token corto (15 min por defecto). Para sesiones largas hace falta refresh token (pendiente de implementar; hoy re-login).
+    expiration-ms: ${JWT_EXPIRATION_MS:900000}
+    issuer: ${JWT_ISSUER:https://inventario.local}
+    audience: ${JWT_AUDIENCE:inventario-api}
+    # Challenge MFA: entre 60 s y 300 s (5 min máximo aplicado en código)
+    mfa-challenge-expiration-ms: ${JWT_MFA_CHALLENGE_MS:300000}
+    # true solo durante migración: acepta JWT antiguos sin claim empresaId (desactivar en producción).
+    allow-legacy-access-without-empresa-claim: ${JWT_ALLOW_LEGACY_NO_EMPRESA:false}
+  refresh-token:
+    # TTL de cada token opaco (rotación); acotado por family-absolute-ms (no hay sesión infinita por refrescar).
+    expiration-ms: ${REFRESH_TOKEN_EXPIRATION_MS:1209600000}
+    # Tope absoluto de la familia desde el primer refresh del login (la rotación NO lo extiende).
+    family-absolute-ms: ${REFRESH_TOKEN_FAMILY_ABSOLUTE_MS:2592000000}
+    hash-pepper: ${REFRESH_TOKEN_PEPPER:}
+    # En producción: true + pepper no vacío (ver RefreshTokenPepperStartupValidator).
+    pepper-required: ${REFRESH_TOKEN_PEPPER_REQUIRED:false}
+    # 0 = familias ilimitadas por usuario; >0 revoca la familia activa más antigua al crear una nueva.
+    max-active-families-per-user: ${REFRESH_TOKEN_MAX_FAMILIES_PER_USER:0}
+  rate-limit:
+    # memory = JVM (dev/tests). redis = ventana fija compartida (requiere app.rate-limit.redis.host).
+    backend: ${RATE_LIMIT_BACKEND:memory}
+    # Con backend=redis: ante fallo de Redis, usar memoria por instancia (true) o propagar error (false).
+    allow-memory-fallback-on-redis-failure: ${RATE_LIMIT_ALLOW_MEMORY_FALLBACK:true}
+    redis:
+      host: ${RATE_LIMIT_REDIS_HOST:}
+      port: ${RATE_LIMIT_REDIS_PORT:6379}
+      password: ${RATE_LIMIT_REDIS_PASSWORD:}
+      database: ${RATE_LIMIT_REDIS_DATABASE:0}
+      command-timeout: ${RATE_LIMIT_REDIS_COMMAND_TIMEOUT_MS:800ms}
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    trust-x-forwarded-for: ${RATE_LIMIT_TRUST_XFF:false}
+    hash-pepper: ${RATE_LIMIT_PEPPER:}
+    login:
+      max-per-ip-per-window: ${RATE_LIMIT_LOGIN_MAX_IP:30}
+      max-per-email-per-window: ${RATE_LIMIT_LOGIN_MAX_EMAIL:15}
+      window-seconds: ${RATE_LIMIT_LOGIN_WINDOW_SEC:60}
+    mfa-verify:
+      max-per-ip-per-window: ${RATE_LIMIT_MFA_MAX_IP:40}
+      max-per-challenge-per-window: ${RATE_LIMIT_MFA_MAX_CHALLENGE:25}
+      window-seconds: ${RATE_LIMIT_MFA_WINDOW_SEC:60}
+    onboarding:
+      max-per-ip-per-window: ${RATE_LIMIT_ONBOARD_IP:10}
+      max-per-email-per-window: ${RATE_LIMIT_ONBOARD_EMAIL:8}
+      window-seconds: ${RATE_LIMIT_ONBOARD_WINDOW_SEC:3600}
+    billing:
+      ip-limited: ${RATE_LIMIT_BILLING_IP:false}
+      max-per-ip-per-window: ${RATE_LIMIT_BILLING_MAX_IP:120}
+      window-seconds: ${RATE_LIMIT_BILLING_WINDOW_SEC:60}
+    auth-refresh:
+      max-per-ip-per-window: ${RATE_LIMIT_REFRESH_IP:45}
+      max-per-token-fingerprint-per-window: ${RATE_LIMIT_REFRESH_TOKEN_FP:30}
+      window-seconds: ${RATE_LIMIT_REFRESH_WINDOW_SEC:60}
+    auth-logout:
+      max-per-ip-per-window: ${RATE_LIMIT_LOGOUT_IP:60}
+      max-per-token-fingerprint-per-window: ${RATE_LIMIT_LOGOUT_TOKEN_FP:40}
+      window-seconds: ${RATE_LIMIT_LOGOUT_WINDOW_SEC:60}
+  mfa:
+    issuer: ${MFA_ISSUER:Inventario}
+    max-challenge-attempts: ${MFA_MAX_ATTEMPTS:5}
+    # jpa (por defecto, seguro en cluster) | memory (solo una réplica / desarrollo)
+    state-store: ${MFA_STATE_STORE:jpa}
+    challenge-state-ttl-minutes: ${MFA_CHALLENGE_STATE_TTL_MINUTES:10}
+    challenge-state-cleanup-ms: ${MFA_CHALLENGE_CLEANUP_MS:300000}
+    backup-code-count: ${MFA_BACKUP_CODE_COUNT:10}
   seed:
     empresa-identificacion: ${APP_SEED_EMPRESA_IDENT:DEV-DEFAULT-001}
     admin-email: ${APP_SEED_ADMIN_EMAIL:admin@inventario.local}
@@ -90,8 +154,12 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+      status:
+        # DEGRADED / MISCONFIGURED (rate limiting) entre UNKNOWN y UP para no tumbar el agregado como DOWN.
+        order: DOWN,OUT_OF_SERVICE,UNKNOWN,MISCONFIGURED,DEGRADED,UP
 
 logging:
   level:
     org.hibernate.SQL: WARN
     com.inventario: INFO
+    AUTH_AUDIT: INFO

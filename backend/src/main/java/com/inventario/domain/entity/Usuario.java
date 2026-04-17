@@ -44,6 +44,14 @@ public class Usuario {
     @Column(nullable = false)
     private Boolean activo;
 
+    @Column(name = "mfa_enabled", nullable = false)
+    private boolean mfaEnabled;
+
+    /** Secreto TOTP (Base32). No serializar en respuestas JSON. */
+    @Column(name = "mfa_secret", length = 255)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private String mfaSecret;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

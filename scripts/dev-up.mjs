@@ -70,7 +70,9 @@ async function main() {
   console.log('[dev-up] 2/4  Esperando PostgreSQL en 127.0.0.1:5433 …');
   await waitForPort(5433);
 
-  console.log('[dev-up] 3/4  Alineando esquema (migraciones 003–005 idempotentes en bases ya existentes)');
+  console.log(
+    '[dev-up] 3/4  Alineando esquema (migraciones SQL idempotentes en BD existente; ver db-sync-dev.mjs)'
+  );
   const { applyDevMigrations } = await import('./db-sync-dev.mjs');
   await applyDevMigrations();
 

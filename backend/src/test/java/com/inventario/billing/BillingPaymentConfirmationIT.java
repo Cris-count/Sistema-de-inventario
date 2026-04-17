@@ -25,7 +25,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(
+        properties = {
+            "app.rate-limit.backend=memory",
+            "app.rate-limit.redis.host="
+        })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional

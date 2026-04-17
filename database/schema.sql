@@ -52,6 +52,8 @@ CREATE TABLE IF NOT EXISTS usuario (
     empresa_id     BIGINT       NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
     rol_id         BIGINT       NOT NULL REFERENCES rol (id) ON DELETE RESTRICT,
     activo         BOOLEAN      NOT NULL DEFAULT TRUE,
+    mfa_enabled    BOOLEAN      NOT NULL DEFAULT FALSE,
+    mfa_secret     VARCHAR(255),
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ
 );
@@ -328,3 +330,46 @@ FROM (
          3)
 ) AS v(codigo, nombre, descripcion, precio, moneda, max_bodegas, max_usuarios, features, orden)
 WHERE NOT EXISTS (SELECT 1 FROM saas_plan p WHERE p.codigo = v.codigo);
+
+-- MFA: estado de challenge (multi-instancia) y códigos de respaldo
+CREATE TABLE IF NOT EXISTS mfa_challenge_state (
+    jti           VARCHAR(64) PRIMARY KEY,
+    email         VARCHAR(255) NOT NULL,
+    failure_count INT          NOT NULL DEFAULT 0,
+    consumed      BOOLEAN      NOT NULL DEFAULT FALSE,
+    expires_at    TIMESTAMPTZ  NOT NULL,
+    created_at    TIMESTAMPTZ  NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_mfa_challenge_state_expires ON mfa_challenge_state (expires_at);
+
+CREATE TABLE IF NOT EXISTS usuario_mfa_backup_code (
+    id          BIGSERIAL PRIMARY KEY,
+    usuario_id  BIGINT       NOT NULL REFERENCES usuario (id) ON DELETE CASCADE,
+    code_hash   VARCHAR(255) NOT NULL,
+    created_at  TIMESTAMPTZ  NOT NULL,
+    used_at     TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_usuario_mfa_backup_usuario ON usuario_mfa_backup_code (usuario_id);
+CREATE INDEX IF NOT EXISTS idx_usuario_mfa_backup_unused ON usuario_mfa_backup_code (usuario_id) WHERE used_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS refresh_token (
+    id                     BIGSERIAL PRIMARY KEY,
+    usuario_id             BIGINT       NOT NULL REFERENCES usuario (id) ON DELETE CASCADE,
+    token_hash             VARCHAR(64)  NOT NULL UNIQUE,
+    family_id              VARCHAR(36)  NOT NULL,
+    issued_at              TIMESTAMPTZ  NOT NULL,
+    expires_at             TIMESTAMPTZ  NOT NULL,
+    family_expires_at      TIMESTAMPTZ  NOT NULL,
+    revoked_at             TIMESTAMPTZ,
+    replaced_by_token_id   BIGINT       REFERENCES refresh_token (id) ON DELETE SET NULL,
+    last_used_at           TIMESTAMPTZ,
+    created_from_ip        VARCHAR(64),
+    user_agent             VARCHAR(512)
+);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_token_family ON refresh_token (family_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_token_usuario ON refresh_token (usuario_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_token_usuario_active
+    ON refresh_token (usuario_id) WHERE revoked_at IS NULL;
