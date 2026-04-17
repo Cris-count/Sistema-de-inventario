@@ -118,6 +118,9 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
               </div>
               <div class="field" style="flex: 1; min-width: 220px">
                 <label>Proveedor preferido (reposición)</label>
+                <p class="muted" style="margin: 0 0 0.35rem; font-size: 0.78rem">
+                  Alertas por stock mínimo usan el correo de este proveedor (debe estar en Proveedores).
+                </p>
                 <select formControlName="proveedorPreferidoId">
                   <option [ngValue]="null">— Ninguno —</option>
                   @for (pr of proveedores(); track pr.id) {
