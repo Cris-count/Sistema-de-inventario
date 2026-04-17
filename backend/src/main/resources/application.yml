@@ -136,7 +136,9 @@ app:
     gerencia-password: ${APP_SEED_GERENCIA_PASSWORD:Gerencia123!}
   inventory:
     stock-alerts:
-      send-email: ${APP_INVENTORY_STOCK_ALERTS_SEND_EMAIL:false}
+      # true: intenta envío SMTP cuando exista bean JavaMailSender (requiere spring.mail.host + credenciales).
+      # false: solo registra en log (útil en dev o si no hay servidor de correo). Variable: APP_INVENTORY_STOCK_ALERTS_SEND_EMAIL
+      send-email: ${APP_INVENTORY_STOCK_ALERTS_SEND_EMAIL:true}
       cooldown-hours: ${APP_INVENTORY_STOCK_ALERTS_COOLDOWN_HOURS:24}
 
 springdoc:

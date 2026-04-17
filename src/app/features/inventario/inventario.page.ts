@@ -6,7 +6,7 @@ import { ProductoService } from '../../core/api/producto.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ROLES_GESTION_PRODUCTOS } from '../../core/auth/app-roles';
 import { InventarioRow } from '../../core/models/entities.model';
-import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { getApiErrorMessage, patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 
 @Component({
@@ -48,6 +48,19 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
       }
       @if (alertasMode()) {
         <h2>Alertas (bajo mínimo)</h2>
+        @if (rows().length > 0) {
+          <p class="muted" style="margin: 0 0 0.75rem; font-size: 0.88rem; max-width: 52rem">
+            El aviso automático y la simulación usan el correo del <strong>proveedor vinculado a ese producto</strong>:
+            primero el «Proveedor preferido» en la ficha del producto; si no hay, el de la última entrada de compra de
+            ese producto. El e-mail se edita en <strong>Proveedores</strong>. Use «Simular» en la fila que corresponda.
+          </p>
+        }
+      }
+      @if (simMsg()) {
+        <div class="alert alert-success" role="status">{{ simMsg() }}</div>
+      }
+      @if (simErr()) {
+        <div class="alert alert-error" role="alert">{{ simErr() }}</div>
       }
       <div class="table-wrap">
         <table class="data">
@@ -58,6 +71,9 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
               <th>Cantidad</th>
               <th>Stock mín.</th>
               <th>Actualizado</th>
+              @if (alertasMode()) {
+                <th>Simular correo</th>
+              }
             </tr>
           </thead>
           <tbody>
@@ -92,6 +108,23 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
                   }
                 </td>
                 <td>{{ fmt(r.updatedAt) }}</td>
+                @if (alertasMode()) {
+                  <td>
+                    <button
+                      type="button"
+                      class="btn btn-ghost"
+                      [disabled]="simLoading()"
+                      (click)="simularCorreo(r)"
+                      title="Mismo destinatario que el aviso automático: proveedor vinculado a este producto"
+                    >
+                      @if (simLoading()) {
+                        <span class="spinner"></span>
+                      } @else {
+                        Simular
+                      }
+                    </button>
+                  </td>
+                }
               </tr>
             }
           </tbody>
@@ -123,6 +156,9 @@ export class InventarioPage implements OnInit {
   readonly minEditKey = signal<string | null>(null);
   readonly minEditDraft = signal('');
   readonly minSaving = signal(false);
+  readonly simMsg = signal<string | null>(null);
+  readonly simErr = signal<string | null>(null);
+  readonly simLoading = signal(false);
 
   readonly puedeEditarMinimo = () => this.auth.hasAnyRole(ROLES_GESTION_PRODUCTOS);
 
@@ -169,6 +205,8 @@ export class InventarioPage implements OnInit {
     this.alertasMode.set(true);
     this.error.set(null);
     this.planFollowup.set(null);
+    this.simMsg.set(null);
+    this.simErr.set(null);
     const bodegaId = this.filterForm.getRawValue().bodegaId;
     this.api.alertas(bodegaId ?? undefined).subscribe({
       next: (a) => {
@@ -178,6 +216,35 @@ export class InventarioPage implements OnInit {
       },
       error: (e) => patchPlanErrorSignals(e, this.error, this.planFollowup)
     });
+  }
+
+  simularCorreo(row: InventarioRow): void {
+    this.simLoading.set(true);
+    this.simMsg.set(null);
+    this.simErr.set(null);
+    this.api
+      .simularCorreoStock({
+        productoId: row.id.productoId,
+        bodegaId: row.id.bodegaId
+      })
+      .subscribe({
+        next: (r) => {
+          this.simLoading.set(false);
+          this.simMsg.set(r.mensaje);
+        },
+        error: (e) => {
+          this.simLoading.set(false);
+          let msg = getApiErrorMessage(e);
+          if (
+            /email:\s*no debe estar vac[ií]o|must not be blank/i.test(msg) ||
+            /^no debe estar vac[ií]o$/i.test(msg.trim())
+          ) {
+            msg +=
+              ' El servidor parece una versión antigua del API (exigía «email» en el cuerpo). Detenga el backend, en la carpeta `backend` ejecute `mvnw clean spring-boot:run` (o reinicie la app desde el IDE) y vuelva a probar.';
+          }
+          this.simErr.set(msg);
+        }
+      });
   }
 
   prev(): void {

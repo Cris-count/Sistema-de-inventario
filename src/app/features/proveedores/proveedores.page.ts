@@ -67,6 +67,7 @@ import { flashSuccess } from '../../core/util/page-flash';
             <tr>
               <th>Documento</th>
               <th>Razón social</th>
+              <th>Email (alertas stock)</th>
               <th>Contacto</th>
               @if (isAdmin()) {
                 <th></th>
@@ -78,6 +79,13 @@ import { flashSuccess } from '../../core/util/page-flash';
               <tr>
                 <td>{{ p.documento }}</td>
                 <td>{{ p.razonSocial }}</td>
+                <td>
+                  @if (p.email?.trim()) {
+                    {{ p.email }}
+                  } @else {
+                    <span class="muted">— sin correo —</span>
+                  }
+                </td>
                 <td>{{ p.contacto }} {{ p.telefono }}</td>
                 @if (isAdmin()) {
                   <td><button type="button" class="btn btn-ghost" (click)="edit(p)">Editar</button></td>

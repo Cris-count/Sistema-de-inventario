@@ -564,6 +564,13 @@ table.data tbody tr:hover td {
   background: var(--bg);
   box-sizing: border-box;
 }
+/* Modo claro: fondo con matices (evita blanco plano) y tarjeta con sombra difusa + vidrio suave */
+[data-theme='light'] .login-panel {
+  background:
+    radial-gradient(ellipse 115% 85% at 0% -5%, rgba(59, 130, 246, 0.1), transparent 55%),
+    radial-gradient(ellipse 95% 75% at 100% 105%, rgba(100, 116, 139, 0.14), transparent 52%),
+    linear-gradient(168deg, #e2e8f0 0%, #eef2f7 42%, #f4f6f9 100%);
+}
 .login-top-bar {
   flex-shrink: 0;
   display: flex;
@@ -624,7 +631,28 @@ table.data tbody tr:hover td {
   }
 }
 [data-theme='light'] .login-card {
-  box-shadow: var(--shadow-md);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 6px 20px -4px rgba(15, 23, 42, 0.06),
+    0 22px 44px -14px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+[data-theme='light'] .login-form .btn-primary {
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  text-shadow: 0 1px 1px rgba(15, 23, 42, 0.18);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 4px 16px rgba(37, 99, 235, 0.32);
+}
+[data-theme='light'] .login-form .btn-primary:hover:not(:disabled) {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.28) inset,
+    0 6px 22px rgba(37, 99, 235, 0.4);
 }
 .login-card-head {
   margin-bottom: 1.35rem;
