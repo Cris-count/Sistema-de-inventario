@@ -1,52 +1,51 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import type { EmpresaForm, PublicPlanDto, SuperAdminForm } from '../register.models';
 import { UiButtonComponent } from '../../../shared/components/ui/button/ui-button.component';
+import { UiCardComponent } from '../../../shared/components/ui/card/ui-card.component';
 import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/format-plan-price';
 
 @Component({
   selector: 'app-register-step-review',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButtonComponent],
+  imports: [UiButtonComponent, UiCardComponent],
   template: `
     <div class="space-y-2">
-      <h2 class="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">4. Confirmación</h2>
-      <p class="text-sm text-slate-600 dark:text-slate-400">Revisa los datos antes de crear la empresa y la suscripción inicial.</p>
+      <h2 class="text-xl font-semibold tracking-tight text-primary dark:text-slate-100">4. Confirmación</h2>
+      <p class="text-sm text-secondary dark:text-slate-400">Revisa los datos antes de crear la empresa y la suscripción inicial.</p>
     </div>
 
-    <div
-      class="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-surface p-5 text-sm shadow-soft dark:border-slate-600 dark:bg-slate-900/90"
-    >
+    <app-ui-card class="mt-6 space-y-4 text-sm">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Plan</p>
-        <p class="mt-1 font-medium text-slate-900 dark:text-slate-100">{{ plan()?.nombre ?? planCodigo() }}</p>
+        <p class="text-xs font-semibold uppercase tracking-wider text-accent">Plan</p>
+        <p class="mt-1 font-medium text-primary dark:text-slate-100">{{ plan()?.nombre ?? planCodigo() }}</p>
         @if (plan(); as pl) {
-          <p class="mt-1 text-slate-600 dark:text-slate-400">
-            <span class="font-medium text-slate-700 dark:text-slate-300">Precio mensual:</span>
+          <p class="mt-1 text-secondary dark:text-slate-400">
+            <span class="font-medium text-primary dark:text-slate-200">Precio mensual:</span>
             {{ resumenPrecio(pl) }}
           </p>
         }
       </div>
       <div class="border-t border-slate-100 pt-4 dark:border-slate-700">
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Empresa</p>
-        <ul class="mt-2 space-y-1 text-slate-600 dark:text-slate-400">
-          <li><span class="font-medium text-slate-700 dark:text-slate-300">Nombre:</span> {{ empresa().nombre }}</li>
-          <li><span class="font-medium text-slate-700 dark:text-slate-300">ID:</span> {{ empresa().identificacion }}</li>
-          <li><span class="font-medium text-slate-700 dark:text-slate-300">Sector:</span> {{ empresa().sector }}</li>
-          <li><span class="font-medium text-slate-700 dark:text-slate-300">Correo:</span> {{ empresa().emailContacto }}</li>
-          <li><span class="font-medium text-slate-700 dark:text-slate-300">Teléfono:</span> {{ empresa().telefono || '—' }}</li>
-          <li><span class="font-medium text-slate-700 dark:text-slate-300">Ubicación:</span> {{ empresa().ciudad || '—' }}, {{ empresa().pais || '—' }}</li>
+        <p class="text-xs font-semibold uppercase tracking-wider text-accent">Empresa</p>
+        <ul class="mt-2 space-y-1 text-secondary dark:text-slate-400">
+          <li><span class="font-medium text-primary dark:text-slate-200">Nombre:</span> {{ empresa().nombre }}</li>
+          <li><span class="font-medium text-primary dark:text-slate-200">ID:</span> {{ empresa().identificacion }}</li>
+          <li><span class="font-medium text-primary dark:text-slate-200">Sector:</span> {{ empresa().sector }}</li>
+          <li><span class="font-medium text-primary dark:text-slate-200">Correo:</span> {{ empresa().emailContacto }}</li>
+          <li><span class="font-medium text-primary dark:text-slate-200">Teléfono:</span> {{ empresa().telefono || '—' }}</li>
+          <li><span class="font-medium text-primary dark:text-slate-200">Ubicación:</span> {{ empresa().ciudad || '—' }}, {{ empresa().pais || '—' }}</li>
         </ul>
       </div>
       <div class="border-t border-slate-100 pt-4 dark:border-slate-700">
-        <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">Super admin</p>
-        <ul class="mt-2 space-y-1 text-slate-600 dark:text-slate-400">
+        <p class="text-xs font-semibold uppercase tracking-wider text-accent">Super admin</p>
+        <ul class="mt-2 space-y-1 text-secondary dark:text-slate-400">
           <li>
-            <span class="font-medium text-slate-700 dark:text-slate-300">Nombre:</span> {{ admin().nombre }} {{ admin().apellido }}
+            <span class="font-medium text-primary dark:text-slate-200">Nombre:</span> {{ admin().nombre }} {{ admin().apellido }}
           </li>
-          <li><span class="font-medium text-slate-700 dark:text-slate-300">Correo:</span> {{ admin().email }}</li>
+          <li><span class="font-medium text-primary dark:text-slate-200">Correo:</span> {{ admin().email }}</li>
         </ul>
       </div>
-    </div>
+    </app-ui-card>
 
     @if (hint()) {
       <p class="mt-4 text-sm text-amber-800 dark:text-amber-200">{{ hint() }}</p>

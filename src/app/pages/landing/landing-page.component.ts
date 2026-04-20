@@ -1,31 +1,61 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { LandingTopbarComponent } from './sections/topbar/landing-topbar.component';
 import { LandingNavbarComponent } from './sections/navbar/landing-navbar.component';
 import { LandingHeroComponent } from './sections/hero/landing-hero.component';
-import { LandingSocialProofComponent } from './sections/social-proof/landing-social-proof.component';
-import { LandingProblemSolutionComponent } from './sections/problem-solution/landing-problem-solution.component';
-import { LandingFeaturesComponent } from './sections/features/landing-features.component';
+import { LandingAdvisorComponent } from './sections/advisor/landing-advisor.component';
+import { LandingProblemComponent } from './sections/problem/landing-problem.component';
+import { LandingSolutionComponent } from './sections/solution/landing-solution.component';
 import { LandingProductShowcaseComponent } from './sections/product-showcase/landing-product-showcase.component';
+import { LandingSectorsComponent } from './sections/sectors/landing-sectors.component';
+import { LandingFeaturesComponent } from './sections/features/landing-features.component';
 import { LandingBenefitsComponent } from './sections/benefits/landing-benefits.component';
 import { LandingPricingComponent } from './sections/pricing/landing-pricing.component';
-import { LandingTestimonialsComponent } from './sections/testimonials/landing-testimonials.component';
+import { LandingPlansCompareComponent } from './sections/plans-compare/landing-plans-compare.component';
+import { LandingTrustComponent } from './sections/trust/landing-trust.component';
 import { LandingFaqComponent } from './sections/faq/landing-faq.component';
 import { LandingCtaComponent } from './sections/cta/landing-cta.component';
 import { LandingFooterComponent } from './sections/footer/landing-footer.component';
 import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.component';
 
+/**
+ * Landing pública. Orquesta las 15 secciones comerciales:
+ *
+ *   1.  Top bar comercial (contacto + área de clientes + CTA prueba)
+ *   2.  Navbar principal (Soluciones / Funcionalidades / Planes / FAQ)
+ *   3.  Hero
+ *   4.  Franja de asesoría (WhatsApp + correo)
+ *   5.  Problema
+ *   6.  Solución
+ *   7.  Soluciones por tipo de negocio
+ *   8.  Funcionalidades clave
+ *   9.  Beneficios
+ *   10. Planes (catálogo real desde backend)
+ *   11. Comparativa breve de planes
+ *   12. Confianza honesta
+ *   13. FAQ
+ *   14. CTA final
+ *   15. Footer
+ *
+ * `LandingUrgencyComponent` se retira del flujo: el mensaje de urgencia ya
+ * está cubierto por el advisor strip y el CTA final, sin saturar el scroll.
+ */
 @Component({
   selector: 'app-landing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    LandingTopbarComponent,
     LandingNavbarComponent,
     LandingHeroComponent,
-    LandingSocialProofComponent,
-    LandingProblemSolutionComponent,
-    LandingFeaturesComponent,
+    LandingAdvisorComponent,
+    LandingProblemComponent,
+    LandingSolutionComponent,
     LandingProductShowcaseComponent,
+    LandingSectorsComponent,
+    LandingFeaturesComponent,
     LandingBenefitsComponent,
     LandingPricingComponent,
-    LandingTestimonialsComponent,
+    LandingPlansCompareComponent,
+    LandingTrustComponent,
     LandingFaqComponent,
     LandingCtaComponent,
     LandingFooterComponent,
@@ -36,16 +66,20 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
       id="lp-root"
       class="min-h-screen bg-background font-sans text-primary antialiased dark:bg-slate-950 dark:text-slate-100"
     >
+      <app-landing-topbar />
       <app-landing-navbar />
       <main>
         <app-landing-hero />
-        <app-landing-social-proof />
-        <app-landing-problem-solution />
-        <app-landing-features />
+        <app-landing-advisor />
+        <app-landing-problem />
+        <app-landing-solution />
         <app-landing-product-showcase />
+        <app-landing-sectors />
+        <app-landing-features />
         <app-landing-benefits />
         <app-landing-pricing />
-        <app-landing-testimonials />
+        <app-landing-plans-compare />
+        <app-landing-trust />
         <app-landing-faq />
         <app-landing-cta />
       </main>
@@ -64,7 +98,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
             linkTo="/login"
             >Iniciar sesión</app-ui-button
           >
-          <app-ui-button variant="landing-floating" linkTo="/registro">Empezar</app-ui-button>
+          <app-ui-button variant="landing-floating" linkTo="/registro">Empieza gratis</app-ui-button>
         </div>
       </div>
 
@@ -77,7 +111,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
             >Iniciar sesión</app-ui-button
           >
           <app-ui-button variant="landing-primary" class="flex-1 !min-h-[48px]" linkTo="/registro"
-            >Empezar</app-ui-button
+            >Empieza gratis</app-ui-button
           >
         </div>
       </div>

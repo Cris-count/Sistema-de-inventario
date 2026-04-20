@@ -8,49 +8,49 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
   imports: [UiButtonComponent],
   template: `
     <div class="space-y-2">
-      <h2 class="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">5. Listo</h2>
-      <p class="text-sm text-slate-600 dark:text-slate-400">{{ state().headline }}</p>
+      <h2 class="text-xl font-semibold tracking-tight text-primary dark:text-slate-100">5. Listo</h2>
+      <p class="text-sm text-secondary dark:text-slate-400">{{ state().headline }}</p>
     </div>
 
     <div class="mt-5 rounded-2xl border p-4 text-sm" [class]="state().statusContainerClass">
       <p class="text-xs font-semibold uppercase tracking-wide" [class]="state().statusLabelClass">
         Estado de tu registro
       </p>
-      <p class="mt-2 text-base font-semibold text-slate-900 dark:text-slate-100">{{ state().statusTitle }}</p>
-      <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ state().statusDescription }}</p>
-      <p class="mt-3 text-sm font-medium text-slate-900 dark:text-slate-100">{{ state().nextAction }}</p>
+      <p class="mt-2 text-base font-semibold text-primary dark:text-slate-100">{{ state().statusTitle }}</p>
+      <p class="mt-1 text-sm text-secondary dark:text-slate-400">{{ state().statusDescription }}</p>
+      <p class="mt-3 text-sm font-medium text-primary dark:text-slate-100">{{ state().nextAction }}</p>
     </div>
 
     <div
       class="mt-6 space-y-3 rounded-2xl border border-slate-200 bg-surface p-5 text-sm shadow-soft dark:border-slate-600 dark:bg-slate-900/90"
     >
       <div class="flex flex-wrap justify-between gap-2">
-        <span class="text-slate-600 dark:text-slate-400">Empresa</span>
-        <span class="font-medium text-slate-900 dark:text-slate-100">{{ result().empresaNombre }}</span>
+        <span class="text-secondary dark:text-slate-400">Empresa</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ result().empresaNombre }}</span>
       </div>
       <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
-        <span class="text-slate-600 dark:text-slate-400">Super admin</span>
-        <span class="font-medium text-slate-900 dark:text-slate-100">{{ result().superAdminEmail }}</span>
+        <span class="text-secondary dark:text-slate-400">Super admin</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ result().superAdminEmail }}</span>
       </div>
       <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
-        <span class="text-slate-600 dark:text-slate-400">Plan</span>
-        <span class="font-medium text-slate-900 dark:text-slate-100">{{ result().planNombre }}</span>
+        <span class="text-secondary dark:text-slate-400">Plan</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ result().planNombre }}</span>
       </div>
       <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
-        <span class="text-slate-600 dark:text-slate-400">Acceso al sistema</span>
-        <span class="font-medium text-slate-900 dark:text-slate-100">{{ state().accessLabel }}</span>
+        <span class="text-secondary dark:text-slate-400">Acceso al sistema</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ state().accessLabel }}</span>
       </div>
       <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
-        <span class="text-slate-600 dark:text-slate-400">Estado de la cuenta</span>
-        <span class="font-medium text-slate-900 dark:text-slate-100">{{ state().accountLabel }}</span>
+        <span class="text-secondary dark:text-slate-400">Estado de la cuenta</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ state().accountLabel }}</span>
       </div>
 
       @if (paymentReference(); as ref) {
         <div
-          class="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400"
+          class="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs text-secondary dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400"
         >
           <p>
-            <span class="font-semibold text-slate-900 dark:text-slate-100">Referencia de pago:</span>
+            <span class="font-semibold text-primary dark:text-slate-100">Referencia de pago:</span>
             {{ ref }}
           </p>
           <p class="mt-1">Compártela solo para seguimiento del cobro o validación manual.</p>
@@ -58,18 +58,18 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
             <app-ui-button variant="secondary" size="sm" (click)="copyReference(ref)">Copiar referencia</app-ui-button>
           </div>
           @if (copyFeedback(); as feedback) {
-            <p class="mt-2 text-[11px] font-medium text-slate-900 dark:text-slate-100">{{ feedback }}</p>
+            <p class="mt-2 text-[11px] font-medium text-primary dark:text-slate-100">{{ feedback }}</p>
           }
         </div>
       }
 
       @if (result().purchasePin) {
         <div class="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100 dark:bg-slate-800/80 dark:ring-slate-700">
-          <p class="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">PIN de seguimiento</p>
-          <p class="mt-2 font-mono text-lg font-semibold tracking-widest text-slate-900 dark:text-slate-100">
+          <p class="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-slate-400">PIN de seguimiento</p>
+          <p class="mt-2 font-mono text-lg font-semibold tracking-widest text-primary dark:text-slate-100">
             {{ result().purchasePin }}
           </p>
-          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          <p class="mt-1 text-xs text-secondary dark:text-slate-400">
             Es una referencia de soporte para seguimiento. No habilita acceso ni reemplaza el inicio de sesión.
           </p>
         </div>

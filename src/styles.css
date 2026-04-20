@@ -1,55 +1,51 @@
-/* Inventario — sistema de diseño (presentación corporativa, sin Tailwind en build). */
+/* ============================================================================
+ * Inventario — sistema del dashboard/panel.
+ *
+ * Las variables legacy del panel (`--accent`, `--bg`, `--surface`, …) consumen
+ * los design tokens oficiales de `src/app/core/design/tokens.css` (fuente única).
+ * El cambio light/dark lo maneja tokens.css; este archivo sólo traduce nombres
+ * locales a los tokens para no tener que reescribir todas las reglas del panel.
+ *
+ * No se declaran colores hardcoded aquí: si necesitas un color nuevo, agrégalo
+ * primero a tokens.css y consúmelo desde este archivo.
+ * ========================================================================== */
+
 :root {
-  --bg-deep: #0a0d12;
-  --bg: #0f141c;
-  --bg-panel: #131922;
-  --surface: #1a2332;
-  --surface-hover: #222d40;
-  --surface2: #243047;
-  --border: #2f3d52;
-  --border-subtle: #243040;
-  --text: #f8fafc;
-  --muted: #94a3b8;
-  --accent: #3b82f6;
-  --accent-bright: #60a5fa;
-  --accent-dim: #2563eb;
-  --accent-soft: rgba(59, 130, 246, 0.14);
-  --accent-glow: rgba(59, 130, 246, 0.22);
-  --danger: #f87171;
-  --ok: #4ade80;
-  --warn: #fbbf24;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --font: 'DM Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Fondos y superficies */
+  --bg-deep: rgb(var(--color-bg-deep));
+  --bg: rgb(var(--color-bg));
+  --bg-panel: rgb(var(--color-bg-deep));
+  --surface: rgb(var(--color-surface));
+  --surface-hover: rgb(var(--color-surface-hover));
+  --surface2: rgb(var(--color-surface-hover));
+
+  /* Bordes y texto */
+  --border: rgb(var(--color-border));
+  --border-subtle: rgb(var(--color-border-subtle));
+  --text: rgb(var(--color-text));
+  --muted: rgb(var(--color-text-muted));
+
+  /* Acento — teal oficial. `--accent-bright` y `--accent-dim` son alias que
+   * conservan retrocompatibilidad con el CSS existente del panel. */
+  --accent: rgb(var(--color-accent));
+  --accent-bright: rgb(var(--color-accent));
+  --accent-dim: rgb(var(--color-accent-strong));
+  --accent-soft: rgb(var(--color-accent) / 0.14);
+  --accent-glow: rgb(var(--color-accent) / 0.22);
+
+  /* Estados */
+  --danger: rgb(var(--color-danger));
+  --ok: rgb(var(--color-success));
+  --warn: rgb(var(--color-warning));
+  --info: rgb(var(--color-info));
+
+  /* Radios, sombras, tipografía. `--radius-sm`, `--radius-md`, `--shadow-sm`,
+   * `--shadow-md` y `--font-sans` ya están disponibles globalmente (tokens.css);
+   * sólo agregamos el alias `--radius` que el panel usa históricamente. */
+  --radius: var(--radius-md);
+  --font: var(--font-sans);
   --tracking-tight: -0.02em;
   --space-page: clamp(1rem, 3vw, 1.75rem);
-}
-
-/* Modo claro: panel, login y páginas con variables (styles.css). El marketing usa Tailwind + clase `dark` en <html>. */
-:root[data-theme='light'],
-html[data-theme='light'] {
-  --bg-deep: #e2e8f0;
-  --bg: #f8fafc;
-  --bg-panel: #f1f5f9;
-  --surface: #ffffff;
-  --surface-hover: #e2e8f0;
-  --surface2: #e2e8f0;
-  --border: #cbd5e1;
-  --border-subtle: #e2e8f0;
-  --text: #0f172a;
-  --muted: #475569;
-  --accent: #2563eb;
-  --accent-bright: #3b82f6;
-  --accent-dim: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.12);
-  --accent-glow: rgba(37, 99, 235, 0.15);
-  --danger: #dc2626;
-  --ok: #16a34a;
-  --warn: #d97706;
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 4px 24px rgba(15, 23, 42, 0.08);
 }
 
 *,
@@ -68,8 +64,8 @@ body {
   min-height: 100%;
   min-height: 100dvh;
   font-family: var(--font);
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: 1.55;
   background: var(--bg);
   background-image: radial-gradient(ellipse 120% 80% at 50% -30%, var(--accent-glow), transparent 55%);
   color: var(--text);
@@ -95,11 +91,17 @@ h3 {
 }
 
 h1 {
-  font-size: clamp(1.35rem, 2.5vw, 1.65rem);
+  font-size: var(--text-h2);
+  line-height: var(--text-h2-lh);
 }
 h2 {
-  font-size: 1.05rem;
+  font-size: var(--text-h3);
+  line-height: var(--text-h3-lh);
   color: var(--text);
+}
+h3 {
+  font-size: var(--text-body-lg);
+  line-height: 1.35;
 }
 
 /* Encabezado de página reutilizable */
@@ -114,7 +116,7 @@ h2 {
 }
 .page-lead {
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: var(--text-body);
   line-height: 1.55;
 }
 
@@ -128,7 +130,8 @@ h2 {
 
 .muted {
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-body-sm);
+  line-height: 1.5;
 }
 
 .stack {
@@ -228,7 +231,7 @@ h2 {
   background: var(--surface2);
   color: var(--text);
   -webkit-text-fill-color: var(--text);
-  font-size: 0.9rem;
+  font-size: var(--text-body-sm);
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -289,7 +292,7 @@ h2 {
   min-width: min(140px, 100%);
 }
 .field label {
-  font-size: 0.78rem;
+  font-size: var(--text-caption);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -303,7 +306,7 @@ h2 {
   border: 1px solid var(--border);
   background: var(--bg-panel);
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: var(--text-body-sm);
   font-family: inherit;
   transition:
     border-color 0.15s ease,
@@ -322,7 +325,7 @@ h2 {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .field .err {
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   color: var(--danger);
 }
 
@@ -339,7 +342,7 @@ h2 {
 table.data {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: var(--text-body-sm);
 }
 table.data th,
 table.data td {
@@ -351,7 +354,7 @@ table.data th {
   background: var(--bg-panel);
   color: var(--muted);
   font-weight: 600;
-  font-size: 0.72rem;
+  font-size: var(--text-caption);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -364,9 +367,10 @@ table.data tbody tr:hover td {
 
 .badge {
   display: inline-block;
-  padding: 0.2rem 0.5rem;
+  padding: 0.25rem 0.55rem;
   border-radius: 6px;
-  font-size: 0.68rem;
+  font-size: var(--text-caption);
+  line-height: 1.3;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -378,6 +382,16 @@ table.data tbody tr:hover td {
   border-color: color-mix(in srgb, var(--ok) 38%, transparent);
   background: color-mix(in srgb, var(--ok) 12%, transparent);
 }
+.badge-warn {
+  color: var(--warn);
+  border-color: color-mix(in srgb, var(--warn) 42%, transparent);
+  background: color-mix(in srgb, var(--warn) 14%, transparent);
+}
+.badge-danger {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 42%, transparent);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
 .badge-off {
   color: var(--muted);
 }
@@ -385,17 +399,29 @@ table.data tbody tr:hover td {
 .alert {
   padding: 0.85rem 1.1rem;
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  font-size: var(--text-body-sm);
+  line-height: 1.5;
   border: 1px solid transparent;
+  animation: ds-alert-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes ds-alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .alert-error {
-  background: rgba(248, 113, 113, 0.1);
-  border-color: rgba(248, 113, 113, 0.35);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 35%, transparent);
   color: #fecaca;
 }
 [data-theme='light'] .alert-error {
-  background: rgba(254, 226, 226, 0.95);
-  border-color: rgba(220, 38, 38, 0.35);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--danger) 32%, transparent);
   color: #991b1b;
 }
 .alert-success {
@@ -409,13 +435,13 @@ table.data tbody tr:hover td {
   color: #14532d;
 }
 .alert-info {
-  background: color-mix(in srgb, var(--accent-bright) 14%, transparent);
-  border-color: color-mix(in srgb, var(--accent-bright) 32%, transparent);
+  background: color-mix(in srgb, var(--info) 14%, transparent);
+  border-color: color-mix(in srgb, var(--info) 32%, transparent);
   color: #dbeafe;
 }
 [data-theme='light'] .alert-info {
-  background: rgba(37, 99, 235, 0.1);
-  border-color: rgba(37, 99, 235, 0.3);
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+  border-color: color-mix(in srgb, var(--info) 30%, transparent);
   color: #1e3a8a;
 }
 
@@ -427,6 +453,11 @@ table.data tbody tr:hover td {
   border-top-color: var(--accent-bright);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
+}
+.btn-primary .spinner,
+.btn-primary.is-loading .spinner {
+  border-color: rgba(12, 20, 32, 0.25);
+  border-top-color: #ffffff;
 }
 @keyframes spin {
   to {
@@ -448,7 +479,7 @@ table.data tbody tr:hover td {
   margin: 0;
   padding-left: 1.2rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-body-sm);
   line-height: 1.65;
 }
 .flow-list li {
@@ -572,7 +603,7 @@ table.data tbody tr:hover td {
 /* Modo claro: fondo con matices (evita blanco plano) y tarjeta con sombra difusa + vidrio suave */
 [data-theme='light'] .login-panel {
   background:
-    radial-gradient(ellipse 115% 85% at 0% -5%, rgba(59, 130, 246, 0.1), transparent 55%),
+    radial-gradient(ellipse 115% 85% at 0% -5%, rgb(var(--color-accent) / 0.1), transparent 55%),
     radial-gradient(ellipse 95% 75% at 100% 105%, rgba(100, 116, 139, 0.14), transparent 52%),
     linear-gradient(168deg, #e2e8f0 0%, #eef2f7 42%, #f4f6f9 100%);
 }
@@ -652,12 +683,12 @@ table.data tbody tr:hover td {
   text-shadow: 0 1px 1px rgba(15, 23, 42, 0.18);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.22) inset,
-    0 4px 16px rgba(37, 99, 235, 0.32);
+    0 4px 16px rgb(var(--color-accent) / 0.32);
 }
 [data-theme='light'] .login-form .btn-primary:hover:not(:disabled) {
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.28) inset,
-    0 6px 22px rgba(37, 99, 235, 0.4);
+    0 6px 22px rgb(var(--color-accent) / 0.4);
 }
 .login-card-head {
   margin-bottom: 1.35rem;
@@ -923,5 +954,56 @@ table.data th {
   }
   table.data {
     font-size: 0.78rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Motion del dashboard
+ * Estilos de overlay/dialog para futuros modales que usen los triggers
+ * `backdropFade` / `modalFadeScale` de `core/animations`. Así cuando se cree un
+ * modal solo hace falta aplicarle estas clases + los triggers, sin inventar CSS.
+ * -------------------------------------------------------------------------*/
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 14, 0.55);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  z-index: 300;
+}
+[data-theme='light'] .modal-backdrop {
+  background: rgba(15, 23, 42, 0.4);
+}
+.modal-dialog {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 310;
+  pointer-events: none;
+}
+.modal-dialog > * {
+  pointer-events: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  max-width: min(560px, 100%);
+  width: 100%;
+  padding: 1.5rem 1.4rem;
+}
+
+/* Accesibilidad: respetar `prefers-reduced-motion` en el dashboard. */
+@media (prefers-reduced-motion: reduce) {
+  .alert,
+  .spinner,
+  .sidebar,
+  .nav-link,
+  .rail-toggle,
+  .btn {
+    animation: none !important;
+    transition: none !important;
   }
 }

@@ -1,41 +1,65 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { fadeUp, staggerList } from '../../../../core/animations';
+import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.component';
+
+interface BenefitItem {
+  title: string;
+  body: string;
+}
 
 @Component({
   selector: 'app-landing-benefits',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [UiCardComponent],
+  animations: [fadeUp, staggerList],
   template: `
-    <section class="bg-surface py-section dark:bg-slate-900">
-      <div class="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 lp-section-pad">
-        <div class="grid gap-10 lg:grid-cols-2 lg:items-center">
-          <div>
-            <h2 class="text-3xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-4xl">
-              Resultados que tu equipo nota en semanas
-            </h2>
-            <p class="mt-4 text-lg text-secondary dark:text-slate-400">
-              Menos retrabajo, menos reclamos entre áreas y más claridad para comprar y producir con seguridad.
-            </p>
-          </div>
-          <ul class="space-y-4 text-sm leading-relaxed text-secondary dark:text-slate-400">
-            @for (b of benefits; track b) {
-              <li class="flex gap-3 rounded-2xl border border-slate-200/80 bg-background px-4 py-3 dark:border-slate-700/80 dark:bg-slate-950">
-                <span
-                  class="mt-0.5 inline-flex h-6 w-6 flex-none items-center justify-center rounded-full bg-teal-50 text-[11px] font-bold text-accent ring-1 ring-teal-100 dark:bg-teal-950/60 dark:ring-teal-800/80"
-                  >&#10003;</span
-                >
-                <span class="text-primary/90 dark:text-slate-200">{{ b }}</span>
-              </li>
-            }
-          </ul>
+    <section id="beneficios" class="bg-background py-section dark:bg-slate-950">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div @fadeUp class="mx-auto max-w-2xl text-center">
+          <h2 class="text-3xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-4xl">
+            Lo que realmente ganas
+          </h2>
+          <p class="mt-4 text-lg text-secondary dark:text-slate-400">
+            No es solo tener un sistema. Es ganar control, tiempo y claridad para decidir mejor cada día.
+          </p>
+        </div>
+
+        <div @staggerList class="mt-12 grid gap-5 sm:grid-cols-2">
+          @for (b of benefits; track b.title) {
+            <app-ui-card class="lp-card-hover flex gap-4">
+              <span
+                class="mt-0.5 inline-flex h-9 w-9 flex-none items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent ring-1 ring-accent/20 dark:bg-accent/15 dark:ring-accent/30"
+                aria-hidden="true"
+                >&#10003;</span
+              >
+              <div>
+                <h3 class="text-base font-semibold text-primary dark:text-slate-100">{{ b.title }}</h3>
+                <p class="mt-1 text-sm leading-relaxed text-secondary dark:text-slate-400">{{ b.body }}</p>
+              </div>
+            </app-ui-card>
+          }
         </div>
       </div>
     </section>
   `
 })
 export class LandingBenefitsComponent {
-  readonly benefits = [
-    'Reduce faltantes y sobrestock con alertas y saldos confiables por bodega.',
-    'Acelera cierres con movimientos estandarizados y trazabilidad lista para auditoría.',
-    'Escala sin rehacer el proceso: roles, límites y consumo alineados a tu plan.',
-    'Onboarding simple: tu equipo entiende el flujo sin manual de 40 páginas.'
+  readonly benefits: BenefitItem[] = [
+    {
+      title: 'Evitas pérdidas por desorden',
+      body: 'Productos registrados, movimientos claros y menos plata que se escapa sin explicación.'
+    },
+    {
+      title: 'Ahorras tiempo operativo',
+      body: 'Tu equipo deja de revisar Excel, cuadernos y chats. Todo queda en un solo lugar ordenado.'
+    },
+    {
+      title: 'Tomas decisiones con datos reales',
+      body: 'Compras, ventas y reposición basadas en el stock que sí tienes, no en suposiciones.'
+    },
+    {
+      title: 'Escalas sin perder el control',
+      body: 'Más productos, más bodegas y más personas en tu negocio, con la misma claridad del primer día.'
+    }
   ];
 }

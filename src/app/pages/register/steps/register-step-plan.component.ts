@@ -9,8 +9,8 @@ import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/
   imports: [UiButtonComponent],
   template: `
     <div class="space-y-2">
-      <h2 class="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">1. Elige tu plan</h2>
-      <p class="text-sm text-slate-600 dark:text-slate-400">
+      <h2 class="text-xl font-semibold tracking-tight text-primary dark:text-slate-100">1. Elige tu plan</h2>
+      <p class="text-sm text-secondary dark:text-slate-400">
         Mismos precios que en la página principal. Podrás escalar sin límites según política comercial cuando lo necesites.
       </p>
     </div>
@@ -20,28 +20,28 @@ import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/
         <button
           type="button"
           (click)="pick.emit(p.codigo)"
-          class="w-full rounded-2xl border border-slate-200 bg-surface p-4 text-left transition hover:border-teal-200 hover:shadow-sm dark:border-slate-600 dark:bg-slate-900/90 dark:hover:border-teal-600/50"
+          class="w-full rounded-2xl border border-slate-200 bg-surface p-4 text-left transition hover:border-accent/40 hover:shadow-sm dark:border-slate-600 dark:bg-slate-900/90 dark:hover:border-accent/50"
           [class.ring-2]="selectedCodigo() === p.codigo"
-          [class.ring-teal-400]="selectedCodigo() === p.codigo"
-          [class.border-teal-300]="selectedCodigo() === p.codigo"
+          [class.ring-accent]="selectedCodigo() === p.codigo"
+          [class.border-accent]="selectedCodigo() === p.codigo"
         >
           <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <span class="font-semibold text-slate-900 dark:text-slate-100">{{ p.nombre }}</span>
-            <span class="text-sm font-medium text-slate-900 dark:text-slate-100">
+            <span class="font-semibold text-primary dark:text-slate-100">{{ p.nombre }}</span>
+            <span class="text-sm font-medium text-primary dark:text-slate-100">
               {{ etiquetaPrecio(p) }}
             </span>
           </div>
           @if (p.descripcion) {
-            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ p.descripcion }}</p>
+            <p class="mt-1 text-sm text-secondary dark:text-slate-400">{{ p.descripcion }}</p>
           }
-          <ul class="mt-3 space-y-1 text-xs text-slate-600 dark:text-slate-400">
+          <ul class="mt-3 space-y-1 text-xs text-secondary dark:text-slate-400">
             @for (f of p.features; track f) {
               <li class="flex gap-2">
                 <span class="text-accent">·</span><span>{{ f }}</span>
               </li>
             }
           </ul>
-          <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Hasta {{ p.maxBodegas }} bodegas · hasta {{ p.maxUsuarios }} usuarios</p>
+          <p class="mt-2 text-xs text-secondary dark:text-slate-400">Hasta {{ p.maxBodegas }} bodegas · hasta {{ p.maxUsuarios }} usuarios</p>
         </button>
       }
     </div>

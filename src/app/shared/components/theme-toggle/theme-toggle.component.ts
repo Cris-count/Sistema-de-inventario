@@ -46,11 +46,11 @@ import { ThemeService } from '../../../core/services/theme.service';
         border-color 0.15s ease;
     }
     .theme-toggle-btn:hover {
-      border-color: var(--accent, #3b82f6);
+      border-color: var(--accent, #0d9488);
       background: var(--surface-hover, #222d40);
     }
     .theme-toggle-btn:focus-visible {
-      outline: 2px solid var(--accent-bright, #60a5fa);
+      outline: 2px solid var(--accent-bright, #2dd4bf);
       outline-offset: 2px;
     }
     /* Misma lógica visual que .nav-link en barra estrecha: solo icono, sin desbordar */
@@ -115,8 +115,8 @@ import { ThemeService } from '../../../core/services/theme.service';
     }
     /* Barra lateral: aspecto alineado al ítem activo/hover del menú */
     :host-context(.sidebar) .theme-toggle-btn--compact:hover {
-      background: var(--accent-soft, rgba(59, 130, 246, 0.14));
-      border-color: var(--accent, #3b82f6);
+      background: var(--accent-soft, rgba(13, 148, 136, 0.14));
+      border-color: var(--accent, #0d9488);
     }
     :host-context(.user-box-theme--compact) {
       display: flex;

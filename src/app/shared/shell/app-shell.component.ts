@@ -3,6 +3,7 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { catchError, filter, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { routeFadeAnimation, prepareRouteSnapshot } from '../../core/animations';
 import {
   matchNavItemByUrl,
   NAV_ITEMS,
@@ -18,6 +19,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
 @Component({
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, ThemeToggleComponent],
+  animations: [routeFadeAnimation],
   template: `
     <div class="shell">
       @if (navOpen()) {
@@ -138,8 +140,8 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
             <app-theme-toggle />
           </div>
         </header>
-        <div class="main-inner">
-          <router-outlet />
+        <div class="main-inner" [@routeFadeAnimation]="prepareRoute(outlet)">
+          <router-outlet #outlet="outlet" />
         </div>
       </div>
     </div>
@@ -577,6 +579,7 @@ export class AppShellComponent {
   private readonly destroyRef = inject(DestroyRef);
   readonly navExactActive = navExactActive;
   readonly navOpen = signal(false);
+  readonly prepareRoute = prepareRouteSnapshot;
 
   /**
    * Vista de escritorio (mismo breakpoint que el cajón móvil): en móvil el menú es ancho aunque railMode

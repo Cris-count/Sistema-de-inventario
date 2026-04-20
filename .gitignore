@@ -52,3 +52,7 @@ backend/target/
 
 # SMTP / overrides locales del API (copiar desde application-local.yml.example)
 backend/src/main/resources/application-local.yml
+
+# Referencia externa de plantilla (solo para inspiración visual,
+# nunca se importa en la app — contiene nicepage.css/js y assets propios).
+/_templete-reference/

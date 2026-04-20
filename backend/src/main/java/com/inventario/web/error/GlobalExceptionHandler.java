@@ -27,6 +27,9 @@ public class GlobalExceptionHandler {
         if (ex.getBlockCode() != null && !ex.getBlockCode().isBlank()) {
             pd.setProperty("blockCode", ex.getBlockCode());
         }
+        if (ex.getBlockModule() != null && !ex.getBlockModule().isBlank()) {
+            pd.setProperty("blockModule", ex.getBlockModule());
+        }
         ResponseEntity.BodyBuilder b = ResponseEntity.status(ex.getStatus());
         if (ex.getRetryAfterSeconds() != null && ex.getRetryAfterSeconds() > 0) {
             b.header(HttpHeaders.RETRY_AFTER, ex.getRetryAfterSeconds().toString());

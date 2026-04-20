@@ -1,0 +1,200 @@
+/* ============================================================================
+ * Design Tokens — fuente única del sistema visual
+ * ============================================================================
+ *
+ * Este archivo es consumido por:
+ *  - src/styles.css              (dashboard, login, panel administrativo)
+ *  - src/landing-styles.css      (landing pública)
+ *  - tailwind.config.mjs         (vía rgb(var(--color-x) / <alpha-value>))
+ *
+ * REGLAS:
+ *  - NO escribir colores hardcoded fuera de este archivo.
+ *  - Los canales de color se expresan como triples RGB sin `rgb(...)` para
+ *    que Tailwind v4 pueda componer alpha con `<alpha-value>`.
+ *  - Dark mode se activa con clase `dark` o atributo `data-theme='dark'` en
+ *    el elemento raíz (el `ThemeService` ya aplica ambos).
+ *
+ * Ver src/app/core/design/README.md para uso detallado y escala tipográfica.
+ * ========================================================================== */
+
+:root {
+  /* -------------------------------------------------------------------------
+   * Color — canales RGB (para componer alpha con Tailwind v4)
+   * ---------------------------------------------------------------------- */
+
+  /** Acento oficial del producto. Teal-600. Se usa para CTAs, acciones
+   * primarias, estados activos y marca. */
+  --color-accent: 13 148 136;
+  --color-accent-strong: 15 118 110;   /* teal-700: hover/pressed */
+  --color-accent-soft: 204 251 241;    /* teal-100: backgrounds sutiles */
+  --color-accent-foreground: 255 255 255;
+
+  /** Color informativo. Azul. SOLO para info, links descriptivos y estados
+   * informativos. No usar como CTA primario. */
+  --color-info: 59 130 246;
+  --color-info-soft: 219 234 254;
+
+  /** Estados semánticos. */
+  --color-success: 16 185 129;
+  --color-success-soft: 209 250 229;
+  --color-warning: 245 158 11;
+  --color-warning-soft: 254 243 199;
+  --color-danger: 239 68 68;
+  --color-danger-soft: 254 226 226;
+
+  /** Fondos y superficies. */
+  --color-bg: 248 250 252;             /* slate-50 */
+  --color-bg-deep: 241 245 249;        /* slate-100 */
+  --color-surface: 255 255 255;
+  --color-surface-hover: 248 250 252;
+
+  /** Texto. */
+  --color-text: 15 23 42;              /* slate-900 */
+  --color-text-muted: 100 116 139;     /* slate-500 */
+  --color-text-subtle: 148 163 184;    /* slate-400 */
+  --color-text-inverse: 248 250 252;   /* sobre fondos oscuros */
+
+  /** Bordes. */
+  --color-border: 226 232 240;         /* slate-200 */
+  --color-border-strong: 203 213 225;  /* slate-300 */
+  --color-border-subtle: 241 245 249;  /* slate-100 */
+
+  /* -------------------------------------------------------------------------
+   * Tipografía
+   * ---------------------------------------------------------------------- */
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, 'Cascadia Mono',
+    'Segoe UI Mono', monospace;
+
+  /** Escala tipográfica oficial (line-height incluido vía "/"). */
+  --text-display: 3rem;          /* 48px */
+  --text-display-lh: 1.1;
+  --text-h1: 2.25rem;            /* 36px */
+  --text-h1-lh: 1.2;
+  --text-h2: 1.75rem;            /* 28px */
+  --text-h2-lh: 1.25;
+  --text-h3: 1.25rem;            /* 20px */
+  --text-h3-lh: 1.35;
+  --text-body-lg: 1.125rem;      /* 18px */
+  --text-body: 1rem;             /* 16px */
+  --text-body-sm: 0.875rem;      /* 14px */
+  --text-caption: 0.75rem;       /* 12px */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+
+  /* -------------------------------------------------------------------------
+   * Espaciado / radios / sombras
+   * ---------------------------------------------------------------------- */
+
+  --radius-sm: 0.5rem;           /* 8px  — chips, inputs pequeños */
+  --radius-md: 0.75rem;          /* 12px — botones, inputs, cards pequeñas */
+  --radius-lg: 1rem;             /* 16px — cards */
+  --radius-xl: 1.25rem;          /* 20px — cards grandes, modales */
+  --radius-2xl: 1.5rem;          /* 24px — heros */
+  --radius-full: 9999px;
+
+  --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-md: 0 4px 12px rgb(15 23 42 / 0.08);
+  --shadow-lg: 0 12px 32px rgb(15 23 42 / 0.10);
+  --shadow-soft: 0 1px 2px rgb(15 23 42 / 0.06),
+    0 8px 24px rgb(15 23 42 / 0.06);
+  --shadow-focus: 0 0 0 3px rgb(var(--color-accent) / 0.25);
+
+  /* -------------------------------------------------------------------------
+   * Motion (alineado con src/app/core/animations/motion-tokens.ts)
+   * ---------------------------------------------------------------------- */
+
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --easing-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --easing-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* -------------------------------------------------------------------------
+   * Z-index oficial — usar siempre estos tokens, NO valores arbitrarios.
+   * ---------------------------------------------------------------------- */
+
+  --z-base: 1;
+  --z-nav: 50;
+  --z-drawer: 90;
+  --z-header: 150;
+  --z-fab: 200;
+  --z-modal-backdrop: 300;
+  --z-modal: 310;
+  --z-toast: 400;
+  --z-tooltip: 500;
+
+  /* -------------------------------------------------------------------------
+   * Espaciado de layout
+   * ---------------------------------------------------------------------- */
+
+  --space-page: clamp(1rem, 3vw, 1.75rem);
+  --space-section: 5rem;
+  --space-section-sm: 3.5rem;
+}
+
+/* ============================================================================
+ * Dark mode — activo con clase `dark` (Tailwind) o data-theme='dark' (panel)
+ * ========================================================================== */
+
+:root.dark,
+:root[data-theme='dark'] {
+  /** Acento más luminoso en dark para mantener contraste. */
+  --color-accent: 45 212 191;           /* teal-400 */
+  --color-accent-strong: 20 184 166;    /* teal-500 */
+  --color-accent-soft: 19 78 74;        /* teal-900 */
+  --color-accent-foreground: 2 6 23;
+
+  --color-info: 96 165 250;             /* blue-400 */
+  --color-info-soft: 30 58 138;         /* blue-900 */
+
+  --color-success: 52 211 153;
+  --color-success-soft: 6 78 59;
+  --color-warning: 251 191 36;
+  --color-warning-soft: 120 53 15;
+  --color-danger: 248 113 113;
+  --color-danger-soft: 127 29 29;
+
+  --color-bg: 2 6 23;                   /* slate-950 */
+  --color-bg-deep: 0 0 0;
+  --color-surface: 15 23 42;            /* slate-900 */
+  --color-surface-hover: 30 41 59;      /* slate-800 */
+
+  --color-text: 241 245 249;            /* slate-100 */
+  --color-text-muted: 148 163 184;      /* slate-400 */
+  --color-text-subtle: 100 116 139;
+  --color-text-inverse: 15 23 42;
+
+  --color-border: 51 65 85;             /* slate-700 */
+  --color-border-strong: 71 85 105;
+  --color-border-subtle: 30 41 59;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 4px 16px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 12px 36px rgb(0 0 0 / 0.5);
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px rgb(0 0 0 / 0.4);
+  --shadow-focus: 0 0 0 3px rgb(var(--color-accent) / 0.35);
+}
+
+/* ============================================================================
+ * Accesibilidad — reducir motion
+ * ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 1ms;
+    --duration-base: 1ms;
+    --duration-slow: 1ms;
+  }
+}
