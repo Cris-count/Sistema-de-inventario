@@ -15,6 +15,8 @@ Guía del repositorio (Angular + Docker + variables): [README.md](../README.md) 
 | [estructura_proyecto.md](estructura_proyecto.md) | Carpetas y archivos |
 | [PASO4_integracion.md](PASO4_integracion.md) | Validación, optimización, Spring Boot, cierre |
 
+Frontend (sistema visual oficial): [../src/app/core/design/README.md](../src/app/core/design/README.md) — tokens, componentes, reglas por área, dark mode, motion, do/don’t, checklist de nuevas pantallas.
+
 Backend (arquitectura): [../README_BACKEND.md](../README_BACKEND.md)
 
 Pruebas Postman: [../tests/README.md](../tests/README.md)

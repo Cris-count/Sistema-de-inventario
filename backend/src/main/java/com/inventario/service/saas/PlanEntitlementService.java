@@ -33,10 +33,14 @@ public class PlanEntitlementService {
     public void requireModulo(Long empresaId, String moduloCodigo) {
         PlanEntitlements e = resolveForEmpresa(empresaId);
         if (!e.tieneModulo(moduloCodigo)) {
+            // Propaga el módulo exacto para que el cliente recomiende el primer plan
+            // superior que lo desbloquea (ver MiEmpresaPage.contextualRecommendation).
             throw new BusinessException(
                     HttpStatus.FORBIDDEN,
                     "Esta acción no está disponible en tu plan actual. Puedes ampliar tu plan para usarla.",
-                    PlanBlockCodes.MODULO_NO_INCLUIDO);
+                    PlanBlockCodes.MODULO_NO_INCLUIDO,
+                    moduloCodigo,
+                    null);
         }
     }
 
@@ -45,10 +49,15 @@ public class PlanEntitlementService {
         PlanEntitlements e = resolveForEmpresa(empresaId);
         if (!e.tieneModulo(PlanEntitlementCodes.REPORTES_BASICOS)
                 && !e.tieneModulo(PlanEntitlementCodes.REPORTES_AVANZADOS)) {
+            // El gate se dispara sólo cuando la empresa no tiene ningún módulo de
+            // reportes: el mínimo módulo que lo desbloquea es REPORTES_BASICOS.
+            // Así el cliente recomienda el plan más pequeño que lo incluye.
             throw new BusinessException(
                     HttpStatus.FORBIDDEN,
                     "Los reportes no están incluidos en tu plan actual. Actualiza tu plan para acceder a reportes y exportaciones.",
-                    PlanBlockCodes.REPORTES_NO_INCLUIDO);
+                    PlanBlockCodes.REPORTES_NO_INCLUIDO,
+                    PlanEntitlementCodes.REPORTES_BASICOS,
+                    null);
         }
     }
 

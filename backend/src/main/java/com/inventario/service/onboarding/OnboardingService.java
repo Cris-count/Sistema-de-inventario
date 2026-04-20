@@ -3,6 +3,8 @@ package com.inventario.service.onboarding;
 import com.inventario.config.SecurityRoles;
 import com.inventario.domain.entity.*;
 import com.inventario.domain.repository.*;
+import com.inventario.service.saas.PlanEntitlements;
+import com.inventario.service.saas.PlanEntitlementsRegistry;
 import com.inventario.web.dto.onboarding.OnboardingDtos.EmpresaOnboardingDto;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterRequest;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterResponse;
@@ -281,6 +283,10 @@ public class OnboardingService {
         BigDecimal precio = p.getPrecioMensual() != null ? p.getPrecioMensual() : BigDecimal.ZERO;
         String descripcion = p.getDescripcion();
         String descripcionCorta = descripcion == null ? "" : descripcion.trim();
+        // Fuente única de verdad para capacidades estructuradas: registry de entitlements.
+        PlanEntitlements ent = PlanEntitlementsRegistry.forPlanCodigo(p.getCodigo());
+        List<String> modulos = ent.modulos().stream().sorted().toList();
+        Integer maxProductos = ent.maxProductos();
         return new PublicPlanResponse(
                 p.getCodigo(),
                 p.getCodigo(),
@@ -294,7 +300,9 @@ public class OnboardingService {
                 p.getMaxUsuarios(),
                 feats,
                 recomendado,
-                inferPlanType(p));
+                inferPlanType(p),
+                modulos,
+                maxProductos);
     }
 
     private String createUniquePin() {

@@ -16,7 +16,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
         <div class="mt-10 space-y-3">
           @for (item of faqs; track item.q) {
             <details
-              class="group rounded-2xl border border-slate-200/80 bg-background px-4 py-3 shadow-sm open:shadow-soft dark:border-slate-700/80 dark:bg-slate-950"
+              class="group rounded-2xl border border-slate-200/80 bg-background px-4 py-3 shadow-sm transition-colors open:shadow-soft dark:border-slate-600/70 dark:bg-slate-800/60 dark:open:bg-slate-800/80"
             >
               <summary
                 class="cursor-pointer list-none text-left text-sm font-semibold text-primary dark:text-slate-100 outline-none marker:content-none [&::-webkit-details-marker]:hidden"
@@ -24,7 +24,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
                 <span class="flex items-center justify-between gap-3">
                   {{ item.q }}
                   <span
-                    class="text-secondary transition group-open:rotate-45 dark:text-slate-500"
+                    class="text-secondary transition group-open:rotate-45 dark:text-slate-300"
                     aria-hidden="true"
                     >+</span
                   >
@@ -41,20 +41,28 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 export class LandingFaqComponent {
   readonly faqs = [
     {
-      q: '¿Puedo migrar desde planillas o desde otro sistema?',
-      a: 'Sí. La mayoría de los equipos importa catálogo y saldos iniciales, luego congela el Excel “maestro” para evitar divergencias.'
+      q: '¿Puedo empezar gratis?',
+      a: 'Sí. Puedes crear tu cuenta y empezar a usar el sistema con el plan inicial sin costo, para validar que se ajusta a tu negocio antes de escalar.'
     },
     {
-      q: '¿Cómo funcionan roles y permisos?',
-      a: 'Puedes separar administración, bodega, compras y lectura. Cada perfil ve solo lo necesario para su trabajo diario.'
+      q: '¿Puedo cambiar de plan después?',
+      a: 'Sí, puedes subir de plan cuando lo necesites. La información que ya cargaste sigue intacta y simplemente se desbloquean nuevas funciones y mayor capacidad.'
     },
     {
-      q: '¿Hay límites por plan?',
-      a: 'Los planes están pensados para crecer con tu operación: bodegas, usuarios y consumo pueden ajustarse según tu suscripción.'
+      q: '¿Qué pasa si necesito más usuarios o más bodegas?',
+      a: 'Cada plan tiene un tope claro de usuarios y bodegas. Si necesitas más, basta con cambiar a un plan superior — el sistema te avisa y te recomienda la mejor opción.'
     },
     {
-      q: '¿Necesito instalar algo en servidores propios?',
-      a: 'No para empezar: el panel es web. Si tu empresa requiere despliegue dedicado, se evalúa como proyecto aparte.'
+      q: '¿Qué incluye cada plan?',
+      a: 'Más arriba puedes ver la comparativa con los módulos y capacidades de cada plan: usuarios, bodegas, productos, reportes, transferencias, ajustes e historial.'
+    },
+    {
+      q: '¿Necesito instalar algo?',
+      a: 'No. Es una aplicación web: entras desde el navegador en computador, tablet o celular. Sin instalaciones ni servidores propios.'
+    },
+    {
+      q: '¿Cómo me ayuda a controlar mi negocio?',
+      a: 'Centraliza productos, movimientos, bodegas y usuarios en un solo lugar. Reduces errores de registro, ves en tiempo real lo que tienes y tomas decisiones con datos reales en vez de suposiciones.'
     }
   ];
 }

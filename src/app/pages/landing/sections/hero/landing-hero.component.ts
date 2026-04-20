@@ -1,13 +1,16 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
 import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badge.component';
+import { fadeUp } from '../../../../core/animations';
 
 @Component({
   selector: 'app-landing-hero',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [UiButtonComponent, UiBadgeComponent],
+  animations: [fadeUp],
   template: `
     <section
+      @fadeUp
       id="producto"
       class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-teal-900 text-slate-50"
     >
@@ -22,32 +25,34 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
       ></div>
 
       <div class="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8 lg:py-24">
-        <div class="lp-fade-up max-w-xl">
-          <app-ui-badge tone="accent" class="!bg-white/10 !text-teal-100 !ring-white/10"
-            >Inventario en tiempo real</app-ui-badge
+        <div class="max-w-xl">
+          <app-ui-badge tone="on-dark"
+            >Diseñado para pymes que quieren crecer con control</app-ui-badge
           >
           <h1 class="mt-5 text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
-            Controla stock, bodegas y movimientos sin hojas de cálculo.
+            Deja de perder dinero por desorden en tu inventario
           </h1>
           <p class="mt-5 text-base leading-relaxed text-slate-300 sm:text-lg">
-            Un panel claro para equipos que necesitan precisión operativa: entradas, salidas,
-            transferencias y trazabilidad — con roles y límites listos para escalar.
+            Controla tus productos, movimientos y stock en un solo lugar claro y fácil de usar.
+          </p>
+          <p class="mt-3 text-base font-medium text-teal-200 sm:text-lg">
+            Menos errores, más control, mejores decisiones.
           </p>
           <div class="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4">
             <app-ui-button variant="landing-primary" class="w-full sm:w-auto" linkTo="/registro"
-              >Empezar gratis</app-ui-button
+              >Empieza gratis</app-ui-button
             >
             <app-ui-button
               variant="landing-secondary"
               class="w-full !border-white/30 !bg-white/10 !text-white hover:!bg-white/15 sm:w-auto"
-              linkTo="/login"
-              >Iniciar sesión</app-ui-button
+              (click)="scrollToPlanes()"
+              >Ver planes</app-ui-button
             >
           </div>
-          <p class="mt-4 text-xs text-slate-400">Sin tarjeta para explorar · Migración guiada disponible</p>
+          <p class="mt-4 text-xs text-slate-400">Empieza sin costo · Organiza tu inventario desde el primer día</p>
         </div>
 
-        <div class="lp-fade-up lp-delay-1 relative">
+        <div class="relative">
           <div
             class="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-3 shadow-2xl shadow-teal-900/40 backdrop-blur"
           >
@@ -58,30 +63,30 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
                   <span class="h-2.5 w-2.5 rounded-full bg-amber-400/90"></span>
                   <span class="h-2.5 w-2.5 rounded-full bg-emerald-400/90"></span>
                 </div>
-                <span class="text-xs font-medium text-secondary">app / dashboard</span>
+                <span class="text-xs font-medium text-secondary">Tu panel de inventario</span>
               </div>
               <div class="mt-4 grid gap-3 sm:grid-cols-3">
                 <div class="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
-                  <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Existencias</p>
-                  <p class="mt-1 text-2xl font-semibold text-slate-900">12.4k</p>
-                  <p class="text-xs text-accent">+3.1% vs. mes</p>
+                  <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Productos</p>
+                  <p class="mt-1 text-2xl font-semibold text-slate-900">342</p>
+                  <p class="text-xs text-secondary">Catálogo organizado</p>
                 </div>
                 <div class="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
-                  <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Alertas</p>
-                  <p class="mt-1 text-2xl font-semibold text-slate-900">18</p>
-                  <p class="text-xs text-amber-700">Stock mínimo</p>
+                  <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Stock bajo</p>
+                  <p class="mt-1 text-2xl font-semibold text-slate-900">6</p>
+                  <p class="text-xs text-amber-700">Necesita reposición</p>
                 </div>
                 <div class="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
-                  <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Movimientos</p>
-                  <p class="mt-1 text-2xl font-semibold text-slate-900">642</p>
-                  <p class="text-xs text-secondary">Últimos 7 días</p>
+                  <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Movimientos hoy</p>
+                  <p class="mt-1 text-2xl font-semibold text-slate-900">28</p>
+                  <p class="text-xs text-accent">Todo registrado</p>
                 </div>
               </div>
               <div class="mt-4 rounded-lg border border-slate-100 bg-white">
                 <div class="grid grid-cols-4 gap-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-secondary">
-                  <span>SKU</span>
+                  <span>Código</span>
                   <span class="col-span-2">Producto</span>
-                  <span class="text-right">Qty</span>
+                  <span class="text-right">Stock</span>
                 </div>
                 @for (row of rows; track row.sku) {
                   <div
@@ -109,8 +114,15 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
 })
 export class LandingHeroComponent {
   readonly rows = [
-    { sku: 'SKU-2041', name: 'Tornillería M6', qty: '240' },
-    { sku: 'SKU-1188', name: 'Empaque térmico', qty: '92' },
-    { sku: 'SKU-0092', name: 'Sensor NTC', qty: '15' }
+    { sku: 'P-001', name: 'Producto A', qty: '120' },
+    { sku: 'P-014', name: 'Producto B', qty: '48' },
+    { sku: 'P-027', name: 'Producto C', qty: '15' }
   ];
+
+  protected scrollToPlanes(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    document.getElementById('planes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }

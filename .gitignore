@@ -49,3 +49,7 @@ Thumbs.db
 
 # Maven (backend Spring Boot)
 backend/target/
+
+# Referencia externa de plantilla (solo para inspiración visual,
+# nunca se importa en la app — contiene nicepage.css/js y assets propios).
+/_templete-reference/

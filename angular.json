@@ -23,9 +23,15 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/assets",
+                "output": "/assets"
               }
             ],
             "styles": [
+              "src/app/core/design/tokens.css",
               "src/styles.css",
               "src/landing-styles.css"
             ],

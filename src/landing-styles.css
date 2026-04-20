@@ -1,13 +1,11 @@
 @import 'tailwindcss';
 @config '../tailwind.config.mjs';
 
-/* Base copy color for marketing/register: evita heredar el gris claro del body (styles.css) y perder contraste en fondos blancos. */
+/* Base copy color para landing/registro. Lee el token oficial (`--color-text`)
+ * para mantener coherencia con el resto del producto y soportar dark mode
+ * sin declarar dos selectores. */
 #lp-root {
-  color: #0f172a;
-}
-
-html.dark #lp-root {
-  color: #f1f5f9;
+  color: rgb(var(--color-text));
 }
 
 /* Landing scope: utilities are prefixed with #lp-root via Tailwind `important` option. */
@@ -35,5 +33,140 @@ html.dark #lp-root {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Reveal on scroll (landing)
+ * Estado inicial oculto aplicado por la directiva [appReveal]. Al intersectar
+ * con el viewport la directiva añade `.lp-reveal-in` y la transición se dispara.
+ * Solo se anima opacity + transform: GPU-aceleradas, sin reflow.
+ * -------------------------------------------------------------------------*/
+#lp-root .lp-reveal {
+  --lp-reveal-delay: 0ms;
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 260ms cubic-bezier(0.22, 1, 0.36, 1) var(--lp-reveal-delay),
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1) var(--lp-reveal-delay);
+  will-change: opacity, transform;
+}
+
+#lp-root .lp-reveal.lp-reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger automático de hijos directos: útil para grids de tarjetas (problem, pricing, benefits).
+ * Si un contenedor lleva `.lp-stagger` y cada hijo lleva `[appReveal]`, cada uno entra con
+ * 80ms más de retraso sin necesidad de binding por índice en el template. */
+#lp-root .lp-stagger > .lp-reveal:nth-child(1) {
+  transition-delay: 0ms;
+}
+#lp-root .lp-stagger > .lp-reveal:nth-child(2) {
+  transition-delay: 80ms;
+}
+#lp-root .lp-stagger > .lp-reveal:nth-child(3) {
+  transition-delay: 160ms;
+}
+#lp-root .lp-stagger > .lp-reveal:nth-child(4) {
+  transition-delay: 240ms;
+}
+#lp-root .lp-stagger > .lp-reveal:nth-child(n + 5) {
+  transition-delay: 320ms;
+}
+
+/* Hover sutil en cards destacadas (pricing / beneficios). Microinteracción a 140ms, sin rebote. */
+#lp-root .lp-card-hover {
+  transition:
+    transform 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 140ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+#lp-root .lp-card-hover:hover {
+  transform: translateY(-2px);
+}
+
+/* Tarjetas Soluciones: sombra un poco más definida; hover coherente con lp-card-hover */
+#lp-root .lp-sector-card {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 8px 24px rgb(15 23 42 / 0.06);
+}
+#lp-root .lp-sector-card:hover {
+  box-shadow:
+    0 2px 4px rgb(15 23 42 / 0.06),
+    0 14px 32px rgb(15 23 42 / 0.09);
+}
+html.dark #lp-root .lp-sector-card {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.25),
+    0 8px 24px rgb(0 0 0 / 0.35);
+}
+html.dark #lp-root .lp-sector-card:hover {
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.3),
+    0 14px 32px rgb(0 0 0 / 0.45);
+}
+
+/* Tarjetas Funcionalidades (misma elevación que Soluciones para coherencia visual) */
+#lp-root .lp-feature-card {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 8px 24px rgb(15 23 42 / 0.06);
+}
+#lp-root .lp-feature-card:hover {
+  box-shadow:
+    0 2px 4px rgb(15 23 42 / 0.06),
+    0 14px 32px rgb(15 23 42 / 0.09);
+}
+html.dark #lp-root .lp-feature-card {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.25),
+    0 8px 24px rgb(0 0 0 / 0.35);
+}
+html.dark #lp-root .lp-feature-card:hover {
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.3),
+    0 14px 32px rgb(0 0 0 / 0.45);
+}
+
+/* Tarjetas Planes (pricing) */
+#lp-root .lp-pricing-card {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 8px 24px rgb(15 23 42 / 0.06);
+}
+#lp-root .lp-pricing-card:hover {
+  box-shadow:
+    0 2px 4px rgb(15 23 42 / 0.06),
+    0 14px 32px rgb(15 23 42 / 0.09);
+}
+html.dark #lp-root .lp-pricing-card {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.25),
+    0 8px 24px rgb(0 0 0 / 0.35);
+}
+html.dark #lp-root .lp-pricing-card:hover {
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 0.3),
+    0 14px 32px rgb(0 0 0 / 0.45);
+}
+
+/* Accesibilidad: desactivar todo el motion si el usuario lo pide. */
+@media (prefers-reduced-motion: reduce) {
+  #lp-root .lp-fade-up,
+  #lp-root .lp-reveal,
+  #lp-root .lp-card-hover {
+    animation: none !important;
+    transition: none !important;
+  }
+  #lp-root .lp-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  #lp-root .lp-sector-img {
+    transform: none !important;
+    transition: none !important;
   }
 }
