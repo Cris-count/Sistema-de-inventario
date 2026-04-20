@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "npm run frontend",
-    "frontend": "ng serve --configuration development",
+    "frontend": "node scripts/serve-frontend.mjs",
     "dev": "npm run frontend",
     "backend": "node scripts/run-backend.mjs",
     "db": "docker compose up -d db",

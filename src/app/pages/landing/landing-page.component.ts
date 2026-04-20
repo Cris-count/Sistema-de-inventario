@@ -77,13 +77,9 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
         class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-surface/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-600/60 dark:bg-slate-900/95 sm:hidden"
         aria-label="Acciones rápidas móvil"
       >
-        <div class="mx-auto flex max-w-lg items-stretch gap-2.5">
-          <app-ui-button variant="landing-secondary" class="flex-1 !min-h-[48px]" linkTo="/login"
-            >Iniciar sesión</app-ui-button
-          >
-          <app-ui-button variant="landing-primary" class="flex-1 !min-h-[48px]" linkTo="/registro"
-            >Empieza gratis</app-ui-button
-          >
+        <div class="mx-auto flex max-w-lg items-stretch gap-2">
+          <app-ui-button variant="secondary" class="flex-1" to="/login">Entrar</app-ui-button>
+          <app-ui-button variant="gradient" class="flex-1" to="/registro">Crear cuenta</app-ui-button>
         </div>
       </div>
 

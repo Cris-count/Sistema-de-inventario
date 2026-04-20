@@ -34,12 +34,14 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
             Consulta existencias, registra movimientos, organiza productos y toma decisiones con reportes claros en una
             plataforma hecha para el día a día de tu negocio.
           </p>
-
-          <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
+          <div class="mt-8 flex flex-wrap items-center gap-3">
+            <app-ui-button variant="gradient" size="lg" to="/registro">Empezar gratis</app-ui-button>
             <app-ui-button
-              variant="landing-primary"
-              class="w-full sm:w-auto sm:min-w-[220px] !text-base"
-              linkTo="/registro"
+              variant="secondary"
+              size="lg"
+              class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/15"
+              to="/login"
+              >Ver demo en vivo</app-ui-button
             >
               Probar gratis
             </app-ui-button>

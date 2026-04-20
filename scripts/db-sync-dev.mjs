@@ -29,6 +29,7 @@ const MIGRATIONS = [
   'database/migrations/009_refresh_token.sql',
   'database/migrations/010_refresh_token_family_expires.sql',
   'database/migrations/011_pedido_proveedor_mensaje.sql'
+  'database/migrations/006_onboarding_email_totp.sql'
 ];
 
 const PSQL_ENV = {
@@ -259,6 +260,7 @@ export async function applyDevMigrations() {
     await runMigrationWithRetries(rel, sql);
   }
   console.log('[db-sync] Listo (migraciones dev idempotentes; seguro repetir).');
+  console.log('[db-sync] Listo (migraciones 004–006 idempotentes; seguro repetir).');
 }
 
 const isDirectRun =

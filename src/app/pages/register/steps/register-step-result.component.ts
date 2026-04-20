@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import type { OnboardingRegisterResponseDto } from '../register.models';
 import { UiButtonComponent } from '../../../shared/components/ui/button/ui-button.component';
 
@@ -8,8 +8,8 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
   imports: [UiButtonComponent],
   template: `
     <div class="space-y-2">
-      <h2 class="text-xl font-semibold tracking-tight text-primary dark:text-slate-100">5. Listo</h2>
-      <p class="text-sm text-secondary dark:text-slate-400">{{ state().headline }}</p>
+      <h2 class="text-xl font-semibold tracking-tight text-primary">6. Listo</h2>
+      <p class="text-sm text-secondary">{{ result().message }}</p>
     </div>
 
     <div class="mt-5 rounded-2xl border p-4 text-sm" [class]="state().statusContainerClass">

@@ -85,8 +85,10 @@ function resolveSize(v: UiButtonVariant, explicit: UiButtonSize): UiButtonSize {
 export class UiButtonComponent {
   readonly variant = input<UiButtonVariant>('primary');
   readonly size = input<UiButtonSize>('md');
-  /** Ruta interna (`RouterLink` en el botón). */
-  readonly linkTo = input<string | undefined>(undefined);
+  /** In-page anchor, e.g. `#pricing` */
+  readonly href = input<string | undefined>(undefined);
+  /** Internal navigation; named `to` so host `routerLink` does not bind RouterLink to this component. */
+  readonly to = input<string | undefined>(undefined);
   readonly queryParams = input<Record<string, string> | undefined>(undefined);
   readonly fragment = input<string | undefined>(undefined);
   readonly type = input<'button' | 'submit'>('button');

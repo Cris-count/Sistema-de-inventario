@@ -51,13 +51,15 @@ import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/
       <p class="mt-4 text-sm text-amber-800 dark:text-amber-200">{{ hint() }}</p>
     }
 
-    <div class="mt-8 flex flex-wrap justify-between gap-2">
-      <app-ui-button variant="secondary" [disabled]="submitting()" (click)="back.emit()">Atrás</app-ui-button>
-      <app-ui-button variant="gradient" [disabled]="submitting()" (click)="confirm.emit()">
+    <div class="mt-8 flex flex-col gap-3 border-t border-slate-200/80 pt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+      <app-ui-button variant="outline" class="w-full sm:w-auto sm:min-w-[11rem]" [disabled]="submitting()" (click)="back.emit()">
+        Atrás: editar administrador
+      </app-ui-button>
+      <app-ui-button variant="gradient" class="w-full sm:w-auto sm:min-w-[13rem]" [disabled]="submitting()" (click)="confirm.emit()">
         @if (submitting()) {
-          Creando…
+          Creando cuenta…
         } @else {
-          Crear cuenta
+          Crear cuenta empresarial
         }
       </app-ui-button>
     </div>
