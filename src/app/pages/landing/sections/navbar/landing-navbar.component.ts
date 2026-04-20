@@ -1,50 +1,120 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
+import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle/theme-toggle.component';
 
+/**
+ * Navbar principal. Enlaces a anclas de la misma landing (#producto, #planes, etc.).
+ *
+ * Escritorio: una fila. Móvil: marca + tema, CTAs a ancho completo, anclas con área táctil.
+ */
 @Component({
   selector: 'app-landing-navbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiButtonComponent],
+  imports: [RouterLink, UiButtonComponent, ThemeToggleComponent],
   template: `
     <header
-      class="sticky top-0 z-50 border-b border-white/10 bg-surface/75 backdrop-blur-md supports-[backdrop-filter]:bg-surface/65"
+      class="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-white/70 dark:border-slate-700/60 dark:bg-slate-950/80 dark:shadow-none"
     >
-      <div class="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between gap-3">
-          <a routerLink="/landing" class="flex min-w-0 items-center gap-2.5 text-primary no-underline hover:opacity-90">
+      <div class="mx-auto max-w-6xl px-5 py-3 sm:px-6 lg:px-8 lp-nav-pad">
+        <!-- Escritorio / tablet: una sola fila -->
+        <div class="hidden items-center justify-between gap-6 md:flex">
+          <a
+            routerLink="/landing"
+            class="flex min-w-0 shrink-0 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
+          >
             <span
-              class="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-accent to-teal-600 text-sm font-bold text-white shadow-soft"
+              class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-accent via-teal-500 to-teal-700 text-sm font-bold text-white shadow-lg shadow-teal-900/20"
               >IV</span
             >
-            <span class="truncate text-sm font-semibold tracking-tight sm:text-base">Inventario Pro</span>
+            <span class="truncate text-base font-semibold tracking-tight">Inventario Pro</span>
           </a>
 
-          <nav class="hidden items-center gap-7 text-sm font-medium text-secondary md:flex">
-            <a href="#producto" class="no-underline transition hover:text-primary">Producto</a>
-            <a href="#funciones" class="no-underline transition hover:text-primary">Funciones</a>
-            <a href="#planes" class="no-underline transition hover:text-primary">Planes</a>
-            <a href="#faq" class="no-underline transition hover:text-primary">FAQ</a>
+          <nav class="flex items-center gap-7 text-sm font-medium text-secondary dark:text-slate-300">
+            <a href="#producto" class="no-underline transition hover:text-primary dark:hover:text-white">Producto</a>
+            <a href="#como-funciona" class="no-underline transition hover:text-primary dark:hover:text-white"
+              >Cómo funciona</a
+            >
+            <a href="#producto-visual" class="no-underline transition hover:text-primary dark:hover:text-white">Panel</a>
+            <a href="#planes" class="no-underline transition hover:text-primary dark:hover:text-white">Planes</a>
+            <a href="#faq" class="no-underline transition hover:text-primary dark:hover:text-white">FAQ</a>
           </nav>
 
-          <div class="flex flex-none items-center gap-1.5 sm:gap-3">
-            <app-ui-button variant="ghost" size="sm" class="!px-2 sm:!px-3.5" to="/login"
-              ><span class="hidden min-[400px]:inline">Iniciar sesión</span
-              ><span class="min-[400px]:hidden">Entrar</span></app-ui-button
+          <div class="flex shrink-0 items-center gap-2.5 sm:gap-3">
+            <app-theme-toggle />
+            <app-ui-button
+              variant="landing-secondary"
+              class="!min-h-[40px] !min-w-0 !px-3.5 !py-2 !text-sm sm:!px-5"
+              linkTo="/login"
+              >Iniciar sesión</app-ui-button
             >
-            <app-ui-button variant="gradient" size="sm" to="/registro">Crear cuenta</app-ui-button>
+            <app-ui-button variant="landing-navbar" class="!min-w-0 sm:!min-w-[140px]" linkTo="/registro"
+              >Empieza gratis</app-ui-button
+            >
           </div>
         </div>
 
-        <nav
-          class="-mx-1 mt-3 flex gap-4 overflow-x-auto px-1 pb-1 text-xs font-semibold text-secondary md:hidden"
-          aria-label="Secciones"
-        >
-          <a href="#producto" class="whitespace-nowrap no-underline hover:text-primary">Producto</a>
-          <a href="#funciones" class="whitespace-nowrap no-underline hover:text-primary">Funciones</a>
-          <a href="#planes" class="whitespace-nowrap no-underline hover:text-primary">Planes</a>
-          <a href="#faq" class="whitespace-nowrap no-underline hover:text-primary">FAQ</a>
-        </nav>
+        <!-- Móvil: marca + tema; CTAs a ancho completo; anclas con área táctil -->
+        <div class="flex flex-col gap-3.5 md:hidden">
+          <div class="flex items-center justify-between gap-3">
+            <a
+              routerLink="/landing"
+              class="flex min-w-0 flex-1 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
+            >
+              <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-teal-600 text-sm font-bold text-white shadow-soft"
+                >IV</span
+              >
+              <span class="truncate text-base font-semibold tracking-tight">Inventario Pro</span>
+            </a>
+            <div class="shrink-0">
+              <app-theme-toggle />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <app-ui-button
+              variant="landing-secondary"
+              class="!min-h-[44px] w-full !px-3 !text-sm"
+              linkTo="/login"
+              >Iniciar sesión</app-ui-button
+            >
+            <app-ui-button variant="landing-navbar" class="!min-h-[44px] w-full !text-sm" linkTo="/registro"
+              >Crear cuenta</app-ui-button
+            >
+          </div>
+
+          <nav
+            class="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            aria-label="Secciones"
+          >
+            <a
+              href="#producto"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >Producto</a
+            >
+            <a
+              href="#como-funciona"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >Cómo funciona</a
+            >
+            <a
+              href="#producto-visual"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >Panel</a
+            >
+            <a
+              href="#planes"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >Planes</a
+            >
+            <a
+              href="#faq"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >FAQ</a
+            >
+          </nav>
+        </div>
       </div>
     </header>
   `

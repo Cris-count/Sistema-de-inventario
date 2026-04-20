@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface SaasPlanRepository extends JpaRepository<SaasPlan, Long> {
 
+    Optional<SaasPlan> findByCodigoIgnoreCase(String codigo);
+
     Optional<SaasPlan> findByCodigoIgnoreCaseAndActivoIsTrue(String codigo);
 
     List<SaasPlan> findAllByActivoIsTrueOrderByOrdenAsc();

@@ -1,14 +1,13 @@
 package com.inventario.security;
 
 import com.inventario.config.SecurityRoles;
-import com.inventario.domain.entity.EstadoEmpresa;
 import com.inventario.domain.repository.UsuarioRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,16 +22,27 @@ import java.util.List;
 import static com.inventario.web.error.ApiErrorMessages.UNAUTHORIZED_JWT_DETAIL;
 
 /**
- * Valida el JWT y fija la autenticación usando el rol vigente en base de datos (no solo el claim {@code rol}
- * del token), para que cambios de rol y la UI alineada con {@code /auth/me} no queden en conflicto con permisos.
+ * Valida el JWT de acceso ({@code token_use=ACCESS}, {@code iss}, {@code aud}) y fija la autenticación con rol en BD.
  */
 @Component
-@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final TenantJwtClaimsValidator tenantJwtClaimsValidator;
+    private final boolean allowLegacyAccessWithoutEmpresaClaim;
+
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            UsuarioRepository usuarioRepository,
+            TenantJwtClaimsValidator tenantJwtClaimsValidator,
+            @Value("${app.jwt.allow-legacy-access-without-empresa-claim:false}")
+            boolean allowLegacyAccessWithoutEmpresaClaim) {
+        this.jwtService = jwtService;
+        this.usuarioRepository = usuarioRepository;
+        this.tenantJwtClaimsValidator = tenantJwtClaimsValidator;
+        this.allowLegacyAccessWithoutEmpresaClaim = allowLegacyAccessWithoutEmpresaClaim;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -53,8 +63,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         try {
             Claims claims = jwtService.parse(token);
+            jwtService.assertIssuerAndAudience(claims);
+            if (jwtService.isMfaChallengeToken(claims)) {
+                writeUnauthorized(request, response);
+                return;
+            }
+            if (!jwtService.isAccessToken(claims)) {
+                writeUnauthorized(request, response);
+                return;
+            }
             String email = claims.getSubject();
             if (email == null || email.isBlank()) {
+                writeUnauthorized(request, response);
+                return;
+            }
+            if (!allowLegacyAccessWithoutEmpresaClaim && claims.get("empresaId") == null) {
                 writeUnauthorized(request, response);
                 return;
             }
@@ -72,9 +95,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 writeUnauthorized(request, response);
                 return;
             }
-            // No exigir coincidencia del claim "uid" con el id en BD: tras resembrar datos el mismo
-            // email puede tener otro id y un JWT antiguo seguiría siendo criptográficamente válido.
-            // La identidad efectiva la define el subject (email) verificado y el usuario activo en BD.
             var rolEntity = usuario.getRol();
             if (rolEntity == null || rolEntity.getCodigo() == null || rolEntity.getCodigo().isBlank()) {
                 writeUnauthorized(request, response);

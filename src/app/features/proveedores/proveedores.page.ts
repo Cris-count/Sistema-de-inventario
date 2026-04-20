@@ -3,20 +3,26 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProveedorService } from '../../core/api/proveedor.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { Proveedor } from '../../core/models/entities.model';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-proveedores',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Proveedores</h1>
-      <p class="muted">
-        Listado disponible para ADMIN, COMPRAS y GERENCIA. Alta/edición solo ADMIN (API).
-      </p>
+      <header class="page-header">
+        <h1>Proveedores</h1>
+        <p class="page-lead page-header-lead">
+          Listado para ADMIN, SUPER_ADMIN, COMPRAS y GERENCIA. Alta/edición solo ADMIN/SUPER_ADMIN (API).
+        </p>
+      </header>
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -29,7 +35,7 @@ import { flashSuccess } from '../../core/util/page-flash';
                 <label>Documento</label>
                 <input formControlName="documento" />
               </div>
-              <div class="field" style="flex:1">
+              <div class="field field-flex-1">
                 <label>Razón social</label>
                 <input formControlName="razonSocial" />
               </div>
@@ -63,6 +69,7 @@ import { flashSuccess } from '../../core/util/page-flash';
             <tr>
               <th>Documento</th>
               <th>Razón social</th>
+              <th>Email (alertas stock)</th>
               <th>Contacto</th>
               @if (isAdmin()) {
                 <th></th>
@@ -74,6 +81,13 @@ import { flashSuccess } from '../../core/util/page-flash';
               <tr>
                 <td>{{ p.documento }}</td>
                 <td>{{ p.razonSocial }}</td>
+                <td>
+                  @if (p.email?.trim()) {
+                    {{ p.email }}
+                  } @else {
+                    <span class="muted">— sin correo —</span>
+                  }
+                </td>
                 <td>{{ p.contacto }} {{ p.telefono }}</td>
                 @if (isAdmin()) {
                   <td><button type="button" class="btn btn-ghost" (click)="edit(p)">Editar</button></td>
@@ -92,13 +106,14 @@ export class ProveedoresPage implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   readonly auth = inject(AuthService);
 
-  isAdmin = () => this.auth.hasAnyRole(['ADMIN']);
+  isAdmin = () => this.auth.hasAnyRole(['ADMIN', 'SUPER_ADMIN']);
 
   readonly rows = signal<Proveedor[]>([]);
   readonly editingId = signal<number | null>(null);
   readonly saving = signal(false);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     documento: ['', Validators.required],
@@ -114,10 +129,14 @@ export class ProveedoresPage implements OnInit {
 
   reload(): void {
     this.api.list().subscribe({
-      next: (r) => this.rows.set(r),
+      next: (r) => {
+        this.rows.set(r);
+        this.error.set(null);
+        this.planFollowup.set(null);
+      },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
   }
@@ -142,12 +161,14 @@ export class ProveedoresPage implements OnInit {
     if (this.form.invalid) return;
     this.saving.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     const v = this.form.getRawValue();
     const id = this.editingId();
     const req = id ? this.api.update(id, v) : this.api.create(v);
     req.subscribe({
       next: () => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set('Proveedor guardado.');
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.cancel();
@@ -155,7 +176,7 @@ export class ProveedoresPage implements OnInit {
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.saving.set(false)
     });

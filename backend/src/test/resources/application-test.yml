@@ -16,9 +16,29 @@ spring:
 
 # En tests solo se sembrará el admin; el resto de emails vacíos evita cuatro usuarios en H2.
 app:
+  rate-limit:
+    enabled: false
+    # Aislar tests de variables de entorno (p. ej. RATE_LIMIT_BACKEND=redis en la máquina local).
+    backend: memory
+    redis:
+      host: ""
+  refresh-token:
+    expiration-ms: 86400000
+    family-absolute-ms: 172800000
+    hash-pepper: test-refresh-pepper
+    pepper-required: false
+    max-active-families-per-user: 0
+  jwt:
+    secret: ${JWT_SECRET:test-jwt-secret-min-32-bytes-for-h2-tests!!}
+    issuer: https://test.inventario.local
+    audience: inventario-api-test
+    allow-legacy-access-without-empresa-claim: false
+  mfa:
+    state-store: jpa
   billing:
     api-secret: test-billing-secret-key-for-integration-tests
     post-payment-empresa-estado: ACTIVA
+    plan-change-late-confirm-max-hours: 72
   seed:
     empresa-identificacion: TEST-001
     superadmin-email: ""

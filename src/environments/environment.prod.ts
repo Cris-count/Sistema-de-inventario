@@ -1,9 +1,10 @@
 /**
  * Valores usados en `ng build` (configuración production).
- * Sustituí `apiUrl` por la URL pública del API en tu despliegue.
+ * Misma ruta si sirves el front y el API detrás del mismo dominio (nginx, etc.).
+ * Si el API está en otro host, sustituí por URL absoluta, p. ej. https://api.tudominio.com/api/v1
  */
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8080/api/v1',
+  apiUrl: '/api/v1',
   showSeedLoginHint: false
 };

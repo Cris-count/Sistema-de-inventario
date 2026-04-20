@@ -1,0 +1,29 @@
+# Activar: SPRING_PROFILES_ACTIVE=prod
+# Obliga a definir REFRESH_TOKEN_PEPPER (no vacío) junto con pepper-required heredado o explícito.
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+app:
+  refresh-token:
+    pepper-required: true
+  # Rate limit en clúster: Redis + observabilidad (sin secretos en YAML; usar env).
+  # rate-limit:
+  #   enabled: true
+  #   backend: redis
+  #   allow-memory-fallback-on-redis-failure: true   # false = propagar error si Redis cae (5xx en rutas limitadas)
+  #   redis:
+  #     host: ${RATE_LIMIT_REDIS_HOST}
+  #     port: ${RATE_LIMIT_REDIS_PORT:6379}
+  #     password: ${RATE_LIMIT_REDIS_PASSWORD:}
+  #     database: ${RATE_LIMIT_REDIS_DATABASE:0}
+  #     command-timeout: 800ms
+  # Logging sugerido: INFO com.inventario.ratelimit (degradación WARN/INFO ya emitidos por el código)
+
+management:
+  endpoint:
+    health:
+      # Ver componente "rateLimiting" en GET /actuator/health (distributed / DEGRADED / MISCONFIGURED).
+      status:
+        order: DOWN,OUT_OF_SERVICE,UNKNOWN,MISCONFIGURED,DEGRADED,UP

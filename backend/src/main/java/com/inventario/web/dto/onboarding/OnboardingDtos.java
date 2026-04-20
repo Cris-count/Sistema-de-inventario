@@ -49,15 +49,33 @@ public final class OnboardingDtos {
             @NotBlank @Size(min = 8, max = 128) String password,
             @NotBlank String confirmPassword) {}
 
+    /**
+     * Catálogo público de plan (landing, onboarding y recomendación contextual).
+     *
+     * Campos estructurados añadidos:
+     *  - {@code modulos}: códigos técnicos de {@code PlanEntitlementCodes} proyectados
+     *    desde {@code PlanEntitlementsRegistry} (fuente única). Ordenados y no-null.
+     *  - {@code maxProductos}: tope de productos del plan; {@code null} = ilimitado.
+     *
+     * {@code maxBodegas} y {@code maxUsuarios} se mantienen como {@code int} primitivo
+     * por retrocompatibilidad con landing/onboarding existente (no se cambia su tipo).
+     */
     public record PublicPlanResponse(
+            String id,
             String codigo,
             String nombre,
+            String descripcionCorta,
+            BigDecimal precio,
             String descripcion,
             BigDecimal precioMensual,
             String moneda,
             int maxBodegas,
             int maxUsuarios,
-            List<String> features) {}
+            List<String> features,
+            boolean recomendado,
+            String tipo,
+            List<String> modulos,
+            Integer maxProductos) {}
 
     public record OnboardingRegisterResponse(
             Long empresaId,

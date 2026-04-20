@@ -12,86 +12,155 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
       <p class="text-sm text-secondary">{{ result().message }}</p>
     </div>
 
-    <div class="mt-6 space-y-3 rounded-2xl border border-slate-200 bg-surface p-5 text-sm shadow-soft">
+    <div class="mt-5 rounded-2xl border p-4 text-sm" [class]="state().statusContainerClass">
+      <p class="text-xs font-semibold uppercase tracking-wide" [class]="state().statusLabelClass">
+        Estado de tu registro
+      </p>
+      <p class="mt-2 text-base font-semibold text-primary dark:text-slate-100">{{ state().statusTitle }}</p>
+      <p class="mt-1 text-sm text-secondary dark:text-slate-400">{{ state().statusDescription }}</p>
+      <p class="mt-3 text-sm font-medium text-primary dark:text-slate-100">{{ state().nextAction }}</p>
+    </div>
+
+    <div
+      class="mt-6 space-y-3 rounded-2xl border border-slate-200 bg-surface p-5 text-sm shadow-soft dark:border-slate-600 dark:bg-slate-900/90"
+    >
       <div class="flex flex-wrap justify-between gap-2">
-        <span class="text-secondary">Empresa</span>
-        <span class="font-medium text-primary">{{ result().empresaNombre }}</span>
+        <span class="text-secondary dark:text-slate-400">Empresa</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ result().empresaNombre }}</span>
       </div>
-      <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3">
-        <span class="text-secondary">Super admin</span>
-        <span class="font-medium text-primary">{{ result().superAdminEmail }}</span>
+      <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
+        <span class="text-secondary dark:text-slate-400">Super admin</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ result().superAdminEmail }}</span>
       </div>
-      <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3">
-        <span class="text-secondary">Plan</span>
-        <span class="font-medium text-primary">{{ result().planNombre }}</span>
+      <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
+        <span class="text-secondary dark:text-slate-400">Plan</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ result().planNombre }}</span>
       </div>
-      <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3">
-        <span class="text-secondary">Suscripción</span>
-        <span class="font-medium text-primary">{{ result().suscripcionEstado }}</span>
+      <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
+        <span class="text-secondary dark:text-slate-400">Acceso al sistema</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ state().accessLabel }}</span>
       </div>
-      <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3">
-        <span class="text-secondary">Estado empresa</span>
-        <span class="font-medium text-primary">{{ result().empresaEstadoComercial }}</span>
+      <div class="flex flex-wrap justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-700">
+        <span class="text-secondary dark:text-slate-400">Estado de la cuenta</span>
+        <span class="font-medium text-primary dark:text-slate-100">{{ state().accountLabel }}</span>
       </div>
-      @if (result().pagoId != null || result().compraId != null) {
-        <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs text-secondary">
-          @if (result().pagoId != null) {
-            <p>
-              <span class="font-semibold text-primary">Referencia de pago (API):</span>
-              #{{ result().pagoId }} — usar en webhook o confirmación manual con cabecera X-Billing-Secret.
-            </p>
-          }
-          @if (result().compraId != null) {
-            <p class="mt-1">
-              <span class="font-semibold text-primary">Compra:</span>
-              #{{ result().compraId }}
-            </p>
+
+      @if (paymentReference(); as ref) {
+        <div
+          class="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs text-secondary dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400"
+        >
+          <p>
+            <span class="font-semibold text-primary dark:text-slate-100">Referencia de pago:</span>
+            {{ ref }}
+          </p>
+          <p class="mt-1">Compártela solo para seguimiento del cobro o validación manual.</p>
+          <div class="mt-2">
+            <app-ui-button variant="secondary" size="sm" (click)="copyReference(ref)">Copiar referencia</app-ui-button>
+          </div>
+          @if (copyFeedback(); as feedback) {
+            <p class="mt-2 text-[11px] font-medium text-primary dark:text-slate-100">{{ feedback }}</p>
           }
         </div>
       }
-      @if (result().totpOtpauthUri) {
-        <div class="rounded-xl border border-teal-100 bg-teal-50/50 p-4 ring-1 ring-teal-100/80">
-          <p class="text-xs font-semibold uppercase tracking-wide text-secondary">Google Authenticator</p>
-          <p class="mt-1 text-xs text-secondary">
-            Los códigos de un solo uso los genera tu app (TOTP), no el servidor. Escanea el QR o copia el secreto Base32.
+
+      @if (result().purchasePin) {
+        <div class="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-100 dark:bg-slate-800/80 dark:ring-slate-700">
+          <p class="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-slate-400">PIN de seguimiento</p>
+          <p class="mt-2 font-mono text-lg font-semibold tracking-widest text-primary dark:text-slate-100">
+            {{ result().purchasePin }}
           </p>
-          @if (totpQrSrc(); as src) {
-            <img
-              [src]="src"
-              width="240"
-              height="240"
-              alt="Código QR para Google Authenticator"
-              class="mx-auto mt-3 rounded-lg border border-slate-200 bg-white p-2"
-            />
-          }
-          @if (result().totpSecretBase32) {
-            <p class="mt-3 break-all font-mono text-xs text-primary">{{ result().totpSecretBase32 }}</p>
-          }
+          <p class="mt-1 text-xs text-secondary dark:text-slate-400">
+            Es una referencia de soporte para seguimiento. No habilita acceso ni reemplaza el inicio de sesión.
+          </p>
+        </div>
+      }
+
+      @if (!canLogin()) {
+        <div
+          class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-500/35 dark:bg-amber-950/45 dark:text-amber-100"
+        >
+          Tu cuenta aún no está habilitada para entrar al sistema. Cuando se confirme la activación, podrás iniciar sesión.
         </div>
       }
     </div>
 
-    <div class="mt-8 flex flex-col gap-3 border-t border-slate-200/80 pt-6 sm:flex-row sm:flex-wrap">
-      @if (result().nextStep === 'LOGIN') {
-        <app-ui-button variant="gradient" class="w-full sm:flex-1" to="/login">Iniciar sesión</app-ui-button>
-        <app-ui-button variant="outline" class="w-full sm:flex-1" to="/app">Ir al panel (app)</app-ui-button>
-      } @else if (result().nextStep === 'PAYMENT') {
-        <app-ui-button variant="gradient" class="w-full sm:flex-1" to="/login">Ir a login cuando actives el pago</app-ui-button>
-        <app-ui-button variant="outline" class="w-full sm:flex-1" to="/landing">Volver al inicio</app-ui-button>
+    <div class="mt-8 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+      @if (canLogin()) {
+        <app-ui-button variant="gradient" class="sm:flex-1" linkTo="/login">Iniciar sesión</app-ui-button>
+        <app-ui-button variant="secondary" class="sm:flex-1" linkTo="/landing">Volver al inicio</app-ui-button>
       } @else {
-        <app-ui-button variant="gradient" class="w-full sm:min-w-[12rem]" to="/login">Ir a iniciar sesión</app-ui-button>
+        <app-ui-button variant="secondary" class="sm:flex-1" type="button" [disabled]="true">Esperando activación</app-ui-button>
+        <app-ui-button variant="secondary" class="sm:flex-1" linkTo="/landing">Volver al inicio</app-ui-button>
       }
     </div>
   `
 })
 export class RegisterStepResultComponent {
   readonly result = input.required<OnboardingRegisterResponseDto>();
+  readonly copyFeedback = signal<string | null>(null);
 
-  readonly totpQrSrc = computed(() => {
-    const uri = this.result().totpOtpauthUri;
-    if (!uri) {
-      return null;
-    }
-    return 'https://quickchart.io/chart?cht=qr&chs=240x240&chl=' + encodeURIComponent(uri);
+  readonly canLogin = computed(() => this.result().nextStep === 'LOGIN');
+
+  readonly paymentReference = computed(() => {
+    const r = this.result();
+    if (r.pagoId != null) return `PAGO-${r.pagoId}`;
+    if (r.compraId != null) return `COMPRA-${r.compraId}`;
+    return null;
   });
+
+  readonly state = computed(() => {
+    const r = this.result();
+    if (r.nextStep === 'PAYMENT') {
+      return {
+        headline: 'Tu registro fue creado, pero aún falta la activación de la cuenta.',
+        statusTitle: 'Registro pendiente de activación por pago',
+        statusDescription: 'Completa o valida el pago para habilitar el acceso del usuario administrador.',
+        nextAction: 'Siguiente paso: usa la referencia de pago para seguimiento y espera la confirmación.',
+        accessLabel: 'Aún no disponible',
+        accountLabel: 'Pendiente de pago / activación',
+        statusContainerClass:
+          'border-amber-200 bg-amber-50 dark:border-amber-500/40 dark:bg-amber-950/50',
+        statusLabelClass: 'text-amber-900 dark:text-amber-200'
+      };
+    }
+
+    if (r.suscripcionEstado === 'TRIAL' || r.activationOutcome === 'TRIAL_STARTED') {
+      return {
+        headline: 'Tu empresa quedó creada en periodo de prueba. Ya puedes ingresar con tu correo administrador.',
+        statusTitle: 'Cuenta en periodo de prueba',
+        statusDescription: 'Tienes acceso habilitado para iniciar operación y validar el sistema.',
+        nextAction: 'Siguiente paso: inicia sesión y completa la configuración inicial.',
+        accessLabel: 'Disponible ahora',
+        accountLabel: 'Prueba activa',
+        statusContainerClass:
+          'border-cyan-200 bg-cyan-50 dark:border-cyan-500/40 dark:bg-cyan-950/50',
+        statusLabelClass: 'text-cyan-900 dark:text-cyan-200'
+      };
+    }
+
+    return {
+      headline: 'Tu cuenta quedó creada y activa. Ya puedes iniciar sesión.',
+      statusTitle: 'Cuenta activa',
+      statusDescription: 'Tu acceso está habilitado para entrar al sistema.',
+      nextAction: 'Siguiente paso: inicia sesión con tu correo administrador.',
+      accessLabel: 'Disponible ahora',
+      accountLabel: 'Activa',
+      statusContainerClass:
+        'border-emerald-200 bg-emerald-50 dark:border-emerald-500/40 dark:bg-emerald-950/50',
+      statusLabelClass: 'text-emerald-900 dark:text-emerald-200'
+    };
+  });
+
+  async copyReference(reference: string): Promise<void> {
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error('Clipboard API not available');
+      }
+      await navigator.clipboard.writeText(reference);
+      this.copyFeedback.set('Referencia copiada.');
+    } catch {
+      this.copyFeedback.set('No se pudo copiar automáticamente. Cópiala manualmente.');
+    }
+    setTimeout(() => this.copyFeedback.set(null), 2400);
+  }
 }

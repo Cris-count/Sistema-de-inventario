@@ -1,6 +1,6 @@
 package com.inventario.web.controller;
 
-import com.inventario.service.onboarding.OnboardingEmailVerificationService;
+import com.inventario.ratelimit.ApplicationRateLimitService;
 import com.inventario.service.onboarding.OnboardingService;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterRequest;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterResponse;
@@ -10,6 +10,7 @@ import com.inventario.web.dto.onboarding.OnboardingDtos.VerifyEmailRequest;
 import com.inventario.web.dto.onboarding.OnboardingDtos.VerifyEmailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -47,8 +48,10 @@ public class OnboardingController {
     @SecurityRequirements
     @Operation(
             summary = "Registro transaccional de empresa",
-            description = "Requiere emailVerificationToken de /verify-email. Crea empresa, suscripción, SUPER_ADMIN y, si aplica, secreto TOTP (Google Authenticator) en lugar de PIN aleatorio.")
-    public ResponseEntity<OnboardingRegisterResponse> register(@Valid @RequestBody OnboardingRegisterRequest body) {
+            description = "Crea empresa, suscripción inicial, SUPER_ADMIN y opcionalmente PIN de compra en una sola transacción.")
+    public ResponseEntity<OnboardingRegisterResponse> register(
+            @Valid @RequestBody OnboardingRegisterRequest body, HttpServletRequest httpRequest) {
+        applicationRateLimitService.assertOnboardingRegisterAllowed(httpRequest, body.superAdmin().email());
         return ResponseEntity.status(HttpStatus.CREATED).body(onboardingService.register(body));
     }
 }

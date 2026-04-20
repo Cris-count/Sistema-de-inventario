@@ -61,6 +61,12 @@ async function waitForApiHealth(url, timeoutMs = API_HEALTH_TIMEOUT_MS, interval
 async function main() {
   runOrFail('docker', ['compose', 'up', '-d', '--build'], '[dev-up] 1/5  Levantando Docker completo (db + api) …');
 
+  console.log('[dev-up] 2/4  Esperando PostgreSQL en 127.0.0.1:5433 …');
+  await waitForPort(5433);
+
+  console.log(
+    '[dev-up] 3/4  Alineando esquema (migraciones SQL idempotentes en BD existente; ver db-sync-dev.mjs)'
+  );
   console.log('[dev-up] 2/5  Alineando esquema PostgreSQL (migraciones idempotentes) …');
   const { applyDevMigrations } = await import('./db-sync-dev.mjs');
   await applyDevMigrations();

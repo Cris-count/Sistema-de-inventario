@@ -12,6 +12,7 @@ export interface ProductoRequest {
   categoriaId: number;
   unidadMedida?: string;
   stockMinimo?: string;
+  proveedorPreferidoId?: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,5 +39,9 @@ export class ProductoService {
 
   setActivo(id: number, activo: boolean): Observable<Producto> {
     return this.http.patch<Producto>(`${this.base}/${id}/estado`, { activo });
+  }
+
+  patchStockMinimo(id: number, stockMinimo: number): Observable<Producto> {
+    return this.http.patch<Producto>(`${this.base}/${id}/stock-minimo`, { stockMinimo });
   }
 }

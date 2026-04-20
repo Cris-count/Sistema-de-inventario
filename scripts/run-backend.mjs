@@ -31,8 +31,7 @@ const result = isWin
   : spawnSync(mvnw, mvnArgs, {
       cwd: backendDir,
       stdio: 'inherit',
-      shell: false,
-      env: process.env
+      env
     });
 
 process.exit(result.status === null ? 1 : result.status);

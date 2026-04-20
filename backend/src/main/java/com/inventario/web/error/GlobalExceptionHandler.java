@@ -1,7 +1,9 @@
 package com.inventario.web.error;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -15,16 +17,30 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
-    public ProblemDetail handleBusiness(BusinessException ex) {
+    public ResponseEntity<ProblemDetail> handleBusiness(BusinessException ex) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
-        pd.setTitle("Error de negocio");
-        return pd;
+        if (ex.getStatus() == HttpStatus.TOO_MANY_REQUESTS) {
+            pd.setTitle("Límite de solicitudes");
+        } else {
+            pd.setTitle("Error de negocio");
+        }
+        if (ex.getBlockCode() != null && !ex.getBlockCode().isBlank()) {
+            pd.setProperty("blockCode", ex.getBlockCode());
+        }
+        if (ex.getBlockModule() != null && !ex.getBlockModule().isBlank()) {
+            pd.setProperty("blockModule", ex.getBlockModule());
+        }
+        ResponseEntity.BodyBuilder b = ResponseEntity.status(ex.getStatus());
+        if (ex.getRetryAfterSeconds() != null && ex.getRetryAfterSeconds() > 0) {
+            b.header(HttpHeaders.RETRY_AFTER, ex.getRetryAfterSeconds().toString());
+        }
+        return b.body(pd);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
         String msg = ex.getBindingResult().getFieldErrors().stream()
-                .map(FieldError::getDefaultMessage)
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining("; "));
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, msg);
         pd.setTitle("Validación");

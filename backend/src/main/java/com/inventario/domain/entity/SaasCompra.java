@@ -25,9 +25,18 @@ public class SaasCompra {
     @JoinColumn(name = "empresa_id", nullable = false)
     private Empresa empresa;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "suscripcion_id", nullable = false, unique = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "suscripcion_id", nullable = false)
     private Suscripcion suscripcion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 24)
+    private SaasCompraTipo tipo;
+
+    /** Plan objetivo del cambio; nulo en compras de onboarding. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "plan_destino_id")
+    private SaasPlan planDestino;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 24)

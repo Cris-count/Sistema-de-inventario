@@ -5,6 +5,7 @@ import com.inventario.service.catalog.ProductoCatalogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +31,15 @@ public class ProductoController {
             String descripcion,
             @NotNull Long categoriaId,
             String unidadMedida,
-            BigDecimal stockMinimo
+            BigDecimal stockMinimo,
+            Long proveedorPreferidoId
     ) {}
 
     public record ActivoRequest(boolean activo) {}
+
+    public record StockMinimoPatchRequest(
+            @NotNull @DecimalMin(value = "0", inclusive = true) BigDecimal stockMinimo
+    ) {}
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
@@ -56,7 +62,7 @@ public class ProductoController {
     public Producto crear(@Valid @RequestBody ProductoRequest req) {
         return productoCatalogService.crear(
                 req.codigo(), req.nombre(), req.descripcion(), req.categoriaId(),
-                req.unidadMedida(), req.stockMinimo());
+                req.unidadMedida(), req.stockMinimo(), req.proveedorPreferidoId());
     }
 
     @PutMapping("/{id}")
@@ -65,7 +71,14 @@ public class ProductoController {
     public Producto actualizar(@PathVariable Long id, @Valid @RequestBody ProductoRequest req) {
         return productoCatalogService.actualizar(
                 id, req.codigo(), req.nombre(), req.descripcion(), req.categoriaId(),
-                req.unidadMedida(), req.stockMinimo());
+                req.unidadMedida(), req.stockMinimo(), req.proveedorPreferidoId());
+    }
+
+    @PatchMapping("/{id}/stock-minimo")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA')")
+    @Operation(summary = "Actualizar solo el stock mínimo del producto (p. ej. desde inventario)")
+    public Producto actualizarStockMinimo(@PathVariable Long id, @Valid @RequestBody StockMinimoPatchRequest req) {
+        return productoCatalogService.actualizarStockMinimo(id, req.stockMinimo());
     }
 
     @PatchMapping("/{id}/estado")

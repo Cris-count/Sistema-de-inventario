@@ -6,6 +6,8 @@ import com.inventario.domain.repository.*;
 import com.inventario.web.dto.billing.BillingDtos.PaymentConfirmationResponse;
 import com.inventario.web.error.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ public class BillingPaymentConfirmationService {
     public static final String CHANNEL_MANUAL = "MANUAL_API";
     public static final String CHANNEL_WEBHOOK = "WEBHOOK";
 
+    private static final Logger log = LoggerFactory.getLogger(BillingPaymentConfirmationService.class);
+
     private final SaasPagoRepository saasPagoRepository;
     private final SaasCompraRepository saasCompraRepository;
     private final SuscripcionRepository suscripcionRepository;
@@ -35,6 +39,13 @@ public class BillingPaymentConfirmationService {
 
     @Value("${app.billing.post-payment-empresa-estado:ACTIVA}")
     private String postPaymentEmpresaEstado;
+
+    /**
+     * Horas máximas desde la marca temporal del pago (preferente {@code pago.createdAt}) para aceptar confirmación
+     * tras cierre por TTL; ver {@link PlanChangeLatePaymentPolicy} y {@code application.yml}.
+     */
+    @Value("${app.billing.plan-change-late-confirm-max-hours:72}")
+    private long planChangeLateConfirmMaxHours;
 
     public void requireValidSecret(String provided) {
         if (!secretMatches(configuredSecret, provided)) {
@@ -51,11 +62,21 @@ public class BillingPaymentConfirmationService {
         if (pago.getEstado() == EstadoPago.APROBADO) {
             return buildIdempotentSuccess(pago);
         }
+
+        SaasCompra compra = pago.getCompra();
+        SaasCompraTipo tipo = compra.getTipo() != null ? compra.getTipo() : SaasCompraTipo.ONBOARDING;
+        if (tipo == SaasCompraTipo.CAMBIO_PLAN) {
+            return confirmPlanChangePayment(pago, compra, channel, payloadAudit, pagoId);
+        }
+
         if (pago.getEstado() != EstadoPago.PENDIENTE) {
             throw new BusinessException(HttpStatus.CONFLICT, "El pago no está pendiente de confirmación");
         }
+        return confirmOnboardingPaymentFlow(pago, compra, channel, payloadAudit, pagoId);
+    }
 
-        SaasCompra compra = pago.getCompra();
+    private PaymentConfirmationResponse confirmOnboardingPaymentFlow(
+            SaasPago pago, SaasCompra compra, String channel, String payloadAudit, Long pagoId) {
         Empresa empresa = compra.getEmpresa();
         Suscripcion suscripcion = compra.getSuscripcion();
 
@@ -126,6 +147,118 @@ public class BillingPaymentConfirmationService {
                 true,
                 plan != null ? plan.getCodigo() : null,
                 "Pago confirmado. El super administrador ya puede iniciar sesión.");
+    }
+
+    private PaymentConfirmationResponse confirmPlanChangePayment(
+            SaasPago pago, SaasCompra compra, String channel, String payloadAudit, Long pagoId) {
+        Empresa empresa = compra.getEmpresa();
+        Suscripcion suscripcion = compra.getSuscripcion();
+
+        if (!empresa.getId().equals(suscripcion.getEmpresa().getId())) {
+            throw new BusinessException(HttpStatus.CONFLICT, "Inconsistencia empresa/suscripción en la compra");
+        }
+        if (!empresa.getEstado().permiteAccesoUsuarios()) {
+            throw new BusinessException(
+                    HttpStatus.CONFLICT,
+                    "La empresa no puede confirmar el cambio de plan en su estado actual.");
+        }
+        if (suscripcion.getEstado() != EstadoSuscripcion.ACTIVA && suscripcion.getEstado() != EstadoSuscripcion.TRIAL) {
+            throw new BusinessException(HttpStatus.CONFLICT, "La suscripción no permite confirmar este cambio de plan.");
+        }
+        SaasPlan destino = compra.getPlanDestino();
+        if (destino == null) {
+            throw new BusinessException(HttpStatus.CONFLICT, "La compra de cambio de plan no tiene plan destino.");
+        }
+
+        if (pago.getEstado() == EstadoPago.PENDIENTE) {
+            if (compra.getEstado() != EstadoCompra.PENDIENTE_PAGO) {
+                throw new BusinessException(
+                        HttpStatus.CONFLICT,
+                        "El estado de la solicitud no permite confirmar este pago. Si el cobro ya se realizó, contacta a soporte.");
+            }
+            return finalizePlanChangePaymentApproved(pago, compra, suscripcion, empresa, destino, channel, payloadAudit, pagoId, false);
+        }
+
+        if (pago.getEstado() == EstadoPago.RECHAZADO) {
+            Instant now = Instant.now();
+            PlanChangeLatePaymentPolicy.Evaluation late = PlanChangeLatePaymentPolicy.evaluateLatePaymentAcceptance(
+                    pago, compra, empresa, now, saasCompraRepository, planChangeLateConfirmMaxHours);
+            if (late.eligible()) {
+                log.info(
+                        "Plan change billing: late payment accepted pagoId={} empresaId={} compraId={} policy={}",
+                        pagoId,
+                        empresa.getId(),
+                        compra.getId(),
+                        late.logDetail());
+                return finalizePlanChangePaymentApproved(
+                        pago, compra, suscripcion, empresa, destino, channel, payloadAudit, pagoId, true);
+            }
+            log.warn(
+                    "Plan change billing: late payment denied pagoId={} empresaId={} compraId={} motivo={} detalle={}",
+                    pagoId,
+                    empresa.getId(),
+                    compra.getId(),
+                    late.denialReason(),
+                    late.logDetail());
+            throw new BusinessException(HttpStatus.CONFLICT, late.userMessage());
+        }
+
+        throw new BusinessException(
+                HttpStatus.CONFLICT,
+                "Este pago no está en un estado que permita confirmar el cambio de plan. "
+                        + "Si el cobro ya se realizó, contacta a soporte con la referencia del pago.");
+    }
+
+    private PaymentConfirmationResponse finalizePlanChangePaymentApproved(
+            SaasPago pago,
+            SaasCompra compra,
+            Suscripcion suscripcion,
+            Empresa empresa,
+            SaasPlan destino,
+            String channel,
+            String payloadAudit,
+            Long pagoId,
+            boolean lateAcceptance) {
+        Instant now = Instant.now();
+        pago.setEstado(EstadoPago.APROBADO);
+        pago.setConfirmedAt(now);
+        pago.setConfirmationChannel(channel);
+        if (payloadAudit != null && !payloadAudit.isBlank()) {
+            String trimmed = payloadAudit.length() > 8000 ? payloadAudit.substring(0, 8000) : payloadAudit;
+            pago.setPayloadAudit(trimmed);
+        }
+        saasPagoRepository.save(pago);
+
+        compra.setEstado(EstadoCompra.COMPLETADA);
+        saasCompraRepository.save(compra);
+
+        suscripcion.setPlan(destino);
+        suscripcionRepository.save(suscripcion);
+
+        String detalle = channel + " pagoId=" + pagoId + " plan=" + destino.getCodigo();
+        if (lateAcceptance) {
+            detalle += " aceptacion_tardia";
+        }
+        billingEventRepository.save(BillingEvent.builder()
+                .pago(pago)
+                .tipo("PAYMENT_CONFIRMED_PLAN_CHANGE")
+                .detalle(detalle)
+                .createdAt(now)
+                .build());
+
+        String mensaje = lateAcceptance
+                ? "Pago recibido con demora: tu plan solicitado queda activo."
+                : "Pago confirmado. Tu nuevo plan ya está activo.";
+        return new PaymentConfirmationResponse(
+                true,
+                false,
+                pago.getId(),
+                empresa.getId(),
+                suscripcion.getEstado().name(),
+                empresa.getEstado().name(),
+                true,
+                destino.getCodigo(),
+                mensaje);
     }
 
     private PaymentConfirmationResponse buildIdempotentSuccess(SaasPago pago) {

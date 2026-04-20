@@ -8,8 +8,10 @@
 #
 # Primera vez: Postgres ejecuta database/schema.sql (esquema completo).
 # BD ya existente con volumen antiguo: aplicar database/migrations/*.sql manualmente si falta algo.
+# Si el backend (JDBC) falla con "password authentication failed" para inventario: el volumen
+# puede haberse creado con otras credenciales (POSTGRES_* solo aplican en el primer init). Reset: npm run db:reset
 #
-# API: http://localhost:8080/swagger-ui.html  |  DB: localhost:5432 inventario/inventario
+# API: http://localhost:8080/swagger-ui.html  |  DB en el host: localhost:5433 → 5432 en el contenedor (evita choque con Postgres local en 5432)
 
 services:
   db:
@@ -20,7 +22,7 @@ services:
       POSTGRES_PASSWORD: inventario
       POSTGRES_DB: inventario
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - inventario_pgdata:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro

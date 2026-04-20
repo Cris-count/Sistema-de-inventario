@@ -34,6 +34,17 @@ export class InventarioService {
     return this.http.get<InventarioRow[]>(`${this.base}/alertas`, { params });
   }
 
+  /**
+   * Simula el correo de pedido sugerido por bajo stock (mismo texto y destinatario que el envío automático:
+   * correo del proveedor resuelto para el producto).
+   */
+  simularCorreoStock(body: { productoId?: number | null; bodegaId?: number | null } = {}): Observable<{
+    modo: string;
+    mensaje: string;
+  }> {
+    return this.http.post<{ modo: string; mensaje: string }>(`${this.base}/alertas/simular-correo`, body);
+  }
+
   stockInicial(lineas: LineaStockInicial[]): Observable<MovimientoResponse> {
     return this.http.post<MovimientoResponse>(`${this.base}/stock-inicial`, { lineas });
   }

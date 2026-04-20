@@ -4,9 +4,9 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   selector: 'app-landing-social-proof',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="border-b border-slate-200/80 bg-background py-section-sm">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <p class="text-center text-xs font-semibold uppercase tracking-widest text-secondary">
+    <section class="border-b border-slate-200/80 bg-background py-section-sm dark:border-slate-700/60 dark:bg-slate-950">
+      <div class="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 lp-section-pad">
+        <p class="text-center text-xs font-semibold uppercase tracking-widest text-secondary dark:text-slate-400">
           Operaciones que necesitan claridad, no caos
         </p>
         <div
@@ -15,8 +15,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
         >
           @for (m of metrics; track m.label) {
             <div class="text-center">
-              <p class="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">{{ m.value }}</p>
-              <p class="mt-1 text-sm text-secondary">{{ m.label }}</p>
+              <p class="text-2xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-3xl">{{ m.value }}</p>
+              <p class="mt-1 text-sm text-secondary dark:text-slate-400">{{ m.label }}</p>
             </div>
           }
         </div>

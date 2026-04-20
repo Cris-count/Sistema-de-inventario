@@ -40,6 +40,7 @@ interface RegisterDraft {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
+    ThemeToggleComponent,
     UiButtonComponent,
     RegisterStepPlanComponent,
     RegisterStepEmailVerifyComponent,
@@ -49,6 +50,35 @@ interface RegisterDraft {
     RegisterStepResultComponent
   ],
   template: `
+    <div
+      id="lp-root"
+      class="min-h-screen bg-background font-sans text-primary antialiased dark:bg-slate-950 dark:text-slate-100"
+    >
+      <header
+        class="border-b border-slate-200/80 bg-surface/90 backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/90"
+      >
+        <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <a
+            routerLink="/landing"
+            class="text-sm font-semibold text-secondary no-underline hover:text-primary dark:text-slate-300 dark:hover:text-white"
+          >
+            ← Inventario Pro
+          </a>
+          <div class="flex items-center gap-2">
+            <app-theme-toggle />
+            @if (step() < 5) {
+              <span class="text-xs font-medium text-secondary dark:text-slate-400">Paso {{ step() }} de 4</span>
+            }
+          </div>
+        </div>
+        @if (step() < 5) {
+          <div class="mx-auto max-w-3xl px-4 pb-3 sm:px-6">
+            <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div
+                class="h-full rounded-full bg-gradient-to-r from-accent to-accent-strong transition-all duration-300"
+                [style.width.%]="progressPct()"
+              ></div>
+            </div>
     <!--
       Tailwind important selector #lp-root: utility classes must live on a descendant of #lp-root,
       not on the same element, or background/text tokens won't apply (dark body shows through).
@@ -77,6 +107,12 @@ interface RegisterDraft {
         </header>
 
       <main class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+        @if (loadError()) {
+          <p
+            class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/55 dark:text-amber-100"
+          >
+            {{ loadError() }}
+          </p>
         @if (loadError(); as loadErr) {
           <div class="rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-soft">
             <p class="text-sm font-semibold text-amber-950">{{ loadErr }}</p>
@@ -158,6 +194,7 @@ interface RegisterDraft {
 })
 export class RegisterPageComponent implements OnInit {
   private readonly api = inject(RegisterApiService);
+  private readonly planesApi = inject(PlanesService);
   private readonly route = inject(ActivatedRoute);
 
   /** Expuesto en plantilla si falla la carga de planes. */
@@ -191,21 +228,15 @@ export class RegisterPageComponent implements OnInit {
   readonly progressPct = computed(() => (Math.min(this.step(), 5) / 5) * 100);
 
   ngOnInit(): void {
-    this.loadPlans();
-  }
-
-  reloadPlans(): void {
-    this.loadPlans();
-  }
-
-  private loadPlans(): void {
-    this.loadError.set(null);
-    this.api.listPlanes().subscribe({
+    this.planesApi.listPublicPlanes().subscribe({
       next: (list) => {
         this.plans.set(list);
         const q = this.route.snapshot.queryParamMap.get('plan');
-        if (q && list.some((p) => p.codigo === q)) {
-          this.draft.update((d) => ({ ...d, planCodigo: q }));
+        if (q) {
+          const match = list.find((p) => p.id === q || p.codigo === q);
+          if (match) {
+            this.draft.update((d) => ({ ...d, planCodigo: match.codigo }));
+          }
         }
       },
       error: () =>
