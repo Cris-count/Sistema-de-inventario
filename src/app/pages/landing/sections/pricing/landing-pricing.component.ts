@@ -30,7 +30,7 @@ interface LandingPlanView {
   template: `
     <section
       id="planes"
-      class="bg-background py-section dark:bg-slate-950"
+      class="scroll-mt-24 border-t border-slate-200/80 bg-gradient-to-b from-slate-50 to-white py-section-lg dark:border-slate-800 dark:from-slate-950 dark:to-slate-950"
       aria-labelledby="planes-heading"
     >
       <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -43,9 +43,8 @@ interface LandingPlanView {
             Elige el nivel de control que tu operación necesita hoy
           </h2>
           <p class="mt-4 text-lg text-secondary dark:text-slate-400">
-            Precios en pesos colombianos y límites publicados igual que en el catálogo: sin sorpresas
-            al registrar tu empresa. Si dudas entre dos planes, la comparativa de abajo te resume las
-            diferencias.
+            Precios en pesos colombianos y límites publicados igual que en el catálogo: sin sorpresas al registrar tu
+            empresa.
           </p>
         </div>
 

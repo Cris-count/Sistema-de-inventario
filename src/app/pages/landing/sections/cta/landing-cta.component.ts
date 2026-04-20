@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
 import { fadeUp } from '../../../../core/animations';
 import { buildWhatsAppLink } from '../../config/landing-contact';
@@ -10,7 +11,7 @@ import { buildWhatsAppLink } from '../../config/landing-contact';
 @Component({
   selector: 'app-landing-cta',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButtonComponent],
+  imports: [UiButtonComponent, RouterLink],
   animations: [fadeUp],
   template: `
     <section
@@ -22,15 +23,19 @@ import { buildWhatsAppLink } from '../../config/landing-contact';
       <div
         class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent"
       ></div>
-      <div @fadeUp class="relative mx-auto max-w-4xl text-center">
-        <h2 class="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          Empieza hoy a tomar el control de tu negocio
+      <div @fadeUp class="relative mx-auto max-w-2xl text-center">
+        <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-400/90">Siguiente paso</p>
+        <h2 class="mt-3 text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          Regístrate y opera con inventario real
         </h2>
-        <p class="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-200 sm:text-lg">
-          Organiza tu inventario, reduce errores y crece con más claridad.
+        <p class="mx-auto mt-4 max-w-lg text-base leading-relaxed text-slate-400 sm:text-lg">
+          Sin tarjeta. Carga tu empresa, tus bodegas y empieza a registrar entradas y salidas con tu equipo el mismo día.
         </p>
         <div class="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <app-ui-button variant="landing-primary" class="w-full sm:w-auto" linkTo="/registro"
+          <app-ui-button
+            variant="landing-primary"
+            class="w-full min-w-0 !px-10 sm:w-auto"
+            linkTo="/registro"
             >Crear cuenta gratis</app-ui-button
           >
           <a
@@ -47,6 +52,29 @@ import { buildWhatsAppLink } from '../../config/landing-contact';
             Hablar con un asesor
           </a>
         </div>
+        <nav
+          class="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-slate-500"
+          aria-label="Enlaces relacionados"
+        >
+          <a
+            routerLink="/landing"
+            fragment="planes"
+            class="font-medium text-slate-400 underline-offset-4 transition hover:text-teal-300 hover:underline"
+            >Ver planes y límites</a
+          >
+          <span class="hidden text-slate-600 sm:inline" aria-hidden="true">·</span>
+          <a
+            routerLink="/login"
+            class="font-medium text-slate-400 underline-offset-4 transition hover:text-teal-300 hover:underline"
+            >Ya tengo cuenta</a
+          >
+          <span class="hidden text-slate-600 sm:inline" aria-hidden="true">·</span>
+          <a
+            routerLink="/app"
+            class="font-medium text-slate-500 underline-offset-4 transition hover:text-slate-300 hover:underline"
+            >Ir al panel</a
+          >
+        </nav>
       </div>
     </section>
   `

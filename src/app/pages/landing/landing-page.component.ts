@@ -2,43 +2,19 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { LandingTopbarComponent } from './sections/topbar/landing-topbar.component';
 import { LandingNavbarComponent } from './sections/navbar/landing-navbar.component';
 import { LandingHeroComponent } from './sections/hero/landing-hero.component';
-import { LandingAdvisorComponent } from './sections/advisor/landing-advisor.component';
-import { LandingProblemComponent } from './sections/problem/landing-problem.component';
-import { LandingSolutionComponent } from './sections/solution/landing-solution.component';
-import { LandingProductShowcaseComponent } from './sections/product-showcase/landing-product-showcase.component';
-import { LandingSectorsComponent } from './sections/sectors/landing-sectors.component';
-import { LandingFeaturesComponent } from './sections/features/landing-features.component';
+import { LandingProblemSolutionComponent } from './sections/problem-solution/landing-problem-solution.component';
 import { LandingBenefitsComponent } from './sections/benefits/landing-benefits.component';
-import { LandingPricingComponent } from './sections/pricing/landing-pricing.component';
-import { LandingPlansCompareComponent } from './sections/plans-compare/landing-plans-compare.component';
+import { LandingHowItWorksComponent } from './sections/how-it-works/landing-how-it-works.component';
+import { LandingInlineCtaComponent } from './sections/inline-cta/landing-inline-cta.component';
+import { LandingBusinessVisualComponent } from './sections/business-visual/landing-business-visual.component';
 import { LandingTrustComponent } from './sections/trust/landing-trust.component';
+import { LandingPricingComponent } from './sections/pricing/landing-pricing.component';
 import { LandingFaqComponent } from './sections/faq/landing-faq.component';
 import { LandingCtaComponent } from './sections/cta/landing-cta.component';
 import { LandingFooterComponent } from './sections/footer/landing-footer.component';
 import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.component';
 
-/**
- * Landing pública. Orquesta las 15 secciones comerciales:
- *
- *   1.  Top bar comercial (contacto + área de clientes + CTA prueba)
- *   2.  Navbar principal (Soluciones / Funcionalidades / Planes / FAQ)
- *   3.  Hero
- *   4.  Franja de asesoría (WhatsApp + correo)
- *   5.  Problema
- *   6.  Solución
- *   7.  Soluciones por tipo de negocio
- *   8.  Funcionalidades clave
- *   9.  Beneficios
- *   10. Planes (catálogo real desde backend)
- *   11. Comparativa breve de planes
- *   12. Confianza honesta
- *   13. FAQ
- *   14. CTA final
- *   15. Footer
- *
- * `LandingUrgencyComponent` se retira del flujo: el mensaje de urgencia ya
- * está cubierto por el advisor strip y el CTA final, sin saturar el scroll.
- */
+/** Landing pública: topbar, navbar, hero, narrativa comercial, planes (API), FAQ, CTA y footer. */
 @Component({
   selector: 'app-landing-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,16 +22,13 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
     LandingTopbarComponent,
     LandingNavbarComponent,
     LandingHeroComponent,
-    LandingAdvisorComponent,
-    LandingProblemComponent,
-    LandingSolutionComponent,
-    LandingProductShowcaseComponent,
-    LandingSectorsComponent,
-    LandingFeaturesComponent,
+    LandingProblemSolutionComponent,
     LandingBenefitsComponent,
-    LandingPricingComponent,
-    LandingPlansCompareComponent,
+    LandingHowItWorksComponent,
+    LandingInlineCtaComponent,
+    LandingBusinessVisualComponent,
     LandingTrustComponent,
+    LandingPricingComponent,
     LandingFaqComponent,
     LandingCtaComponent,
     LandingFooterComponent,
@@ -64,22 +37,20 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
   template: `
     <div
       id="lp-root"
-      class="min-h-screen bg-background font-sans text-primary antialiased dark:bg-slate-950 dark:text-slate-100"
+      class="min-h-screen overflow-x-hidden bg-background font-sans text-primary antialiased dark:bg-slate-950 dark:text-slate-100"
     >
       <app-landing-topbar />
       <app-landing-navbar />
       <main>
         <app-landing-hero />
-        <app-landing-advisor />
-        <app-landing-problem />
-        <app-landing-solution />
-        <app-landing-product-showcase />
-        <app-landing-sectors />
-        <app-landing-features />
+        <app-landing-how-it-works />
+        <app-landing-inline-cta variant="organize" />
+        <app-landing-problem-solution />
+        <app-landing-business-visual />
         <app-landing-benefits />
-        <app-landing-pricing />
-        <app-landing-plans-compare />
         <app-landing-trust />
+        <app-landing-inline-cta variant="free" [showPlansLink]="false" />
+        <app-landing-pricing />
         <app-landing-faq />
         <app-landing-cta />
       </main>

@@ -88,11 +88,17 @@ export default {
         sm: 'var(--shadow-sm)',
         md: 'var(--shadow-md)',
         lg: 'var(--shadow-lg)',
-        soft: 'var(--shadow-soft)'
+        soft: 'var(--shadow-soft)',
+        card: '0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 12px 28px -8px rgba(15, 23, 42, 0.1)',
+        'card-hover':
+          '0 16px 40px -12px rgba(13, 148, 136, 0.22), 0 8px 16px -8px rgba(15, 23, 42, 0.12)',
+        lift: '0 25px 50px -12px rgba(15, 23, 42, 0.2)',
+        visual: '0 32px 80px -20px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(13, 148, 136, 0.15)'
       },
       spacing: {
         section: 'var(--space-section)',
-        'section-sm': 'var(--space-section-sm)'
+        'section-sm': 'var(--space-section-sm)',
+        'section-lg': '8.5rem'
       },
       zIndex: {
         nav: 'var(--z-nav)',

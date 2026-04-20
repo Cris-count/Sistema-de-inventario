@@ -1,105 +1,150 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
 import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badge.component';
-import { fadeUp } from '../../../../core/animations';
 
 @Component({
   selector: 'app-landing-hero',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [UiButtonComponent, UiBadgeComponent],
-  animations: [fadeUp],
   template: `
-    <section
-      @fadeUp
-      id="producto"
-      class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-teal-900 text-slate-50"
-    >
-      <div
-        class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(45,212,191,0.35),transparent)]"
-      ></div>
-      <div
-        class="pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full bg-teal-400/20 blur-3xl"
-      ></div>
-      <div
-        class="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl"
-      ></div>
+    <section id="producto" class="lp-hero relative overflow-hidden text-slate-50">
+      <div class="lp-hero-bg" aria-hidden="true"></div>
+      <div class="lp-hero-right-glow" aria-hidden="true"></div>
+      <div class="lp-hero-grid" aria-hidden="true"></div>
+      <div class="lp-hero-vignette" aria-hidden="true"></div>
 
       <div
-        class="relative mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:gap-12 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8 lg:py-24 lp-hero-pad"
+        class="relative z-10 mx-auto grid max-w-7xl gap-14 px-5 py-14 sm:gap-12 sm:px-6 sm:py-20 lg:grid-cols-[minmax(0,1.05fr)_minmax(520px,0.95fr)] lg:items-center lg:gap-16 lg:px-8 lg:py-24 lp-hero-pad"
       >
-        <div class="lp-fade-up max-w-xl">
-          <app-ui-badge tone="on-dark">Diseñado para pymes que quieren crecer con control</app-ui-badge>
-          <h1
-            class="mt-5 text-[1.65rem] font-semibold leading-[1.2] tracking-tight text-white sm:text-4xl sm:leading-[1.15] lg:text-[3.25rem] lg:leading-[1.08]"
+        <div class="max-w-2xl">
+          <app-ui-badge
+            tone="accent"
+            class="!border-white/12 !bg-white/8 !px-3.5 !py-1 !text-sm !font-medium !text-teal-50 !ring-1 !ring-white/8"
           >
-            Deja de perder dinero por desorden en tu inventario
+            Sistema para PYMES en Colombia
+          </app-ui-badge>
+
+          <h1
+            class="mt-6 max-w-3xl text-balance text-4xl font-bold tracking-tight text-white sm:text-5xl sm:leading-[1.06] lg:text-6xl lg:leading-[1.02]"
+          >
+            Controla inventario, ventas y compras desde un solo lugar
           </h1>
-          <p class="mt-5 text-base leading-relaxed text-slate-300 sm:text-lg">
-            Controla tus productos, movimientos y stock en un solo lugar claro y fácil de usar.
+
+          <p class="mt-6 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl">
+            Consulta existencias, registra movimientos, organiza productos y toma decisiones con reportes claros en una
+            plataforma hecha para el día a día de tu negocio.
           </p>
-          <p class="mt-3 text-base font-medium text-teal-200 sm:text-lg">
-            Menos errores, más control, mejores decisiones.
-          </p>
-          <div class="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <app-ui-button variant="landing-primary" class="w-full sm:w-auto" linkTo="/registro"
-              >Empieza gratis</app-ui-button
-            >
+
+          <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
             <app-ui-button
-              variant="landing-secondary"
-              class="w-full !border-white/30 !bg-white/10 !text-white hover:!bg-white/15 sm:w-auto"
-              (click)="scrollToPlanes()"
-              >Ver planes</app-ui-button
+              variant="landing-primary"
+              class="w-full sm:w-auto sm:min-w-[220px] !text-base"
+              linkTo="/registro"
             >
+              Probar gratis
+            </app-ui-button>
+
+            <app-ui-button
+              variant="landing-on-dark"
+              class="w-full sm:w-auto sm:min-w-[220px] !text-base"
+              linkTo="/landing"
+              fragment="como-funciona"
+            >
+              Ver cómo funciona
+            </app-ui-button>
           </div>
-          <p class="mt-4 text-xs text-slate-400">Empieza sin costo · Organiza tu inventario desde el primer día</p>
+
+          <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-400 sm:text-[15px]">
+            <span>Sin tarjeta</span>
+            <span class="h-1 w-1 rounded-full bg-slate-600"></span>
+            <span>Configuración rápida</span>
+            <span class="h-1 w-1 rounded-full bg-slate-600"></span>
+            <span>Hecho para operación real</span>
+          </div>
+
+          <div class="mt-8 grid gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Ventas</p>
+              <p class="mt-1 text-sm font-medium leading-snug text-white">Registra y consulta al instante</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Inventario</p>
+              <p class="mt-1 text-sm font-medium leading-snug text-white">Controla stock y movimientos</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-sm">
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Reportes</p>
+              <p class="mt-1 text-sm font-medium leading-snug text-white">Decide con información clara</p>
+            </div>
+          </div>
         </div>
 
-        <div class="relative">
-          <div
-            class="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-3 shadow-2xl shadow-teal-900/40 backdrop-blur"
-          >
-            <div class="rounded-xl bg-surface p-4 shadow-inner ring-1 ring-slate-200/60">
-              <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2">
-                  <span class="h-2.5 w-2.5 rounded-full bg-red-400/90"></span>
-                  <span class="h-2.5 w-2.5 rounded-full bg-amber-400/90"></span>
-                  <span class="h-2.5 w-2.5 rounded-full bg-emerald-400/90"></span>
-                </div>
-                <span class="text-xs font-medium text-secondary">Tu panel de inventario</span>
-              </div>
-              <div class="mt-4 grid gap-3 sm:grid-cols-3">
-                <div class="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
-                  <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Productos</p>
-                  <p class="mt-1 text-2xl font-semibold text-slate-900">342</p>
-                  <p class="text-xs text-secondary">Catálogo organizado</p>
-                </div>
-                <div class="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
-                  <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Stock bajo</p>
-                  <p class="mt-1 text-2xl font-semibold text-slate-900">6</p>
-                  <p class="text-xs text-amber-700">Necesita reposición</p>
-                </div>
-                <div class="rounded-lg bg-slate-50 p-3 ring-1 ring-slate-100">
-                  <p class="text-[11px] font-medium uppercase tracking-wide text-secondary">Movimientos hoy</p>
-                  <p class="mt-1 text-2xl font-semibold text-slate-900">28</p>
-                  <p class="text-xs text-accent">Todo registrado</p>
-                </div>
-              </div>
-              <div class="mt-4 rounded-lg border border-slate-100 bg-white">
-                <div class="grid grid-cols-4 gap-2 border-b border-slate-100 bg-slate-50/80 px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-secondary">
-                  <span>Código</span>
-                  <span class="col-span-2">Producto</span>
-                  <span class="text-right">Stock</span>
-                </div>
-                @for (row of rows; track row.sku) {
-                  <div
-                    class="grid grid-cols-4 gap-2 px-3 py-2.5 text-xs text-slate-900 odd:bg-white even:bg-slate-50/50"
-                  >
-                    <span class="font-mono text-secondary">{{ row.sku }}</span>
-                    <span class="col-span-2">{{ row.name }}</span>
-                    <span class="text-right font-medium">{{ row.qty }}</span>
+        <div class="relative flex justify-center lg:justify-end">
+          <div class="lp-hero-panel-wrap relative w-full max-w-2xl">
+            <div class="lp-hero-panel-halo" aria-hidden="true"></div>
+
+            <div
+              class="relative z-10 overflow-hidden rounded-[2rem] border border-white/12 bg-[#0c1620]/88 p-4 shadow-[0_30px_120px_-28px_rgba(0,0,0,0.75)] ring-1 ring-white/8 backdrop-blur-xl sm:p-5 lg:p-6"
+            >
+              <div class="rounded-[1.4rem] border border-white/8 bg-white p-5 shadow-inner ring-1 ring-slate-200/70 sm:p-6">
+                <div class="flex items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                  <div class="flex items-center gap-2">
+                    <span class="h-3 w-3 rounded-full bg-red-400"></span>
+                    <span class="h-3 w-3 rounded-full bg-amber-400"></span>
+                    <span class="h-3 w-3 rounded-full bg-emerald-400"></span>
                   </div>
-                }
+                  <span class="text-xs font-semibold tracking-wide text-slate-500 sm:text-sm">panel / operación</span>
+                </div>
+
+                <div class="mt-5 grid gap-4 sm:grid-cols-3">
+                  <div class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">Ventas hoy</p>
+                    <p class="mt-2 text-3xl font-bold tracking-tight text-slate-900">$2.8M</p>
+                    <p class="mt-1 text-sm font-medium text-emerald-600">+12% frente a ayer</p>
+                  </div>
+                  <div class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">Stock bajo</p>
+                    <p class="mt-2 text-3xl font-bold tracking-tight text-slate-900">08</p>
+                    <p class="mt-1 text-sm font-medium text-amber-600">Requieren reposición</p>
+                  </div>
+                  <div class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">Clientes</p>
+                    <p class="mt-2 text-3xl font-bold tracking-tight text-slate-900">126</p>
+                    <p class="mt-1 text-sm text-slate-500">Activos este mes</p>
+                  </div>
+                </div>
+
+                <div class="mt-5 rounded-2xl border border-slate-200 bg-white">
+                  <div
+                    class="grid grid-cols-4 gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-bold uppercase tracking-wide text-slate-500 sm:text-xs"
+                  >
+                    <span>SKU</span>
+                    <span class="col-span-2">Producto</span>
+                    <span class="text-right">Qty</span>
+                  </div>
+
+                  @for (row of rows; track row.sku) {
+                    <div class="grid grid-cols-4 gap-2 px-4 py-3 text-sm text-slate-900 odd:bg-white even:bg-slate-50/70">
+                      <span class="font-mono text-xs text-slate-500 sm:text-sm">{{ row.sku }}</span>
+                      <span class="col-span-2 font-medium">{{ row.name }}</span>
+                      <span class="text-right font-semibold">{{ row.qty }}</span>
+                    </div>
+                  }
+                </div>
               </div>
+            </div>
+
+            <div
+              class="absolute -left-4 top-8 z-20 hidden rounded-2xl border border-teal-300/20 bg-[#0f1c24]/92 px-4 py-3 text-left shadow-[0_20px_60px_-30px_rgba(20,184,166,0.65)] backdrop-blur-md lg:block"
+            >
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Alerta</p>
+              <p class="mt-1 text-sm font-semibold text-white">8 productos en stock mínimo</p>
+            </div>
+
+            <div
+              class="absolute -right-4 bottom-10 z-20 hidden rounded-2xl border border-white/10 bg-[#101923]/92 px-4 py-3 text-left shadow-[0_20px_60px_-30px_rgba(15,23,42,0.75)] backdrop-blur-md lg:block"
+            >
+              <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Resumen</p>
+              <p class="mt-1 text-sm font-semibold text-white">Compras, ventas y existencias en tiempo real</p>
             </div>
           </div>
         </div>
@@ -120,11 +165,4 @@ export class LandingHeroComponent {
     { sku: 'P-014', name: 'Producto B', qty: '48' },
     { sku: 'P-027', name: 'Producto C', qty: '15' }
   ];
-
-  protected scrollToPlanes(): void {
-    if (typeof document === 'undefined') {
-      return;
-    }
-    document.getElementById('planes')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
 }

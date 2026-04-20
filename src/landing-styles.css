@@ -188,7 +188,298 @@ html.dark #lp-root .lp-pricing-card:hover {
     0 14px 32px rgb(0 0 0 / 0.45);
 }
 
-/* Accesibilidad: desactivar todo el motion si el usuario lo pide. */
+/* CTA: movimiento más contenido y menos “misma escena” que el hero */
+@keyframes lp-cta-mesh {
+  0%,
+  100% {
+    transform: translate3d(2%, 1%, 0) rotate(-0.4deg) scale(1);
+  }
+  50% {
+    transform: translate3d(-2%, -2%, 0) rotate(0.4deg) scale(1.015);
+  }
+}
+
+@keyframes lp-cta-blob-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.38;
+  }
+  50% {
+    transform: translate3d(-3%, 4%, 0);
+    opacity: 0.5;
+  }
+}
+
+@keyframes lp-cta-blob-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.32;
+  }
+  50% {
+    transform: translate3d(4%, -3%, 0);
+    opacity: 0.45;
+  }
+}
+
+@keyframes lp-visual-grid-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-40px, -40px, 0);
+  }
+}
+
+@keyframes lp-visual-glow {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.32;
+    transform: translate3d(1%, -1%, 0) scale(1.01);
+  }
+}
+
+#lp-root .lp-cta-mesh {
+  position: absolute;
+  inset: -30% -20%;
+  opacity: 0.75;
+  background: linear-gradient(
+    165deg,
+    rgba(15, 118, 110, 0.11) 0%,
+    rgba(51, 65, 85, 0.14) 38%,
+    rgba(15, 23, 42, 0) 72%
+  );
+  animation: lp-cta-mesh 42s ease-in-out infinite;
+}
+
+#lp-root .lp-cta-blob-a {
+  animation: lp-cta-blob-a 30s ease-in-out infinite;
+}
+
+#lp-root .lp-cta-blob-b {
+  animation: lp-cta-blob-b 22s ease-in-out infinite;
+  animation-delay: -4s;
+}
+
+#lp-root .lp-visual-depth-wrap {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Rejilla / glow reservados por si se reutilizan; estáticos y discretos (sin competir con el mockup). */
+#lp-root .lp-visual-grid {
+  position: absolute;
+  inset: -15%;
+  background-image:
+    linear-gradient(rgba(13, 148, 136, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 148, 136, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.12;
+  animation: none;
+  mask-image: radial-gradient(ellipse 72% 58% at 50% 62%, #000 18%, transparent 72%);
+}
+
+#lp-root .lp-visual-glow {
+  position: absolute;
+  inset: 18% 18% 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.04) 0%, transparent 70%);
+  animation: none;
+  opacity: 0.35;
+}
+
+html.dark #lp-root .lp-visual-grid {
+  background-image:
+    linear-gradient(rgba(45, 212, 191, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(45, 212, 191, 0.025) 1px, transparent 1px);
+  opacity: 0.1;
+}
+
+@media (max-width: 639px) {
+  #lp-root .lp-cta-mesh {
+    animation-duration: 56s;
+    opacity: 0.62;
+  }
+
+  #lp-root .lp-cta-blob-a,
+  #lp-root .lp-cta-blob-b {
+    animation: none;
+    opacity: 0.3;
+  }
+
+  #lp-root .lp-visual-grid {
+    animation-duration: 90s;
+    opacity: 0.14;
+  }
+
+  #lp-root .lp-visual-glow {
+    animation: none;
+    opacity: 0.16;
+  }
+}
+
+/* ===== HERO NUEVO: más comercial, más premium, menos genérico ===== */
+
+#lp-root .lp-hero {
+  background:
+    linear-gradient(90deg, #07111a 0%, #07111a 48%, #09151d 48%, #0a1820 100%);
+  position: relative;
+}
+
+#lp-root .lp-hero-bg {
+  position: absolute;
+  inset: -2%;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 76% 34%, rgba(17, 94, 89, 0.3) 0%, rgba(17, 94, 89, 0.14) 22%, transparent 52%),
+    radial-gradient(circle at 86% 54%, rgba(13, 46, 51, 0.46) 0%, transparent 58%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0%, rgba(255, 255, 255, 0) 100%);
+  transform-origin: center;
+  animation: lp-hero-bg-drift 24s ease-in-out infinite alternate;
+}
+
+#lp-root .lp-hero-right-glow {
+  position: absolute;
+  right: -4%;
+  top: 8%;
+  width: min(46vw, 44rem);
+  height: min(46vw, 44rem);
+  border-radius: 9999px;
+  z-index: 0;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.18) 0%, rgba(13, 46, 51, 0.16) 32%, transparent 72%);
+  filter: blur(26px);
+  transform-origin: center;
+  animation: lp-hero-right-glow 14s ease-in-out infinite;
+}
+
+#lp-root .lp-hero-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.075;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(90deg, transparent 0%, transparent 42%, rgba(0, 0, 0, 0.95) 58%, rgba(0, 0, 0, 1) 100%);
+  animation: lp-hero-grid-drift 36s linear infinite alternate;
+}
+
+#lp-root .lp-hero-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 8, 13, 0.08) 0%,
+    rgba(5, 8, 13, 0.18) 52%,
+    rgba(5, 8, 13, 0.34) 100%
+  );
+  pointer-events: none;
+}
+
+#lp-root .lp-hero-panel-wrap {
+  isolation: isolate;
+}
+
+#lp-root .lp-hero-panel-halo {
+  position: absolute;
+  inset: -1.5rem -1rem -1rem -1rem;
+  border-radius: 2rem;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(20, 184, 166, 0.18) 0%, rgba(15, 23, 42, 0.08) 38%, transparent 74%);
+  filter: blur(18px);
+  animation: lp-hero-panel-halo 14s ease-in-out infinite;
+}
+
+@keyframes lp-hero-bg-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-1.2%, 0.8%, 0) scale(1.025);
+  }
+  100% {
+    transform: translate3d(1%, -0.6%, 0) scale(1.015);
+  }
+}
+
+@keyframes lp-hero-grid-drift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-18px, 10px, 0);
+  }
+}
+
+@keyframes lp-hero-right-glow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.82;
+  }
+  50% {
+    transform: translate3d(2.2%, -1.4%, 0) scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes lp-hero-panel-halo {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1023px) {
+  #lp-root .lp-hero {
+    background: linear-gradient(180deg, #07111a 0%, #08131b 52%, #0a1820 100%);
+  }
+
+  #lp-root .lp-hero-right-glow {
+    right: 50%;
+    transform: translateX(50%);
+    top: 34%;
+    width: min(88vw, 34rem);
+    height: min(88vw, 34rem);
+    opacity: 0.9;
+  }
+
+  #lp-root .lp-hero-grid {
+    opacity: 0.045;
+    mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.4) 30%, rgba(0, 0, 0, 1) 100%);
+  }
+}
+
+@media (max-width: 639px) {
+  #lp-root .lp-hero-right-glow {
+    width: 22rem;
+    height: 22rem;
+    top: 39%;
+    filter: blur(22px);
+  }
+
+  #lp-root .lp-hero-panel-halo {
+    inset: -1rem;
+    filter: blur(14px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   #lp-root .lp-fade-up,
   #lp-root .lp-reveal,
@@ -203,5 +494,21 @@ html.dark #lp-root .lp-pricing-card:hover {
   #lp-root .lp-sector-img {
     transform: none !important;
     transition: none !important;
+  }
+
+  #lp-root .lp-hero-bg,
+  #lp-root .lp-hero-grid,
+  #lp-root .lp-hero-right-glow,
+  #lp-root .lp-hero-panel-halo {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  #lp-root .lp-cta-mesh,
+  #lp-root .lp-cta-blob-a,
+  #lp-root .lp-cta-blob-b,
+  #lp-root .lp-visual-grid,
+  #lp-root .lp-visual-glow {
+    animation: none !important;
   }
 }

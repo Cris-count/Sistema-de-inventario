@@ -26,7 +26,8 @@ export type UiButtonVariant =
   | 'landing-primary'
   /** @deprecated usa `variant="secondary" size="lg"`. */
   | 'landing-secondary'
-  /** @deprecated usa `variant="primary" size="md"`. */
+  /** Outline claro sobre fondos oscuros (landing hero). */
+  | 'landing-on-dark'
   | 'landing-navbar'
   /** @deprecated usa `variant="primary" size="md"`. */
   | 'landing-floating';
@@ -43,6 +44,8 @@ function resolveVariant(v: UiButtonVariant): 'primary' | 'secondary' | 'ghost' {
       return 'primary';
     case 'landing-secondary':
       return 'secondary';
+    case 'landing-on-dark':
+      return 'secondary';
     default:
       return v;
   }
@@ -52,6 +55,7 @@ function resolveVariant(v: UiButtonVariant): 'primary' | 'secondary' | 'ghost' {
 function resolveSize(v: UiButtonVariant, explicit: UiButtonSize): UiButtonSize {
   if (v === 'landing-primary' || v === 'landing-secondary') return 'lg';
   if (v === 'landing-navbar' || v === 'landing-floating') return 'md';
+  if (v === 'landing-on-dark') return 'md';
   return explicit;
 }
 
@@ -72,7 +76,7 @@ function resolveSize(v: UiButtonVariant, explicit: UiButtonSize): UiButtonSize {
       [queryParams]="queryParams() ?? undefined"
       [fragment]="fragment() ?? undefined"
       [class]="classes()"
-      class="inline-flex max-w-full min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-normal rounded-xl border-0 text-center font-semibold transition duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50"
+      class="inline-flex max-w-full min-w-0 cursor-pointer items-center justify-center gap-2 whitespace-normal rounded-xl border-0 text-center font-semibold transition duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]"
     >
       <ng-content />
     </button>
@@ -91,7 +95,6 @@ export class UiButtonComponent {
 
   protected readonly classes = computed(() => {
     const raw = this.variant();
-    const canonical = resolveVariant(raw);
     const effectiveSize = resolveSize(raw, this.size());
 
     const size =
@@ -102,6 +105,28 @@ export class UiButtonComponent {
           : 'px-5 py-2.5 text-sm min-h-[42px]';
 
     const base = `${size} ${this.class()}`;
+
+    if (raw === 'landing-on-dark') {
+      return `${base} min-h-[48px] min-w-[132px] px-5 py-3 text-sm font-semibold leading-tight border border-white/20 bg-transparent !text-white/92 shadow-none hover:border-white/35 hover:bg-white/10`;
+    }
+
+    if (raw === 'landing-primary') {
+      return `${base} min-h-[56px] min-w-[180px] px-8 py-3.5 text-base font-semibold leading-tight bg-gradient-to-r from-accent via-teal-500 to-teal-700 !text-white shadow-xl shadow-teal-950/35 ring-2 ring-white/10 hover:shadow-2xl hover:shadow-teal-950/40 hover:brightness-[1.06] hover:-translate-y-0.5 active:translate-y-0`;
+    }
+
+    if (raw === 'landing-secondary') {
+      return `${base} min-h-[48px] min-w-[140px] px-5 py-3 text-sm font-semibold leading-tight border border-slate-200/95 bg-surface !text-slate-800 shadow-sm hover:border-slate-300 hover:bg-slate-50 hover:shadow-md dark:border-slate-600 dark:bg-slate-900/95 dark:!text-slate-200 dark:hover:border-slate-500 dark:hover:bg-slate-800`;
+    }
+
+    if (raw === 'landing-navbar') {
+      return `${base} min-h-[44px] min-w-[148px] px-6 py-2.5 text-sm font-semibold leading-tight bg-gradient-to-r from-accent via-teal-500 to-teal-600 !text-white shadow-lg shadow-teal-900/20 hover:shadow-xl hover:brightness-110 hover:-translate-y-0.5`;
+    }
+
+    if (raw === 'landing-floating') {
+      return `${base} min-h-[48px] min-w-[140px] px-5 py-3 text-sm font-semibold leading-tight bg-gradient-to-r from-accent via-teal-500 to-teal-600 !text-white shadow-lg shadow-teal-900/25 hover:shadow-xl hover:brightness-110 hover:-translate-y-0.5`;
+    }
+
+    const canonical = resolveVariant(raw);
 
     switch (canonical) {
       case 'primary':
