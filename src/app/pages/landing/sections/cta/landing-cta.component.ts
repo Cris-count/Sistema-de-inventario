@@ -15,13 +15,13 @@ import { buildWhatsAppLink } from '../../config/landing-contact';
   animations: [fadeUp],
   template: `
     <section
-      class="relative overflow-hidden border-t border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-teal-900 px-5 py-16 text-slate-50 sm:px-6 sm:py-20 lg:px-8 lp-section-pad"
+      class="relative overflow-hidden border-t border-white/5 bg-linear-to-br from-slate-950 via-slate-900 to-teal-900 px-5 py-16 text-slate-50 sm:px-6 sm:py-20 lg:px-8 lp-section-pad"
     >
       <div
         class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_55%_45%_at_50%_115%,rgba(13,148,136,0.28),transparent)]"
       ></div>
       <div
-        class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/30 to-transparent"
+        class="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-accent/30 to-transparent"
       ></div>
       <div @fadeUp class="relative mx-auto max-w-2xl text-center">
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-400/90">Siguiente paso</p>
@@ -34,7 +34,7 @@ import { buildWhatsAppLink } from '../../config/landing-contact';
         <div class="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
           <app-ui-button
             variant="landing-primary"
-            class="w-full min-w-0 !px-10 sm:w-auto"
+            class="w-full min-w-0 px-10! sm:w-auto"
             linkTo="/registro"
             >Crear cuenta gratis</app-ui-button
           >

@@ -8,7 +8,7 @@ type StepIcon = 'register' | 'flow' | 'cart' | 'decide';
   template: `
     <section
       id="como-funciona"
-      class="scroll-mt-24 border-b border-slate-200/60 bg-gradient-to-b from-white via-slate-50/90 to-slate-100/80 py-section-lg dark:border-slate-800 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
+      class="scroll-mt-24 border-b border-slate-200/60 bg-linear-to-b from-white via-slate-50/90 to-slate-100/80 py-section-lg dark:border-slate-800 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950"
     >
       <div class="mx-auto max-w-7xl px-4 sm:px-8 lg:px-10">
         <div class="mx-auto max-w-3xl text-center">
@@ -32,7 +32,7 @@ type StepIcon = 'register' | 'flow' | 'cart' | 'decide';
               class="group relative flex flex-col rounded-2xl border border-slate-200/80 bg-white p-7 shadow-card transition duration-300 hover:-translate-y-1.5 hover:border-teal-300/60 hover:shadow-card-hover dark:border-slate-700/80 dark:bg-slate-900/80 dark:hover:border-teal-600/40"
             >
               <div
-                class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 text-accent shadow-inner ring-2 ring-teal-100/80 dark:from-teal-950/80 dark:to-slate-900 dark:text-teal-300 dark:ring-teal-800/60"
+                class="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-teal-50 to-emerald-50 text-accent shadow-inner ring-2 ring-teal-100/80 dark:from-teal-950/80 dark:to-slate-900 dark:text-teal-300 dark:ring-teal-800/60"
                 aria-hidden="true"
               >
                 @switch (step.icon) {

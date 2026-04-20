@@ -20,7 +20,7 @@ import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../confi
           <div>
             <div class="flex items-center gap-2.5">
               <span
-                class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-accent-strong text-sm font-bold text-white shadow-soft"
+                class="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-accent to-accent-strong text-sm font-bold text-white shadow-soft"
                 >IV</span
               >
               <div>

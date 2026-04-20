@@ -78,7 +78,7 @@ interface RegisterDraft {
           <div class="mx-auto max-w-3xl px-4 pb-3 sm:px-6">
             <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
-                class="h-full rounded-full bg-gradient-to-r from-accent to-accent-strong transition-all duration-300"
+                class="h-full rounded-full bg-linear-to-r from-accent to-accent-strong transition-all duration-300"
                 [style.width.%]="progressPct()"
               ></div>
             </div>

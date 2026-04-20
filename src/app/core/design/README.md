@@ -620,7 +620,7 @@ componente.
 
 ### ❌ Don’t
 
-- Pintar un botón con `class="inline-flex rounded-xl bg-gradient-to-r ..."`.
+- Pintar un botón con `class="inline-flex rounded-xl bg-linear-to-r ..."`.
   Eso ya es `UiButton variant="primary"`.
 - Duplicar `rounded-2xl border border-slate-200/80 bg-surface shadow-soft`.
   Eso ya es `<app-ui-card>`.

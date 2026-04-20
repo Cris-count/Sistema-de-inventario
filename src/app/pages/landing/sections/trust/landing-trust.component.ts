@@ -8,7 +8,7 @@ type TrustIcon = 'cop' | 'lang' | 'team';
   template: `
     <section
       id="confianza"
-      class="scroll-mt-24 border-y border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 py-section-lg text-slate-100 dark:border-slate-700"
+      class="scroll-mt-24 border-y border-slate-800 bg-linear-to-br from-slate-900 via-slate-900 to-slate-950 py-section-lg text-slate-100 dark:border-slate-700"
     >
       <div class="mx-auto max-w-7xl px-4 sm:px-8 lg:px-10">
         <div class="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:items-center lg:gap-16">

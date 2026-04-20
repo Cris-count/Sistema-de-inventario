@@ -21,7 +21,7 @@ import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../confi
     >
       <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div
-          class="lp-card-hover relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br from-surface via-surface-hover to-accent-soft shadow-soft transition duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-600/70 dark:from-slate-900 dark:via-slate-900 dark:to-accent/10 dark:hover:border-slate-500"
+          class="lp-card-hover relative overflow-hidden rounded-2xl border border-slate-200/80 bg-linear-to-br from-surface via-surface-hover to-accent-soft shadow-soft transition duration-200 hover:border-slate-300 hover:shadow-md dark:border-slate-600/70 dark:from-slate-900 dark:via-slate-900 dark:to-accent/10 dark:hover:border-slate-500"
         >
           <div class="flex flex-col items-start gap-6 p-6 md:flex-row md:items-center md:justify-between md:p-8">
           <div class="max-w-2xl">

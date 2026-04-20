@@ -24,7 +24,7 @@ import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.c
         <div class="mt-14 grid gap-8 lg:grid-cols-2">
           <app-ui-card
             [class]="
-              'rounded-2xl border-rose-200/60 bg-gradient-to-br from-rose-50/80 to-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover dark:border-rose-900/50 dark:from-rose-950/30 dark:to-slate-900'
+              'rounded-2xl border-rose-200/60 bg-linear-to-br from-rose-50/80 to-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover dark:border-rose-900/50 dark:from-rose-950/30 dark:to-slate-900'
             "
           >
             <h3 class="text-sm font-bold leading-snug text-rose-800 dark:text-rose-200">
@@ -40,7 +40,7 @@ import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.c
           </app-ui-card>
           <app-ui-card
             [class]="
-              'rounded-2xl border-teal-200/60 bg-gradient-to-br from-teal-50/80 to-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover dark:border-teal-800/50 dark:from-teal-950/25 dark:to-slate-900'
+              'rounded-2xl border-teal-200/60 bg-linear-to-br from-teal-50/80 to-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover dark:border-teal-800/50 dark:from-teal-950/25 dark:to-slate-900'
             "
           >
             <h3 class="text-sm font-bold leading-snug text-accent dark:text-teal-300">

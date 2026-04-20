@@ -63,7 +63,7 @@ interface SolutionCard {
                     height="384"
                   />
                   <div
-                    class="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/25 via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100 dark:from-slate-950/40"
+                    class="pointer-events-none absolute inset-0 bg-linear-to-t from-slate-900/25 via-transparent to-transparent opacity-0 transition duration-300 group-hover:opacity-100 dark:from-slate-950/40"
                     aria-hidden="true"
                   ></div>
                 </div>

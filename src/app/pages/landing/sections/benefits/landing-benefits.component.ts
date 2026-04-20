@@ -9,7 +9,7 @@ type BenefitIcon = 'shield' | 'clock' | 'control' | 'chart';
   template: `
     <section
       id="beneficios"
-      class="scroll-mt-24 border-y border-teal-100/50 bg-gradient-to-br from-teal-50/50 via-white to-slate-50 py-section-lg dark:border-teal-900/30 dark:from-teal-950/20 dark:via-slate-900 dark:to-slate-950"
+      class="scroll-mt-24 border-y border-teal-100/50 bg-linear-to-br from-teal-50/50 via-white to-slate-50 py-section-lg dark:border-teal-900/30 dark:from-teal-950/20 dark:via-slate-900 dark:to-slate-950"
     >
       <div class="mx-auto max-w-7xl px-4 sm:px-8 lg:px-10">
         <div class="mx-auto max-w-3xl text-center">
@@ -27,7 +27,7 @@ type BenefitIcon = 'shield' | 'clock' | 'control' | 'chart';
               class="group flex h-full flex-col rounded-2xl border border-slate-200/70 bg-white/90 p-7 shadow-card backdrop-blur-sm transition duration-300 hover:-translate-y-1.5 hover:border-teal-300/50 hover:shadow-card-hover dark:border-slate-700/80 dark:bg-slate-900/90 dark:hover:border-teal-600/40"
             >
               <div
-                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 text-accent shadow-inner ring-2 ring-teal-100/90 dark:from-teal-950/80 dark:to-slate-900 dark:text-teal-300 dark:ring-teal-800/50"
+                class="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-teal-50 to-emerald-50 text-accent shadow-inner ring-2 ring-teal-100/90 dark:from-teal-950/80 dark:to-slate-900 dark:text-teal-300 dark:ring-teal-800/50"
                 aria-hidden="true"
               >
                 @switch (b.icon) {

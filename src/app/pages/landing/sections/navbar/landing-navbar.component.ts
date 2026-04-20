@@ -24,7 +24,7 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
             class="flex min-w-0 shrink-0 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
           >
             <span
-              class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-accent via-teal-500 to-teal-700 text-sm font-bold text-white shadow-lg shadow-teal-900/20"
+              class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-linear-to-br from-accent via-teal-500 to-teal-700 text-sm font-bold text-white shadow-lg shadow-teal-900/20"
               >IV</span
             >
             <span class="truncate text-base font-semibold tracking-tight">Inventario Pro</span>
@@ -62,7 +62,7 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
               class="flex min-w-0 flex-1 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
             >
               <span
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-teal-600 text-sm font-bold text-white shadow-soft"
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-accent to-teal-600 text-sm font-bold text-white shadow-soft"
                 >IV</span
               >
               <span class="truncate text-base font-semibold tracking-tight">Inventario Pro</span>

@@ -30,7 +30,7 @@ interface LandingPlanView {
   template: `
     <section
       id="planes"
-      class="scroll-mt-24 border-t border-slate-200/80 bg-gradient-to-b from-slate-50 to-white py-section-lg dark:border-slate-800 dark:from-slate-950 dark:to-slate-950"
+      class="scroll-mt-24 border-t border-slate-200/80 bg-linear-to-b from-slate-50 to-white py-section-lg dark:border-slate-800 dark:from-slate-950 dark:to-slate-950"
       aria-labelledby="planes-heading"
     >
       <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
