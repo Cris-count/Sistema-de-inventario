@@ -88,11 +88,13 @@ interface RegisterDraft {
 
       <main class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
         @if (loadError(); as loadErr) {
-          <div class="rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-soft dark:border-amber-500/40 dark:bg-amber-950/55">
+          <div
+            class="rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-soft dark:border-amber-500/40 dark:bg-amber-950/55"
+          >
             <p class="text-sm font-semibold text-amber-950 dark:text-amber-100">{{ loadErr }}</p>
             <p class="mt-2 text-xs leading-relaxed text-amber-900/90 dark:text-amber-200/90">
               Comprueba que la API responda en
-              <span class="rounded bg-white/80 px-1.5 py-0.5 font-mono text-amber-950 dark:bg-slate-900 dark:text-amber-100">{{
+              <span class="rounded bg-white/80 px-1.5 py-0.5 font-mono text-amber-950 dark:bg-amber-900/80 dark:text-amber-50">{{
                 apiBaseUrl
               }}</span>
               (por ejemplo <span class="font-mono">/public/planes</span>). Si usás Docker, esperá a que el contenedor
@@ -201,21 +203,21 @@ export class RegisterPageComponent implements OnInit {
   readonly progressPct = computed(() => (Math.min(this.step(), 5) / 5) * 100);
 
   ngOnInit(): void {
-    this.loadPlansFromApi();
+    this.loadPlans();
   }
 
   reloadPlans(): void {
     this.loadError.set(null);
-    this.loadPlansFromApi();
+    this.loadPlans();
   }
 
-  private loadPlansFromApi(): void {
+  private loadPlans(): void {
     this.planesApi.listPublicPlanes().subscribe({
       next: (list: PublicPlanDto[]) => {
         this.plans.set(list);
         const q = this.route.snapshot.queryParamMap.get('plan');
         if (q) {
-          const match = list.find((p) => p.id === q || p.codigo === q);
+          const match = list.find((p: PublicPlanDto) => p.id === q || p.codigo === q);
           if (match) {
             this.draft.update((d) => ({ ...d, planCodigo: match.codigo }));
           }

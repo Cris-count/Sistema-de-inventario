@@ -19,6 +19,8 @@ import { RouterLink } from '@angular/router';
 export type UiButtonVariant =
   | 'primary'
   | 'secondary'
+  /** Borde visible, fondo claro; alias práctico del secundario en formularios. */
+  | 'outline'
   | 'ghost'
   /** Borde visible, fondo claro (formularios / secundario fuerte). */
   | 'outline'
@@ -47,6 +49,7 @@ function resolveVariant(v: UiButtonVariant): 'primary' | 'secondary' | 'ghost' {
     case 'landing-floating':
       return 'primary';
     case 'landing-secondary':
+    case 'outline':
       return 'secondary';
     case 'landing-on-dark':
       return 'secondary';
@@ -72,11 +75,11 @@ function resolveSize(v: UiButtonVariant, explicit: UiButtonSize): UiButtonSize {
   imports: [RouterLink],
   template: `
     <!-- Un solo <ng-content>: varias ramas @if con ng-content rompen la proyección en Angular (el texto no llega al DOM). -->
-    <!-- Navegación interna: RouterLink en <button> (selector soportado); sin ruta, routerLink queda inactivo. -->
+    <!-- Navegación interna: RouterLink en <button> (selector soportado). -->
     <button
-      [type]="navPath() ? 'button' : type()"
+      [type]="navTarget() ? 'button' : type()"
       [disabled]="disabled()"
-      [routerLink]="navPath() ?? undefined"
+      [routerLink]="navTarget() ?? undefined"
       [queryParams]="queryParams() ?? undefined"
       [fragment]="fragment() ?? undefined"
       [class]="classes()"
@@ -93,7 +96,7 @@ export class UiButtonComponent {
   readonly href = input<string | undefined>(undefined);
   /** Internal navigation; named `to` so host `routerLink` does not bind RouterLink to this component. */
   readonly to = input<string | undefined>(undefined);
-  /** @deprecated usar `to`; se mantiene por plantillas existentes. */
+  /** @deprecated Usar `to`. */
   readonly linkTo = input<string | undefined>(undefined);
   readonly queryParams = input<Record<string, string> | undefined>(undefined);
   readonly fragment = input<string | undefined>(undefined);
@@ -101,8 +104,8 @@ export class UiButtonComponent {
   readonly disabled = input(false);
   readonly class = input<string>('');
 
-  /** Ruta efectiva para RouterLink (`linkTo` o `to`). */
-  protected readonly navPath = computed(() => this.linkTo() ?? this.to());
+  /** Ruta interna efectiva (`to` tiene prioridad sobre `linkTo`). */
+  protected readonly navTarget = computed(() => this.to() ?? this.linkTo() ?? undefined);
 
   protected readonly classes = computed(() => {
     const raw = this.variant();
@@ -138,7 +141,7 @@ export class UiButtonComponent {
     }
 
     if (raw === 'outline') {
-      return `${base} border-2 border-slate-300 bg-transparent !text-slate-800 shadow-none hover:bg-slate-50 dark:border-slate-500 dark:!text-slate-100 dark:hover:bg-slate-800/80`;
+      return `${base} border-2 border-slate-300 bg-transparent !text-slate-800 shadow-none hover:border-slate-400 hover:bg-slate-50 dark:border-slate-500 dark:!text-slate-100 dark:hover:border-slate-400 dark:hover:bg-slate-800/50`;
     }
 
     const canonical = resolveVariant(raw);
