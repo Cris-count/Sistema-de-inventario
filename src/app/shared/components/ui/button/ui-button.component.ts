@@ -22,6 +22,8 @@ export type UiButtonVariant =
   /** Borde visible, fondo claro; alias práctico del secundario en formularios. */
   | 'outline'
   | 'ghost'
+  /** Borde visible, fondo claro (formularios / secundario fuerte). */
+  | 'outline'
   /** @deprecated usa `variant="primary"`. */
   | 'gradient'
   /** @deprecated usa `variant="primary" size="lg"`. */
@@ -39,6 +41,8 @@ export type UiButtonSize = 'sm' | 'md' | 'lg';
 /** Resuelve variante → canónica (elimina aliases deprecated en el switch). */
 function resolveVariant(v: UiButtonVariant): 'primary' | 'secondary' | 'ghost' {
   switch (v) {
+    case 'outline':
+      return 'secondary';
     case 'gradient':
     case 'landing-primary':
     case 'landing-navbar':

@@ -104,9 +104,7 @@ interface RegisterDraft {
               <app-ui-button variant="gradient" class="sm:min-w-[200px]" (click)="reloadPlans()">
                 Reintentar cargar planes
               </app-ui-button>
-              <app-ui-button variant="outline" class="sm:min-w-[180px]" to="/landing">
-                Volver al inicio
-              </app-ui-button>
+              <app-ui-button variant="outline" class="sm:min-w-[180px]" to="/landing"> Volver al inicio </app-ui-button>
             </div>
           </div>
         } @else if (step() === 1) {
