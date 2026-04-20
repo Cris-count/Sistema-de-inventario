@@ -6,33 +6,52 @@ import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.c
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [UiCardComponent],
   template: `
-    <section class="bg-background py-section">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-2xl text-center">
-          <h2 class="text-3xl font-semibold tracking-tight text-primary sm:text-4xl">
-            De “no sabemos cuánto hay” a decisiones con respaldo
+    <section
+      id="problema"
+      class="scroll-mt-24 bg-white py-section-lg dark:bg-slate-950"
+    >
+      <div class="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8 lp-section-pad">
+        <div class="mx-auto max-w-3xl text-center">
+          <h2 class="text-4xl font-bold tracking-tight text-primary dark:text-slate-100 sm:text-5xl">
+            Pensado para negocios que necesitan orden todos los días
           </h2>
-          <p class="mt-4 text-lg text-secondary">
-            El dolor no es el inventario en sí: es la desconfianza en los números. Centraliza movimientos,
-            responsables y saldos por bodega para que compras, bodega y administración hablen el mismo idioma.
+          <p class="mt-4 text-lg leading-relaxed text-secondary dark:text-slate-400 sm:text-xl">
+            Ideal para tiendas, bodegas, papelerías, ferreterías, repuestos y otros negocios que necesitan controlar
+            inventario, ventas y movimientos en un solo lugar.
           </p>
         </div>
 
-        <div class="mt-12 grid gap-6 lg:grid-cols-2">
-          <app-ui-card>
-            <h3 class="text-sm font-semibold uppercase tracking-wide text-rose-700">Problema</h3>
-            <ul class="mt-4 space-y-3 text-sm leading-relaxed text-secondary">
-              <li>· Hojas duplicadas y versiones contradictorias del stock.</li>
-              <li>· Entradas/salidas sin trazabilidad ni responsable claro.</li>
-              <li>· Reportes tardíos que llegan cuando el daño ya ocurrió.</li>
+        <div class="mt-14 grid gap-8 lg:grid-cols-2">
+          <app-ui-card
+            [class]="
+              'rounded-2xl border-rose-200/60 bg-linear-to-br from-rose-50/80 to-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover dark:border-rose-900/50 dark:from-rose-950/30 dark:to-slate-900'
+            "
+          >
+            <h3 class="text-sm font-bold leading-snug text-rose-800 dark:text-rose-200">
+              Lo que suele pasar sin control claro
+            </h3>
+            <ul class="mt-5 space-y-3 text-base leading-relaxed text-secondary dark:text-slate-400">
+              <li>· No sabes con certeza qué productos quedan disponibles.</li>
+              <li>· Se pierden movimientos entre compras, ventas y ajustes.</li>
+              <li>· Cuesta detectar qué necesita reposición.</li>
+              <li>· La información se reparte entre varias personas o herramientas.</li>
+              <li>· Tomar decisiones diarias se vuelve más lento.</li>
             </ul>
           </app-ui-card>
-          <app-ui-card>
-            <h3 class="text-sm font-semibold uppercase tracking-wide text-accent">Solución</h3>
-            <ul class="mt-4 space-y-3 text-sm leading-relaxed text-secondary">
-              <li>· Un solo panel con saldos vivos y movimientos auditables.</li>
-              <li>· Roles y permisos alineados a tu operación real.</li>
-              <li>· Límites y consumo pensados para crecer sin sorpresas.</li>
+          <app-ui-card
+            [class]="
+              'rounded-2xl border-teal-200/60 bg-linear-to-br from-teal-50/80 to-white shadow-card transition duration-300 hover:-translate-y-1 hover:shadow-card-hover dark:border-teal-800/50 dark:from-teal-950/25 dark:to-slate-900'
+            "
+          >
+            <h3 class="text-sm font-bold leading-snug text-accent dark:text-teal-300">
+              Lo que puedes hacer con Inventario Pro
+            </h3>
+            <ul class="mt-5 space-y-3 text-base leading-relaxed text-secondary dark:text-slate-400">
+              <li>· Consultar existencias y movimientos en tiempo real.</li>
+              <li>· Tener inventario, ventas y compras centralizados.</li>
+              <li>· Detectar productos con stock bajo más rápido.</li>
+              <li>· Trabajar con más orden y menos errores.</li>
+              <li>· Revisar reportes claros para decidir mejor.</li>
             </ul>
           </app-ui-card>
         </div>

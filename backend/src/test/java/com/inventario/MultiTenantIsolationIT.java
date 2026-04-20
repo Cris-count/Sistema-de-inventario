@@ -25,7 +25,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * por error; en código de producción los controladores no inyectan repositorios de entidades con tenant
  * (ver {@code com.inventario.service.catalog}).
  */
-@SpringBootTest
+@SpringBootTest(
+        properties = {
+            "app.rate-limit.backend=memory",
+            "app.rate-limit.redis.host="
+        })
 @ActiveProfiles("test")
 @Transactional
 class MultiTenantIsolationIT {

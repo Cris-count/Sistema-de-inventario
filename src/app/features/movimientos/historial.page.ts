@@ -4,16 +4,21 @@ import { RouterLink } from '@angular/router';
 import { MovimientoApiService } from '../../core/api/movimiento.service';
 import { MovimientoList, TipoMovimiento } from '../../core/models/entities.model';
 import { defaultDesdeHasta } from '../../core/util/dates';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 
 @Component({
   selector: 'app-historial-movimientos',
-  imports: [ReactiveFormsModule, FormsModule, RouterLink],
+  imports: [ReactiveFormsModule, FormsModule, RouterLink, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Historial de movimientos</h1>
-      <p class="muted">Parámetros obligatorios en API: <code>desde</code>, <code>hasta</code> (fecha ISO yyyy-MM-dd).</p>
-      <form [formGroup]="form" (ngSubmit)="search()" class="card row">
+      <header class="page-header">
+        <h1>Historial de movimientos</h1>
+        <p class="page-lead page-header-lead">
+          Parámetros obligatorios en API: <code>desde</code>, <code>hasta</code> (fecha ISO yyyy-MM-dd).
+        </p>
+      </header>
+      <form [formGroup]="form" (ngSubmit)="search()" class="card row form-export">
         <div class="field">
           <label>Desde</label>
           <input type="date" formControlName="desde" />
@@ -35,7 +40,10 @@ import { getApiErrorMessage } from '../../core/util/api-error';
         <button type="submit" class="btn btn-primary">Consultar</button>
       </form>
       @if (error()) {
-        <div class="alert alert-error">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       }
       <div class="table-wrap">
         <table class="data">
@@ -63,7 +71,7 @@ import { getApiErrorMessage } from '../../core/util/api-error';
           </tbody>
         </table>
       </div>
-      <div class="row">
+      <div class="row pager">
         <button type="button" class="btn" [disabled]="page() <= 0" (click)="prev()">Anterior</button>
         <span class="muted">Página {{ page() + 1 }} / {{ totalPages() }}</span>
         <button type="button" class="btn" [disabled]="page() + 1 >= totalPages()" (click)="next()">Siguiente</button>
@@ -85,6 +93,7 @@ export class HistorialMovimientosPage implements OnInit {
   readonly page = signal(0);
   readonly totalPages = signal(1);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   ngOnInit(): void {
     const { desde, hasta } = defaultDesdeHasta();
@@ -101,12 +110,15 @@ export class HistorialMovimientosPage implements OnInit {
     const { desde, hasta, tipo } = this.form.getRawValue();
     if (!desde || !hasta) return;
     this.error.set(null);
+    this.planFollowup.set(null);
     this.api.historial(desde, hasta, this.page(), 20, tipo ?? undefined).subscribe({
       next: (p) => {
         this.rows.set(p.content);
         this.totalPages.set(Math.max(1, p.totalPages));
+        this.error.set(null);
+        this.planFollowup.set(null);
       },
-      error: (e) => this.error.set(getApiErrorMessage(e))
+      error: (e) => patchPlanErrorSignals(e, this.error, this.planFollowup)
     });
   }
 

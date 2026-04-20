@@ -6,6 +6,9 @@ import com.inventario.domain.entity.Usuario;
 import com.inventario.domain.repository.RolRepository;
 import com.inventario.domain.repository.UsuarioRepository;
 import com.inventario.service.CurrentUserService;
+import com.inventario.service.saas.AuthBlockCodes;
+import com.inventario.service.saas.PlanEntitlementCodes;
+import com.inventario.service.saas.PlanEntitlementService;
 import com.inventario.service.tenant.TenantEntityLoader;
 import com.inventario.web.error.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -28,20 +31,28 @@ public class UsuarioManagementService {
     private final PasswordEncoder passwordEncoder;
     private final CurrentUserService currentUserService;
     private final TenantEntityLoader tenantEntityLoader;
+    private final PlanEntitlementService planEntitlementService;
 
     @Transactional(readOnly = true)
     public Page<Usuario> listar(Pageable pageable) {
-        return usuarioRepository.findByEmpresaId(currentUserService.requireEmpresaId(), pageable);
+        Long empresaId = currentUserService.requireEmpresaId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.USUARIOS);
+        return usuarioRepository.findByEmpresaId(empresaId, pageable);
     }
 
     @Transactional(readOnly = true)
     public Usuario obtener(Long id) {
-        return tenantEntityLoader.requireUsuarioInTenant(id, currentUserService.requireEmpresaId());
+        Long empresaId = currentUserService.requireEmpresaId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.USUARIOS);
+        return tenantEntityLoader.requireUsuarioInTenant(id, empresaId);
     }
 
     @Transactional
     public Usuario crear(String email, String password, String nombre, String apellido, String rolCodigo) {
         Usuario actor = currentUserService.requireUsuario();
+        Long empresaId = actor.getEmpresa().getId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.USUARIOS);
+        planEntitlementService.assertPuedeCrearUsuario(empresaId);
         assertPuedeAsignarRol(rolCodigo, actor);
         String emailNorm = email.trim().toLowerCase(Locale.ROOT);
         if (usuarioRepository.existsByEmailIgnoreCase(emailNorm)) {
@@ -64,6 +75,7 @@ public class UsuarioManagementService {
     public Usuario actualizar(Long id, String nombre, String apellido, String rolCodigo) {
         Usuario actor = currentUserService.requireUsuario();
         Long empresaId = actor.getEmpresa().getId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.USUARIOS);
         Usuario u = tenantEntityLoader.requireUsuarioInTenant(id, empresaId);
         if (nombre != null) {
             u.setNombre(nombre);
@@ -82,6 +94,7 @@ public class UsuarioManagementService {
     @Transactional
     public Usuario cambiarEstado(Long id, boolean activo) {
         Long empresaId = currentUserService.requireEmpresaId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.USUARIOS);
         Usuario u = tenantEntityLoader.requireUsuarioInTenant(id, empresaId);
         u.setActivo(activo);
         u.setUpdatedAt(Instant.now());
@@ -92,7 +105,11 @@ public class UsuarioManagementService {
         String solicitado = SecurityRoles.canonicalCodigo(rolCodigoSolicitado);
         String actorRol = SecurityRoles.canonicalCodigo(actor.getRol().getCodigo());
         if (SecurityRoles.SUPER_ADMIN.equals(solicitado) && !SecurityRoles.SUPER_ADMIN.equals(actorRol)) {
-            throw new BusinessException(HttpStatus.FORBIDDEN, "Solo SUPER_ADMIN puede asignar el rol SUPER_ADMIN");
+            throw new BusinessException(
+                    HttpStatus.FORBIDDEN,
+                    "Solo un administrador de plataforma puede asignar el rol SUPER_ADMIN. "
+                            + "Si necesitas otro tipo de acceso, pide a tu administrador que ajuste roles.",
+                    AuthBlockCodes.ROL_ASIGNACION_NO_PERMITIDA);
         }
     }
 }

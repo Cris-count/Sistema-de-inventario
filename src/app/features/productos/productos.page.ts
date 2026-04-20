@@ -2,10 +2,12 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoriaService } from '../../core/api/categoria.service';
 import { ProductoService, ProductoRequest } from '../../core/api/producto.service';
+import { ProveedorService } from '../../core/api/proveedor.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ROLES_GESTION_PRODUCTOS } from '../../core/auth/app-roles';
-import { Producto } from '../../core/models/entities.model';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { Producto, Proveedor } from '../../core/models/entities.model';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 /** Códigos cortos (VARCHAR 20 en API). Etiquetas para la UI. */
@@ -34,17 +36,19 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
 
 @Component({
   selector: 'app-productos',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
       <header class="page-header">
-        <div class="row" style="justify-content:space-between; align-items:center; width:100%">
-          <div>
-            <h1 style="margin-bottom:0.25rem">Productos</h1>
-            <p class="page-lead" style="margin:0">Catálogo corporativo y unidades de medida.</p>
+        <div class="page-header-row">
+          <div class="page-header-text">
+            <h1 class="page-header-title">Productos</h1>
+            <p class="page-lead page-header-lead">Catálogo corporativo y unidades de medida.</p>
           </div>
           @if (canGestionarProductos()) {
-            <button type="button" class="btn btn-primary" (click)="startCreate()">Nuevo producto</button>
+            <div class="page-header-actions">
+              <button type="button" class="btn btn-primary" (click)="startCreate()">Nuevo producto</button>
+            </div>
           }
         </div>
       </header>
@@ -62,7 +66,10 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
         </div>
       }
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -80,7 +87,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                 <label>Código</label>
                 <input formControlName="codigo" />
               </div>
-              <div class="field" style="flex:1; min-width:200px">
+              <div class="field field-flex-1">
                 <label>Nombre</label>
                 <input formControlName="nombre" />
               </div>
@@ -99,7 +106,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                   }
                 </select>
               </div>
-              <div class="field" style="min-width:220px">
+              <div class="field field-min-220">
                 <label>Unidad de medida</label>
                 <select formControlName="unidadMedida">
                   @for (o of unidadesForSelect(); track o.codigo) {
@@ -110,6 +117,18 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
               <div class="field">
                 <label>Stock mínimo</label>
                 <input formControlName="stockMinimo" type="text" />
+              </div>
+              <div class="field field-min-220">
+                <label>Proveedor preferido (reposición)</label>
+                <p class="muted muted-hint-below-label">
+                  Alertas por stock mínimo usan el correo de este proveedor (debe estar en Proveedores).
+                </p>
+                <select formControlName="proveedorPreferidoId">
+                  <option [ngValue]="null">— Ninguno —</option>
+                  @for (pr of proveedores(); track pr.id) {
+                    <option [ngValue]="pr.id">{{ pr.razonSocial }}</option>
+                  }
+                </select>
               </div>
             </div>
             <div class="row">
@@ -147,10 +166,12 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                 </td>
                 @if (canGestionarProductos()) {
                   <td>
-                    <button type="button" class="btn btn-ghost" (click)="startEdit(p)">Editar</button>
-                    <button type="button" class="btn btn-ghost" (click)="toggleActivo(p)">
-                      {{ p.activo ? 'Desactivar' : 'Activar' }}
-                    </button>
+                    <div class="table-actions">
+                      <button type="button" class="btn btn-ghost" (click)="startEdit(p)">Editar</button>
+                      <button type="button" class="btn btn-ghost" (click)="toggleActivo(p)">
+                        {{ p.activo ? 'Desactivar' : 'Activar' }}
+                      </button>
+                    </div>
                   </td>
                 }
               </tr>
@@ -158,7 +179,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
           </tbody>
         </table>
       </div>
-      <div class="row">
+      <div class="row pager">
         <button type="button" class="btn" [disabled]="page() <= 0 || loading()" (click)="prev()">Anterior</button>
         <span class="muted">Página {{ page() + 1 }}</span>
         <button type="button" class="btn" [disabled]="!hasNext() || loading()" (click)="next()">Siguiente</button>
@@ -168,6 +189,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
 })
 export class ProductosPage implements OnInit {
   private readonly productoApi = inject(ProductoService);
+  private readonly proveedorApi = inject(ProveedorService);
   private readonly categoriaApi = inject(CategoriaService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
@@ -184,12 +206,14 @@ export class ProductosPage implements OnInit {
   readonly saving = signal(false);
   readonly rows = signal<Producto[]>([]);
   readonly categorias = signal<{ id: number; nombre: string }[]>([]);
+  readonly proveedores = signal<Proveedor[]>([]);
   readonly page = signal(0);
   readonly totalPages = signal(1);
   readonly formMode = signal<'create' | 'edit' | null>(null);
   readonly editingId = signal<number | null>(null);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   readonly unidadesForSelect = signal(CATALOGO_UNIDADES);
 
@@ -199,11 +223,16 @@ export class ProductosPage implements OnInit {
     descripcion: [''],
     categoriaId: [0, [Validators.required, Validators.min(1)]],
     unidadMedida: ['UND'],
-    stockMinimo: ['0']
+    stockMinimo: ['0'],
+    proveedorPreferidoId: null as number | null
   });
 
   ngOnInit(): void {
     this.categoriaApi.list().subscribe((c) => this.categorias.set(c));
+    this.proveedorApi.list().subscribe({
+      next: (list) => this.proveedores.set(list),
+      error: () => this.proveedores.set([])
+    });
     this.load();
   }
 
@@ -214,14 +243,17 @@ export class ProductosPage implements OnInit {
   load(): void {
     this.loading.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     this.productoApi.list(this.page(), 20).subscribe({
       next: (p) => {
         this.rows.set(p.content);
         this.totalPages.set(p.totalPages);
+        this.error.set(null);
+        this.planFollowup.set(null);
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.loading.set(false)
     });
@@ -242,15 +274,25 @@ export class ProductosPage implements OnInit {
   startCreate(): void {
     this.message.set(null);
     this.error.set(null);
+    this.planFollowup.set(null);
     this.formMode.set('create');
     this.editingId.set(null);
     this.unidadesForSelect.set(CATALOGO_UNIDADES);
-    this.form.reset({ codigo: '', nombre: '', descripcion: '', categoriaId: 0, unidadMedida: 'UND', stockMinimo: '0' });
+    this.form.reset({
+      codigo: '',
+      nombre: '',
+      descripcion: '',
+      categoriaId: 0,
+      unidadMedida: 'UND',
+      stockMinimo: '0',
+      proveedorPreferidoId: null
+    });
   }
 
   startEdit(p: Producto): void {
     this.message.set(null);
     this.error.set(null);
+    this.planFollowup.set(null);
     this.formMode.set('edit');
     this.editingId.set(p.id);
     const u = p.unidadMedida;
@@ -265,7 +307,8 @@ export class ProductosPage implements OnInit {
       descripcion: p.descripcion ?? '',
       categoriaId: p.categoria.id,
       unidadMedida: p.unidadMedida,
-      stockMinimo: String(p.stockMinimo)
+      stockMinimo: String(p.stockMinimo),
+      proveedorPreferidoId: p.proveedorPreferidoId ?? null
     });
   }
 
@@ -276,6 +319,7 @@ export class ProductosPage implements OnInit {
     if (clearFeedback) {
       this.message.set(null);
       this.error.set(null);
+      this.planFollowup.set(null);
     }
   }
 
@@ -291,16 +335,19 @@ export class ProductosPage implements OnInit {
       descripcion: v.descripcion || undefined,
       categoriaId: v.categoriaId,
       unidadMedida: v.unidadMedida || undefined,
-      stockMinimo: v.stockMinimo || undefined
+      stockMinimo: v.stockMinimo || undefined,
+      proveedorPreferidoId: v.proveedorPreferidoId ?? null
     };
     this.saving.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     const id = this.editingId();
     const esAlta = this.formMode() === 'create';
     const req = esAlta ? this.productoApi.create(body) : this.productoApi.update(id!, body);
     req.subscribe({
       next: () => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set(
           esAlta
             ? 'Producto nuevo registrado en el catálogo. Ya puede usarlo en movimientos y existencias.'
@@ -312,7 +359,7 @@ export class ProductosPage implements OnInit {
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.saving.set(false)
     });
@@ -320,17 +367,19 @@ export class ProductosPage implements OnInit {
 
   toggleActivo(p: Producto): void {
     this.error.set(null);
+    this.planFollowup.set(null);
     this.message.set(null);
     this.productoApi.setActivo(p.id, !p.activo).subscribe({
       next: () => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set('Estado actualizado.');
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.load();
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
   }

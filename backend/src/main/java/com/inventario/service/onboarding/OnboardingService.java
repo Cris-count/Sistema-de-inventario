@@ -3,6 +3,8 @@ package com.inventario.service.onboarding;
 import com.inventario.config.SecurityRoles;
 import com.inventario.domain.entity.*;
 import com.inventario.domain.repository.*;
+import com.inventario.service.saas.PlanEntitlements;
+import com.inventario.service.saas.PlanEntitlementsRegistry;
 import com.inventario.web.dto.onboarding.OnboardingDtos.EmpresaOnboardingDto;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterRequest;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterResponse;
@@ -17,18 +19,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
 public class OnboardingService {
-
-    private static final String PIN_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
     private final EmpresaRepository empresaRepository;
     private final UsuarioRepository usuarioRepository;
@@ -36,9 +37,11 @@ public class OnboardingService {
     private final SaasPlanRepository saasPlanRepository;
     private final SuscripcionRepository suscripcionRepository;
     private final OnboardingPinRepository onboardingPinRepository;
+    private final OnboardingEmailChallengeRepository onboardingEmailChallengeRepository;
     private final SaasCompraRepository saasCompraRepository;
     private final SaasPagoRepository saasPagoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TotpOnboardingService totpOnboardingService;
 
     @Value("${app.onboarding.activation-default:TRIAL}")
     private String activationDefault;
@@ -49,11 +52,13 @@ public class OnboardingService {
     @Value("${app.onboarding.generate-pin-on-pending-payment:true}")
     private boolean generatePinOnPendingPayment;
 
-    private final SecureRandom secureRandom = new SecureRandom();
-
     @Transactional(readOnly = true)
     public List<PublicPlanResponse> listPublicPlans() {
-        return saasPlanRepository.findAllByActivoIsTrueOrderByOrdenAsc().stream().map(this::toPublic).toList();
+        List<SaasPlan> planes = saasPlanRepository.findAllByActivoIsTrueOrderByOrdenAsc();
+        int recommendedIndex = resolveRecommendedIndex(planes);
+        return IntStream.range(0, planes.size())
+                .mapToObj(i -> toPublic(planes.get(i), i == recommendedIndex))
+                .toList();
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -64,12 +69,38 @@ public class OnboardingService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Las contraseñas no coinciden");
         }
 
+        UUID verificationSession;
+        try {
+            verificationSession = UUID.fromString(req.emailVerificationToken().trim());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Token de verificación de correo inválido");
+        }
+
+        OnboardingEmailChallenge emailChallenge = onboardingEmailChallengeRepository
+                .findFirstBySessionTokenAndStatusAndConsumedAtIsNull(
+                        verificationSession, OnboardingEmailChallenge.STATUS_VERIFIED)
+                .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Verificación de correo inválida o ya utilizada"));
+
+        if (emailChallenge.getSessionExpiresAt() == null
+                || emailChallenge.getSessionExpiresAt().isBefore(Instant.now())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "La verificación de correo expiró; vuelve a verificar");
+        }
+
+        String emailAdmin = admin.email().trim().toLowerCase(Locale.ROOT);
+        if (!emailChallenge.getEmail().equalsIgnoreCase(emailAdmin)) {
+            throw new BusinessException(
+                    HttpStatus.BAD_REQUEST,
+                    "El correo del super administrador debe ser el mismo que verificaste en el paso anterior");
+        }
+        if (!emailChallenge.getPlanCodigo().equalsIgnoreCase(req.planCodigo().trim())) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "El plan no coincide con el usado al verificar el correo");
+        }
+
         String ident = normalizeIdentificacion(req.empresa().identificacion());
         if (empresaRepository.findByIdentificacion(ident).isPresent()) {
             throw new BusinessException(HttpStatus.CONFLICT, "Ya existe una empresa con esa identificación");
         }
 
-        String emailAdmin = admin.email().trim().toLowerCase(Locale.ROOT);
         if (usuarioRepository.existsByEmailIgnoreCase(emailAdmin)) {
             throw new BusinessException(HttpStatus.CONFLICT, "El correo del administrador ya está registrado");
         }
@@ -101,7 +132,8 @@ public class OnboardingService {
         Instant fechaFin = null;
         String outcome;
         String nextStep;
-        String pin = null;
+        String totpOtpauthUri = null;
+        String totpSecretBase32 = null;
 
         switch (policy) {
             case TRIAL:
@@ -149,6 +181,8 @@ public class OnboardingService {
             SaasCompra compra = SaasCompra.builder()
                     .empresa(empresa)
                     .suscripcion(suscripcion)
+                    .tipo(SaasCompraTipo.ONBOARDING)
+                    .planDestino(null)
                     .estado(EstadoCompra.PENDIENTE_PAGO)
                     .monto(plan.getPrecioMensual() != null ? plan.getPrecioMensual() : BigDecimal.ZERO)
                     .moneda(plan.getMoneda() != null ? plan.getMoneda() : "USD")
@@ -166,9 +200,11 @@ public class OnboardingService {
             pagoId = pago.getId();
 
             if (generatePinOnPendingPayment) {
-                pin = createUniquePin();
+                totpSecretBase32 = totpOnboardingService.generateBase32Secret();
+                totpOtpauthUri = totpOnboardingService.buildOtpauthUri(totpSecretBase32, emailAdmin);
                 onboardingPinRepository.save(OnboardingPin.builder()
-                        .pin(pin)
+                        .pin(null)
+                        .totpSecret(totpSecretBase32)
                         .empresa(empresa)
                         .suscripcion(suscripcion)
                         .createdAt(now)
@@ -176,10 +212,13 @@ public class OnboardingService {
             }
         }
 
+        emailChallenge.setConsumedAt(now);
+        onboardingEmailChallengeRepository.save(emailChallenge);
+
         String message = switch (policy) {
             case TRIAL -> "Cuenta creada en periodo de prueba. Ya puedes iniciar sesión.";
             case ACTIVE -> "Cuenta activa. Ya puedes iniciar sesión.";
-            case PENDING_PAYMENT -> "Registro recibido. Completa el pago o espera la activación para poder ingresar.";
+            case PENDING_PAYMENT -> "Registro recibido. Configura Google Authenticator con el código mostrado y completa el pago o espera la activación.";
         };
 
         return new OnboardingRegisterResponse(
@@ -192,11 +231,13 @@ public class OnboardingService {
                 subEstado.name(),
                 empresaEstado.name(),
                 outcome,
-                pin,
+                null,
                 nextStep,
                 message,
                 compraId,
-                pagoId);
+                pagoId,
+                totpOtpauthUri,
+                totpSecretBase32);
     }
 
     private static OnboardingActivationPolicy parsePolicy(String raw) {
@@ -240,7 +281,30 @@ public class OnboardingService {
         return ident.trim().toUpperCase(Locale.ROOT);
     }
 
-    private PublicPlanResponse toPublic(SaasPlan p) {
+    private int resolveRecommendedIndex(List<SaasPlan> planes) {
+        if (planes.isEmpty()) {
+            return -1;
+        }
+        if (planes.size() == 1) {
+            return 0;
+        }
+        return Math.min(1, planes.size() - 1);
+    }
+
+    private String inferPlanType(SaasPlan p) {
+        int maxBodegas = p.getMaxBodegas() != null ? p.getMaxBodegas() : 0;
+        int maxUsuarios = p.getMaxUsuarios() != null ? p.getMaxUsuarios() : 0;
+        if (maxBodegas >= 100 || maxUsuarios >= 100) {
+            return "EMPRESARIAL";
+        }
+        BigDecimal precio = p.getPrecioMensual() != null ? p.getPrecioMensual() : BigDecimal.ZERO;
+        if (precio.compareTo(BigDecimal.ZERO) <= 0) {
+            return "TRIAL";
+        }
+        return "PAGO";
+    }
+
+    private PublicPlanResponse toPublic(SaasPlan p, boolean recomendado) {
         List<String> feats = List.of();
         if (p.getFeatures() != null && !p.getFeatures().isBlank()) {
             feats = Arrays.stream(p.getFeatures().split("\\|"))
@@ -248,32 +312,28 @@ public class OnboardingService {
                     .filter(s -> !s.isEmpty())
                     .toList();
         }
+        BigDecimal precio = p.getPrecioMensual() != null ? p.getPrecioMensual() : BigDecimal.ZERO;
+        String descripcion = p.getDescripcion();
+        String descripcionCorta = descripcion == null ? "" : descripcion.trim();
+        // Fuente única de verdad para capacidades estructuradas: registry de entitlements.
+        PlanEntitlements ent = PlanEntitlementsRegistry.forPlanCodigo(p.getCodigo());
+        List<String> modulos = ent.modulos().stream().sorted().toList();
+        Integer maxProductos = ent.maxProductos();
         return new PublicPlanResponse(
                 p.getCodigo(),
+                p.getCodigo(),
                 p.getNombre(),
-                p.getDescripcion(),
-                p.getPrecioMensual(),
+                descripcionCorta,
+                precio,
+                descripcion,
+                precio,
                 p.getMoneda(),
                 p.getMaxBodegas(),
                 p.getMaxUsuarios(),
-                feats);
-    }
-
-    private String createUniquePin() {
-        for (int attempt = 0; attempt < 12; attempt++) {
-            String candidate = randomPin(10);
-            if (!onboardingPinRepository.existsByPin(candidate)) {
-                return candidate;
-            }
-        }
-        throw new IllegalStateException("No se pudo generar PIN único");
-    }
-
-    private String randomPin(int len) {
-        StringBuilder sb = new StringBuilder(len);
-        for (int i = 0; i < len; i++) {
-            sb.append(PIN_ALPHABET.charAt(secureRandom.nextInt(PIN_ALPHABET.length())));
-        }
-        return sb.toString();
+                feats,
+                recomendado,
+                inferPlanType(p),
+                modulos,
+                maxProductos);
     }
 }

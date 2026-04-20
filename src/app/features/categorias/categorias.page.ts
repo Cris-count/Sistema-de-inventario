@@ -2,28 +2,35 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoriaService } from '../../core/api/categoria.service';
 import { Categoria } from '../../core/models/entities.model';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-categorias',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Categorías</h1>
+      <header class="page-header">
+        <h1>Categorías</h1>
+        <p class="page-lead page-header-lead">Clasificación de productos para informes y filtros.</p>
+      </header>
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
       <div class="card stack">
         <h2>Nueva / editar</h2>
         <form [formGroup]="form" (ngSubmit)="save()" class="row">
-          <div class="field" style="flex:1">
+          <div class="field field-flex-1">
             <label>Nombre</label>
             <input formControlName="nombre" />
           </div>
-          <div class="field" style="flex:2">
+          <div class="field field-flex-2">
             <label>Descripción</label>
             <input formControlName="descripcion" />
           </div>
@@ -66,6 +73,7 @@ export class CategoriasPage implements OnInit {
   readonly saving = signal(false);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     nombre: ['', Validators.required],
@@ -78,10 +86,14 @@ export class CategoriasPage implements OnInit {
 
   reload(): void {
     this.api.list().subscribe({
-      next: (r) => this.rows.set(r),
+      next: (r) => {
+        this.rows.set(r);
+        this.error.set(null);
+        this.planFollowup.set(null);
+      },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
   }
@@ -100,12 +112,14 @@ export class CategoriasPage implements OnInit {
     if (this.form.invalid) return;
     this.saving.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     const v = this.form.getRawValue();
     const id = this.editingId();
     const req = id ? this.api.update(id, v) : this.api.create(v);
     req.subscribe({
       next: () => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set('Guardado.');
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.cancel();
@@ -113,7 +127,7 @@ export class CategoriasPage implements OnInit {
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       },
       complete: () => this.saving.set(false)
     });

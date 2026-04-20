@@ -1,13 +1,5 @@
-export interface PublicPlanDto {
-  codigo: string;
-  nombre: string;
-  descripcion: string;
-  precioMensual: number;
-  moneda: string;
-  maxBodegas: number;
-  maxUsuarios: number;
-  features: string[];
-}
+import type { PublicPlanDto } from '../../core/models/public-plan.model';
+export type { PublicPlanDto };
 
 export interface EmpresaForm {
   nombre: string;
@@ -27,8 +19,20 @@ export interface SuperAdminForm {
   confirmPassword: string;
 }
 
+export interface SendEmailVerificationResponseDto {
+  message: string;
+  codeExpiresAt: string;
+}
+
+export interface VerifyEmailResponseDto {
+  verificationToken: string;
+  sessionExpiresAt: string;
+  message: string;
+}
+
 export interface OnboardingRegisterRequestDto {
   planCodigo: string;
+  emailVerificationToken: string;
   empresa: {
     nombre: string;
     identificacion: string;
@@ -62,6 +66,8 @@ export interface OnboardingRegisterResponseDto {
   message: string;
   compraId: number | null;
   pagoId: number | null;
+  totpOtpauthUri: string | null;
+  totpSecretBase32: string | null;
 }
 
 export function emptyEmpresaForm(): EmpresaForm {

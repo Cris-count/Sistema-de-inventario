@@ -1,4 +1,5 @@
-import { ROLES_LECTURA_API } from './auth/app-roles';
+import { ROLES_ADMIN, ROLES_ENTRADA, ROLES_LECTURA_API, ROLES_MOVIMIENTO_BODEGA, ROLES_PROVEEDOR_LECTURA } from './auth/app-roles';
+import { PlanEntitlementCodes } from './plan-entitlement-codes';
 
 /** Enlaces de navegación; `roles` vacío = todos los autenticados. */
 export interface NavItem {
@@ -8,29 +9,134 @@ export interface NavItem {
   /** Emoji representativo (visible siempre; con menú expandido va junto al texto). */
   icon: string;
   roles: string[];
+  /**
+   * Si se define, el usuario debe tener al menos uno de estos códigos de módulo del plan
+   * (según `GET /empresa/mi`). Vacío / ausente = no filtrar por plan.
+   */
+  requiresAnyPlanModule?: string[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
   { parts: ['dashboard'], label: 'Inicio', icon: '🏠', roles: [] },
-  { parts: ['productos'], label: 'Productos', icon: '📦', roles: ROLES_LECTURA_API },
-  { parts: ['categorias'], label: 'Categorías', icon: '🗂️', roles: ['ADMIN'] },
-  { parts: ['bodegas'], label: 'Bodegas', icon: '🏭', roles: ROLES_LECTURA_API },
-  { parts: ['proveedores'], label: 'Proveedores', icon: '🤝', roles: ['ADMIN', 'COMPRAS', 'GERENCIA'] },
-  { parts: ['inventario'], label: 'Inventario', icon: '📊', roles: ROLES_LECTURA_API },
-  { parts: ['stock-inicial'], label: 'Stock inicial', icon: '📥', roles: ['ADMIN'] },
-  { parts: ['movimientos'], label: 'Historial mov.', icon: '📜', roles: ROLES_LECTURA_API },
-  { parts: ['movimientos', 'entrada'], label: 'Entrada', icon: '➕', roles: ['ADMIN', 'AUX_BODEGA', 'COMPRAS'] },
-  { parts: ['movimientos', 'salida'], label: 'Salida', icon: '➖', roles: ['ADMIN', 'AUX_BODEGA'] },
-  { parts: ['movimientos', 'transferencia'], label: 'Transferencia', icon: '🔀', roles: ['ADMIN', 'AUX_BODEGA'] },
-  { parts: ['movimientos', 'ajuste'], label: 'Ajuste', icon: '⚙️', roles: ['ADMIN', 'AUX_BODEGA'] },
-  { parts: ['reportes', 'kardex'], label: 'Kardex', icon: '📑', roles: ROLES_LECTURA_API },
-  { parts: ['reportes', 'export'], label: 'Exportar CSV', icon: '📤', roles: ROLES_LECTURA_API },
-  { parts: ['usuarios'], label: 'Usuarios', icon: '👥', roles: ['ADMIN'] }
+  { parts: ['mi-empresa'], label: 'Mi empresa', icon: '🏢', roles: ROLES_ADMIN },
+  {
+    parts: ['productos'],
+    label: 'Productos',
+    icon: '📦',
+    roles: ROLES_LECTURA_API,
+    requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico]
+  },
+  {
+    parts: ['categorias'],
+    label: 'Categorías',
+    icon: '🗂️',
+    roles: ROLES_ADMIN,
+    requiresAnyPlanModule: [PlanEntitlementCodes.categorias]
+  },
+  {
+    parts: ['bodegas'],
+    label: 'Bodegas',
+    icon: '🏭',
+    roles: ROLES_LECTURA_API,
+    requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico]
+  },
+  {
+    parts: ['proveedores'],
+    label: 'Proveedores',
+    icon: '🤝',
+    roles: ROLES_PROVEEDOR_LECTURA,
+    requiresAnyPlanModule: [PlanEntitlementCodes.proveedores]
+  },
+  {
+    parts: ['inventario'],
+    label: 'Inventario',
+    icon: '📊',
+    roles: ROLES_LECTURA_API,
+    requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock]
+  },
+  {
+    parts: ['mensajes-pedido'],
+    label: 'Mensajes pedido',
+    icon: '✉️',
+    roles: ROLES_ADMIN,
+    requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock]
+  },
+  {
+    parts: ['stock-inicial'],
+    label: 'Stock inicial',
+    icon: '📥',
+    roles: ROLES_ADMIN,
+    requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico]
+  },
+  {
+    parts: ['movimientos'],
+    label: 'Historial mov.',
+    icon: '📜',
+    roles: ROLES_LECTURA_API,
+    requiresAnyPlanModule: [PlanEntitlementCodes.historial_movimientos]
+  },
+  {
+    parts: ['movimientos', 'entrada'],
+    label: 'Entrada',
+    icon: '➕',
+    roles: ROLES_ENTRADA,
+    requiresAnyPlanModule: [PlanEntitlementCodes.movimientos_basicos]
+  },
+  {
+    parts: ['movimientos', 'salida'],
+    label: 'Salida',
+    icon: '➖',
+    roles: ROLES_MOVIMIENTO_BODEGA,
+    requiresAnyPlanModule: [PlanEntitlementCodes.movimientos_basicos]
+  },
+  {
+    parts: ['movimientos', 'transferencia'],
+    label: 'Transferencia',
+    icon: '🔀',
+    roles: ROLES_MOVIMIENTO_BODEGA,
+    requiresAnyPlanModule: [PlanEntitlementCodes.transferencias]
+  },
+  {
+    parts: ['movimientos', 'ajuste'],
+    label: 'Ajuste',
+    icon: '⚙️',
+    roles: ROLES_MOVIMIENTO_BODEGA,
+    requiresAnyPlanModule: [PlanEntitlementCodes.ajustes_inventario]
+  },
+  {
+    parts: ['reportes', 'kardex'],
+    label: 'Kardex',
+    icon: '📑',
+    roles: ROLES_LECTURA_API,
+    requiresAnyPlanModule: [PlanEntitlementCodes.reportes_basicos, PlanEntitlementCodes.reportes_avanzados]
+  },
+  {
+    parts: ['reportes', 'export'],
+    label: 'Exportar CSV',
+    icon: '📤',
+    roles: ROLES_LECTURA_API,
+    requiresAnyPlanModule: [PlanEntitlementCodes.reportes_basicos, PlanEntitlementCodes.reportes_avanzados]
+  },
+  {
+    parts: ['usuarios'],
+    label: 'Usuarios',
+    icon: '👥',
+    roles: ROLES_ADMIN,
+    requiresAnyPlanModule: [PlanEntitlementCodes.usuarios]
+  }
 ];
 
 export function navVisibleForRole(role: string | null, item: NavItem): boolean {
   if (!item.roles.length) return true;
   return !!role && item.roles.includes(role);
+}
+
+/** `planModules` null = aún no cargado o sin dato: no se oculta por plan (evita menú vacío). */
+export function navVisibleForPlan(item: NavItem, planModules: Set<string> | null): boolean {
+  const req = item.requiresAnyPlanModule;
+  if (!req?.length) return true;
+  if (!planModules) return true;
+  return req.some((c) => planModules.has(c));
 }
 
 /** `routerLinkActive` exacto: evita marcar "Historial" al estar en /movimientos/entrada. */

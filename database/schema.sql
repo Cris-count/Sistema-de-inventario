@@ -29,7 +29,10 @@ CREATE TABLE IF NOT EXISTS empresa (
     id             BIGSERIAL PRIMARY KEY,
     nombre         VARCHAR(200) NOT NULL,
     identificacion VARCHAR(32)  NOT NULL UNIQUE,
-    email_contacto VARCHAR(255),
+    email_contacto                     VARCHAR(255),
+    email_notificaciones_inventario    VARCHAR(255),
+    alertas_pedido_proveedor_activas   BOOLEAN       NOT NULL DEFAULT TRUE,
+    pedido_proveedor_cantidad_maxima   NUMERIC(14, 4),
     telefono       VARCHAR(40),
     sector         VARCHAR(100),
     pais           VARCHAR(80),
@@ -49,6 +52,8 @@ CREATE TABLE IF NOT EXISTS usuario (
     empresa_id     BIGINT       NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
     rol_id         BIGINT       NOT NULL REFERENCES rol (id) ON DELETE RESTRICT,
     activo         BOOLEAN      NOT NULL DEFAULT TRUE,
+    mfa_enabled    BOOLEAN      NOT NULL DEFAULT FALSE,
+    mfa_secret     VARCHAR(255),
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ
 );
@@ -93,18 +98,43 @@ CREATE INDEX IF NOT EXISTS idx_suscripcion_estado ON suscripcion (estado);
 
 CREATE TABLE IF NOT EXISTS onboarding_pin (
     id             BIGSERIAL PRIMARY KEY,
-    pin            VARCHAR(16)  NOT NULL UNIQUE,
+    pin            VARCHAR(16)  UNIQUE,
     empresa_id     BIGINT       NOT NULL REFERENCES empresa (id) ON DELETE CASCADE,
     suscripcion_id BIGINT       NOT NULL REFERENCES suscripcion (id) ON DELETE CASCADE,
+    totp_secret    VARCHAR(64),
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_onboarding_pin_empresa ON onboarding_pin (empresa_id);
 
+CREATE TABLE IF NOT EXISTS onboarding_email_challenge (
+    id                 BIGSERIAL PRIMARY KEY,
+    email              VARCHAR(255) NOT NULL,
+    plan_codigo        VARCHAR(40)  NOT NULL,
+    code_hash          VARCHAR(64)  NOT NULL,
+    expires_at         TIMESTAMPTZ  NOT NULL,
+    status             VARCHAR(16)  NOT NULL DEFAULT 'PENDING'
+        CHECK (status IN ('PENDING', 'VERIFIED', 'CANCELLED')),
+    session_token      UUID,
+    session_expires_at TIMESTAMPTZ,
+    consumed_at        TIMESTAMPTZ,
+    created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_onboarding_email_challenge_lookup
+    ON onboarding_email_challenge (email, plan_codigo, status);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_onboarding_email_challenge_session_token
+    ON onboarding_email_challenge (session_token)
+    WHERE session_token IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS saas_compra (
     id              BIGSERIAL PRIMARY KEY,
     empresa_id      BIGINT         NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
-    suscripcion_id  BIGINT         NOT NULL UNIQUE REFERENCES suscripcion (id) ON DELETE RESTRICT,
+    suscripcion_id  BIGINT         NOT NULL REFERENCES suscripcion (id) ON DELETE RESTRICT,
+    tipo            VARCHAR(32)    NOT NULL DEFAULT 'ONBOARDING'
+        CHECK (tipo IN ('ONBOARDING', 'CAMBIO_PLAN')),
+    plan_destino_id BIGINT         NULL REFERENCES saas_plan (id) ON DELETE RESTRICT,
     estado          VARCHAR(24)    NOT NULL
         CHECK (estado IN ('PENDIENTE_PAGO', 'COMPLETADA', 'CANCELADA')),
     monto           NUMERIC(12, 2) NOT NULL DEFAULT 0,
@@ -113,6 +143,7 @@ CREATE TABLE IF NOT EXISTS saas_compra (
 );
 
 CREATE INDEX IF NOT EXISTS idx_saas_compra_empresa ON saas_compra (empresa_id);
+CREATE INDEX IF NOT EXISTS idx_saas_compra_suscripcion ON saas_compra (suscripcion_id);
 
 CREATE TABLE IF NOT EXISTS saas_pago (
     id BIGSERIAL PRIMARY KEY,
@@ -162,8 +193,9 @@ CREATE TABLE IF NOT EXISTS producto (
     descripcion    TEXT,
     categoria_id   BIGINT       NOT NULL REFERENCES categoria (id) ON DELETE RESTRICT,
     unidad_medida  VARCHAR(20)  NOT NULL DEFAULT 'UND',
-    stock_minimo   NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (stock_minimo >= 0),
-    activo         BOOLEAN      NOT NULL DEFAULT TRUE,
+    stock_minimo          NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (stock_minimo >= 0),
+    proveedor_preferido_id BIGINT       REFERENCES proveedor (id) ON DELETE SET NULL,
+    activo                BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ,
     created_by     BIGINT       REFERENCES usuario (id) ON DELETE SET NULL,
@@ -174,6 +206,7 @@ CREATE TABLE IF NOT EXISTS producto (
 CREATE INDEX IF NOT EXISTS idx_producto_empresa ON producto (empresa_id);
 CREATE INDEX IF NOT EXISTS idx_producto_categoria ON producto (categoria_id);
 CREATE INDEX IF NOT EXISTS idx_producto_activo ON producto (activo);
+CREATE INDEX IF NOT EXISTS idx_producto_proveedor_pref ON producto (proveedor_preferido_id);
 
 CREATE TABLE IF NOT EXISTS bodega (
     id          BIGSERIAL PRIMARY KEY,
@@ -210,12 +243,43 @@ CREATE INDEX IF NOT EXISTS idx_proveedor_empresa ON proveedor (empresa_id);
 CREATE TABLE IF NOT EXISTS inventario (
     producto_id  BIGINT        NOT NULL REFERENCES producto (id) ON DELETE RESTRICT,
     bodega_id    BIGINT        NOT NULL REFERENCES bodega (id) ON DELETE RESTRICT,
-    cantidad     NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (cantidad >= 0),
-    updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    cantidad                   NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (cantidad >= 0),
+    updated_at                 TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    ultima_alerta_proveedor_at TIMESTAMPTZ,
     PRIMARY KEY (producto_id, bodega_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_inventario_bodega ON inventario (bodega_id);
+
+CREATE TABLE IF NOT EXISTS pedido_proveedor_mensaje (
+    id                         BIGSERIAL PRIMARY KEY,
+    empresa_id                 BIGINT        NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
+    producto_id                BIGINT        NOT NULL REFERENCES producto (id) ON DELETE RESTRICT,
+    bodega_id                  BIGINT        NOT NULL REFERENCES bodega (id) ON DELETE RESTRICT,
+    proveedor_id               BIGINT        NOT NULL REFERENCES proveedor (id) ON DELETE RESTRICT,
+    origen                     VARCHAR(32)   NOT NULL
+        CHECK (origen IN ('ALERTA_AUTOMATICA', 'SIMULACION_INVENTARIO')),
+    estado                     VARCHAR(20)   NOT NULL
+        CHECK (estado IN ('PENDIENTE', 'APROBADO', 'RECHAZADO')),
+    cantidad_sugerida          NUMERIC(14, 4) NOT NULL,
+    cantidad_para_proveedor    NUMERIC(14, 4) NOT NULL,
+    existencia_snapshot        NUMERIC(14, 4) NOT NULL,
+    stock_minimo_snapshot      NUMERIC(14, 4) NOT NULL,
+    unidad_medida              VARCHAR(20)   NOT NULL,
+    creado_en                  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    resuelto_en                TIMESTAMPTZ,
+    resuelto_por_usuario_id    BIGINT        REFERENCES usuario (id) ON DELETE SET NULL,
+    notas_admin                TEXT
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_pedido_mensaje_pendiente_linea
+    ON pedido_proveedor_mensaje (empresa_id, producto_id, bodega_id)
+    WHERE estado = 'PENDIENTE';
+
+CREATE INDEX IF NOT EXISTS idx_pedido_mensaje_empresa_estado_creado
+    ON pedido_proveedor_mensaje (empresa_id, estado, creado_en DESC);
+
+COMMENT ON TABLE pedido_proveedor_mensaje IS 'Bandeja admin: pedido sugerido al proveedor; el correo SMTP solo tras APROBADO.';
 
 CREATE TABLE IF NOT EXISTS movimiento (
     id                    BIGSERIAL PRIMARY KEY,
@@ -291,30 +355,73 @@ FROM (
     VALUES
         ('STARTER',
          'Starter',
-         'Para equipos que ordenan el inventario por primera vez.',
-         29.00,
-         'USD',
+         'Control profesional de inventario desde el primer día.',
+         19900.00,
+         'COP',
          2,
          5,
-         'Hasta 2 bodegas|Usuarios esenciales|Movimientos en rango base|Soporte por correo',
+         'Productos y categorías|Movimientos de entrada y salida|Consulta de existencias y alertas|Soporte por correo',
          1),
         ('PROFESIONAL',
-         'Profesional',
-         'Operaciones con varias ubicaciones y roles.',
-         79.00,
-         'USD',
+         'Pro',
+         'Diseñado para crecer con tu empresa: más bodegas, equipo ampliado y reportes.',
+         69900.00,
+         'COP',
          10,
          25,
-         'Bodegas extendidas|Roles avanzados|Reportes kardex y exportación|Límites configurables',
+         'Más bodegas y usuarios|Transferencias y ajustes|Proveedores y roles ampliados|Reportes kardex y exportación CSV',
          2),
         ('EMPRESA',
-         'Empresa',
-         'Multi-sede e integraciones.',
-         0.00,
-         'USD',
+         'Empresarial',
+         'Escala sin límites para operaciones que exigen el máximo control.',
+         149900.00,
+         'COP',
          999,
          999,
-         'SSO roadmap|SLA prioritario|Customer success dedicado',
+         'Límites ampliados en bodegas y usuarios|Módulos avanzados del plan|Prioridad en soporte|Hoja de ruta multi-sede e integraciones',
          3)
 ) AS v(codigo, nombre, descripcion, precio, moneda, max_bodegas, max_usuarios, features, orden)
 WHERE NOT EXISTS (SELECT 1 FROM saas_plan p WHERE p.codigo = v.codigo);
+
+-- MFA: estado de challenge (multi-instancia) y códigos de respaldo
+CREATE TABLE IF NOT EXISTS mfa_challenge_state (
+    jti           VARCHAR(64) PRIMARY KEY,
+    email         VARCHAR(255) NOT NULL,
+    failure_count INT          NOT NULL DEFAULT 0,
+    consumed      BOOLEAN      NOT NULL DEFAULT FALSE,
+    expires_at    TIMESTAMPTZ  NOT NULL,
+    created_at    TIMESTAMPTZ  NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_mfa_challenge_state_expires ON mfa_challenge_state (expires_at);
+
+CREATE TABLE IF NOT EXISTS usuario_mfa_backup_code (
+    id          BIGSERIAL PRIMARY KEY,
+    usuario_id  BIGINT       NOT NULL REFERENCES usuario (id) ON DELETE CASCADE,
+    code_hash   VARCHAR(255) NOT NULL,
+    created_at  TIMESTAMPTZ  NOT NULL,
+    used_at     TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_usuario_mfa_backup_usuario ON usuario_mfa_backup_code (usuario_id);
+CREATE INDEX IF NOT EXISTS idx_usuario_mfa_backup_unused ON usuario_mfa_backup_code (usuario_id) WHERE used_at IS NULL;
+
+CREATE TABLE IF NOT EXISTS refresh_token (
+    id                     BIGSERIAL PRIMARY KEY,
+    usuario_id             BIGINT       NOT NULL REFERENCES usuario (id) ON DELETE CASCADE,
+    token_hash             VARCHAR(64)  NOT NULL UNIQUE,
+    family_id              VARCHAR(36)  NOT NULL,
+    issued_at              TIMESTAMPTZ  NOT NULL,
+    expires_at             TIMESTAMPTZ  NOT NULL,
+    family_expires_at      TIMESTAMPTZ  NOT NULL,
+    revoked_at             TIMESTAMPTZ,
+    replaced_by_token_id   BIGINT       REFERENCES refresh_token (id) ON DELETE SET NULL,
+    last_used_at           TIMESTAMPTZ,
+    created_from_ip        VARCHAR(64),
+    user_agent             VARCHAR(512)
+);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_token_family ON refresh_token (family_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_token_usuario ON refresh_token (usuario_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_token_usuario_active
+    ON refresh_token (usuario_id) WHERE revoked_at IS NULL;

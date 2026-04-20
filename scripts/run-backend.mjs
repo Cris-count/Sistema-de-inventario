@@ -14,13 +14,24 @@ const mvnw = isWin ? path.join(backendDir, 'mvnw.cmd') : path.join(backendDir, '
 const args = process.argv.slice(2);
 const mvnArgs = args.length > 0 ? args : ['spring-boot:run'];
 
-// shell: true en Windows permite ejecutar mvnw.cmd de forma fiable con spawn.
-const result = spawnSync(mvnw, mvnArgs, {
-  cwd: backendDir,
-  stdio: 'inherit',
-  shell: isWin,
-  env: process.env,
-  windowsHide: true
-});
+/** Ruta con espacios: cmd.exe parte el comando si no va entre comillas. */
+function winQuoteArg(p) {
+  return `"${String(p).replace(/"/g, '\\"')}"`;
+}
+
+// En Windows, spawn directo a .cmd con shell:false puede dar EINVAL; con shell:true hay que citar mvnw.
+const result = isWin
+  ? spawnSync(`${winQuoteArg(mvnw)} ${mvnArgs.join(' ')}`, {
+      cwd: backendDir,
+      stdio: 'inherit',
+      shell: true,
+      env: process.env,
+      windowsHide: true
+    })
+  : spawnSync(mvnw, mvnArgs, {
+      cwd: backendDir,
+      stdio: 'inherit',
+      env
+    });
 
 process.exit(result.status === null ? 1 : result.status);

@@ -8,6 +8,8 @@ import java.util.Optional;
 
 public interface BodegaRepository extends JpaRepository<Bodega, Long> {
 
+    long countByEmpresa_Id(Long empresaId);
+
     List<Bodega> findByEmpresaIdOrderByNombreAsc(Long empresaId);
 
     Optional<Bodega> findByIdAndEmpresaId(Long id, Long empresaId);

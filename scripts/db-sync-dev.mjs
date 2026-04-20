@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Aplica migraciones SQL idempotentes (001→005) dentro del contenedor Postgres vía `docker compose exec`.
- * Incluye 002 en volúmenes antiguos sin tabla `empresa` y 004/005 cuando el init no repitió el esquema completo.
+ * Aplica migraciones SQL idempotentes listadas en MIGRATIONS dentro del contenedor Postgres vía `docker compose exec`.
+ * Incluye 001–002 en volúmenes antiguos, variantes 003 según evolución del esquema, y migraciones posteriores cuando
+ * el init del volumen no repitió todo el SQL. El init de Postgres solo corre en la primera creación del volumen.
  *
  * Estrategia `psql -h 127.0.0.1`: fuerza TCP al servidor dentro del contenedor; el socket Unix
  * (/var/run/postgresql) puede no estar listo o no usarse como espera el cliente sin `-h`.
@@ -22,8 +23,17 @@ const MIGRATIONS = [
   'database/migrations/001_add_movimiento_motivo.sql',
   'database/migrations/002_multiempresa.sql',
   'database/migrations/003_empresa_updated_by.sql',
+  'database/migrations/003_stock_alerta_proveedor.sql',
   'database/migrations/004_onboarding_saas.sql',
-  'database/migrations/005_billing_compra_pago.sql'
+  'database/migrations/005_billing_compra_pago.sql',
+  'database/migrations/005_plan_pricing_cop.sql',
+  'database/migrations/006_saas_compra_plan_change.sql',
+  'database/migrations/006_onboarding_email_totp.sql',
+  'database/migrations/007_usuario_mfa.sql',
+  'database/migrations/008_mfa_cluster_backup_codes.sql',
+  'database/migrations/009_refresh_token.sql',
+  'database/migrations/010_refresh_token_family_expires.sql',
+  'database/migrations/011_pedido_proveedor_mensaje.sql'
 ];
 
 const PSQL_ENV = {
@@ -273,7 +283,7 @@ export async function applyDevMigrations() {
     console.log(`[db-sync] Aplicando ${rel} …`);
     await runMigrationWithRetries(rel, sql);
   }
-  console.log('[db-sync] Listo (001–005 idempotentes donde aplica; seguro repetir).');
+  console.log('[db-sync] Listo (migraciones dev idempotentes; seguro repetir).');
 }
 
 const isDirectRun =

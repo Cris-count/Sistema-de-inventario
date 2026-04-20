@@ -1,0 +1,17 @@
+# Copie este archivo a application-local.yml (está en .gitignore) y rellene usuario/contraseña.
+# Gmail: use una "contraseña de aplicación", no la clave normal.
+#
+# spring.mail.host vacío en el yml principal evita crear el cliente SMTP; aquí sí se define.
+
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: CAMBIE_SU_CORREO@gmail.com
+    password: CAMBIE_CONTRASENA_DE_APLICACION
+
+# Opcional: forzar solo log sin intentar SMTP aunque haya host (útil para depurar)
+# app:
+#   inventory:
+#     stock-alerts:
+#       send-email: false

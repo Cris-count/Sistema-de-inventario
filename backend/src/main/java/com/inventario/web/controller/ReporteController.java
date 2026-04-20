@@ -47,7 +47,7 @@ public class ReporteController {
             @RequestParam LocalDate hasta) {
         var iDesde = desde.atStartOfDay().toInstant(ZoneOffset.UTC);
         var iHasta = hasta.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
-        var page = movimientoConsultaService.listar(null, iDesde, iHasta, Pageable.unpaged());
+        var page = movimientoConsultaService.listarParaExportacion(null, iDesde, iHasta, Pageable.unpaged());
         StringBuilder sb = new StringBuilder("id,tipo,fecha,motivo,usuarioEmail\n");
         for (Movimiento m : page.getContent()) {
             sb.append(m.getId()).append(',')

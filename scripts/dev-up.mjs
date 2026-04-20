@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 /**
- * Desarrollo local unificado: solo PostgreSQL en Docker, luego backend (mvnw) + frontend (ng serve).
- * No ejecuta `docker compose up` completo (evita contenedor api en 8080).
+ * Desarrollo unificado:
+ * 1) Levanta Docker completo (db + api) con build
+ * 2) Aplica migraciones SQL en Postgres (evita fallo de Hibernate validate si el volumen es antiguo)
+ * 3) Reinicia el contenedor api para que arranque con esquema al día
+ * 4) Espera health del API
+ * 5) Arranca frontend local
  *
  * Uso: npm run up
  */
@@ -12,16 +16,20 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
+const API_HEALTH_URL = process.env.API_HEALTH_URL ?? 'http://localhost:8080/actuator/health';
+const API_HEALTH_TIMEOUT_MS = Number(process.env.API_HEALTH_TIMEOUT_MS ?? 240_000);
 
-function runDockerUpDb() {
-  const r = spawnSync('docker', ['compose', 'up', '-d', 'db'], {
+function runOrFail(command, args, description, useShell = false) {
+  if (description) {
+    console.log(description);
+  }
+  const r = spawnSync(useShell ? `${command} ${args.join(' ')}` : command, useShell ? [] : args, {
     cwd: root,
     stdio: 'inherit',
-    shell: false,
+    shell: useShell,
     env: process.env
   });
   if (r.error) {
-    console.error('[dev-up] No se pudo ejecutar Docker. ¿Está Docker Desktop en marcha?');
     throw r.error;
   }
   if (r.status !== 0) {
@@ -30,74 +38,67 @@ function runDockerUpDb() {
 }
 
 /**
- * Espera a que algo escuche en TCP en el host (el puerto publicado puede abrirse antes del init completo dentro del contenedor;
- * db-sync-dev.mjs aplica migraciones 001–005 vía psql en el contenedor cuando hace falta).
+ * Espera a que algo escuche en TCP en el host (puerto publicado).
+ * El puerto puede abrirse antes del init completo dentro del contenedor;
+ * db-sync-dev.mjs aplica migraciones vía psql cuando hace falta.
  */
-function waitForPort(port, options = {}) {
-  const host = options.host ?? '127.0.0.1';
-  const timeoutMs = options.timeoutMs ?? 120_000;
-  const intervalMs = options.intervalMs ?? 400;
-  const start = Date.now();
+async function waitForPort(port, host = '127.0.0.1', timeoutMs = 120_000, intervalMs = 1000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const open = await new Promise((resolve) => {
+      const s = net.connect({ port, host }, () => {
+        s.end();
+        resolve(true);
+      });
+      s.on('error', () => resolve(false));
+    });
+    if (open) {
+      return;
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  throw new Error(`[dev-up] Timeout esperando ${host}:${port} (${timeoutMs} ms). ¿Docker está en ejecución?`);
+}
 
-  return new Promise((resolve, reject) => {
-    const tryOnce = () => {
-      const socket = net.connect({ port, host }, () => {
-        socket.end();
-        resolve();
-      });
-      socket.on('error', () => {
-        socket.destroy();
-        if (Date.now() - start > timeoutMs) {
-          reject(
-            new Error(
-              `[dev-up] Tiempo de espera agotado (${timeoutMs} ms) para ${host}:${port}. ` +
-                'Comprueba el contenedor (docker compose ps) y que el puerto no esté ocupado por otra instancia.'
-            )
-          );
-        } else {
-          setTimeout(tryOnce, intervalMs);
+async function waitForApiHealth(url, timeoutMs = API_HEALTH_TIMEOUT_MS, intervalMs = 2000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const body = await response.text();
+        if (!body || body.includes('UP')) {
+          return;
         }
-      });
-    };
-    tryOnce();
-  });
+      }
+    } catch {
+      // API aun no esta disponible
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new Error(
+    `[dev-up] Timeout esperando health del API en ${url} (${timeoutMs} ms). ` +
+      'Revisá: docker compose logs api   (a menudo es esquema desactualizado; db-sync debería haberlo corregido).'
+  );
 }
 
 async function main() {
-  console.log('[dev-up] 1/4  docker compose up -d db   (solo servicio db; no se levanta api del compose)');
-  runDockerUpDb();
+  runOrFail('docker', ['compose', 'up', '-d', '--build'], '[dev-up] 1/5  Levantando Docker completo (db + api) …');
 
-  console.log('[dev-up] 2/4  Esperando PostgreSQL en 127.0.0.1:5432 …');
-  await waitForPort(5432);
+  console.log('[dev-up] 2/5  Esperando PostgreSQL en 127.0.0.1:5433 …');
+  await waitForPort(5433);
 
-  console.log(
-    '[dev-up] 3/4  Alineando esquema (migraciones 001–005 idempotentes; legado sin empresa + billing/SaaS)'
-  );
+  console.log('[dev-up] 3/5  Alineando esquema PostgreSQL (migraciones idempotentes; ver db-sync-dev.mjs) …');
   const { applyDevMigrations } = await import('./db-sync-dev.mjs');
   await applyDevMigrations();
 
-  console.log('[dev-up] 4/4  Backend + frontend en paralelo (Ctrl+C detiene ambos procesos hijos).');
-  let concurrently;
-  try {
-    ({ default: concurrently } = await import('concurrently'));
-  } catch {
-    console.error(
-      '[dev-up] No se encontró el paquete `concurrently` (devDependency). En la raíz del repo ejecutá: npm install'
-    );
-    process.exit(1);
-  }
-  const { result } = concurrently(['npm run backend', 'npm run frontend'], {
-    cwd: root,
-    prefix: 'name',
-    prefixColors: ['green', 'cyan'],
-    killOthersOn: ['failure']
-  });
+  console.log('[dev-up]     Reiniciando servicio api (arranque limpio tras migraciones) …');
+  runOrFail('docker', ['compose', 'restart', 'api'], '');
 
-  try {
-    await result;
-  } catch {
-    process.exit(1);
-  }
+  console.log(`[dev-up] 4/5  Esperando API saludable en ${API_HEALTH_URL} (hasta ${API_HEALTH_TIMEOUT_MS / 1000}s) …`);
+  await waitForApiHealth(API_HEALTH_URL);
+
+  runOrFail('npm', ['run', 'frontend'], '[dev-up] 5/5  Iniciando frontend Angular …', process.platform === 'win32');
 }
 
 main().catch((e) => {

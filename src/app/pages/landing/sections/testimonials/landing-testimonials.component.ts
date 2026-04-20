@@ -6,11 +6,13 @@ import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.c
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [UiCardComponent],
   template: `
-    <section class="bg-background py-section">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+    <section class="bg-background py-section dark:bg-slate-950">
+      <div class="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 lp-section-pad">
         <div class="max-w-2xl">
-          <h2 class="text-3xl font-semibold tracking-tight text-primary sm:text-4xl">Equipos que ya no discuten el stock</h2>
-          <p class="mt-4 text-lg text-secondary">
+          <h2 class="text-3xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-4xl">
+            Equipos que ya no discuten el stock
+          </h2>
+          <p class="mt-4 text-lg text-secondary dark:text-slate-400">
             Voces representativas de operaciones reales. Sustituye por testimonios verificados cuando los tengas.
           </p>
         </div>
@@ -18,10 +20,10 @@ import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.c
         <div class="mt-12 grid gap-5 md:grid-cols-3">
           @for (t of items; track t.author) {
             <app-ui-card class="h-full">
-              <p class="text-sm leading-relaxed text-primary/90">“{{ t.quote }}”</p>
+              <p class="text-sm leading-relaxed text-primary/90 dark:text-slate-300">“{{ t.quote }}”</p>
               <div class="mt-4 text-sm">
-                <p class="font-semibold text-primary">{{ t.author }}</p>
-                <p class="text-secondary">{{ t.role }}</p>
+                <p class="font-semibold text-primary dark:text-slate-100">{{ t.author }}</p>
+                <p class="text-secondary dark:text-slate-400">{{ t.role }}</p>
               </div>
             </app-ui-card>
           }

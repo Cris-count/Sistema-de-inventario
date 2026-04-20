@@ -2,15 +2,23 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MovimientoApiService } from '../../core/api/movimiento.service';
 import { MovimientoResponse } from '../../core/models/entities.model';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 
 @Component({
   selector: 'app-movimiento-detalle',
+  imports: [PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Movimiento #{{ id() }}</h1>
+      <header class="page-header">
+        <h1>Movimiento #{{ id() }}</h1>
+        <p class="page-lead page-header-lead">Detalle de cabecera y líneas del movimiento.</p>
+      </header>
       @if (error()) {
-        <div class="alert alert-error">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       }
       @if (mov(); as m) {
         <div class="card stack">
@@ -50,6 +58,7 @@ export class MovimientoDetallePage implements OnInit {
   readonly id = signal<number | null>(null);
   readonly mov = signal<MovimientoResponse | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -60,8 +69,12 @@ export class MovimientoDetallePage implements OnInit {
     }
     this.id.set(n);
     this.api.get(n).subscribe({
-      next: (r) => this.mov.set(r),
-      error: (e) => this.error.set(getApiErrorMessage(e))
+      next: (r) => {
+        this.mov.set(r);
+        this.error.set(null);
+        this.planFollowup.set(null);
+      },
+      error: (e) => patchPlanErrorSignals(e, this.error, this.planFollowup)
     });
   }
 }

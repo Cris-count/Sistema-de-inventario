@@ -16,6 +16,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -41,6 +42,18 @@ public class Empresa {
 
     @Column(name = "email_contacto", length = 255)
     private String emailContacto;
+
+    /** Correo para copia de alertas de stock bajo (pedidos a proveedor). Si es nulo, se usa {@link #emailContacto}. */
+    @Column(name = "email_notificaciones_inventario", length = 255)
+    private String emailNotificacionesInventario;
+
+    @Builder.Default
+    @Column(name = "alertas_pedido_proveedor_activas", nullable = false)
+    private boolean alertasPedidoProveedorActivas = true;
+
+    /** Tope de unidades a solicitar por correo en un solo aviso (nulo = sin límite en negocio; ver servicio). */
+    @Column(name = "pedido_proveedor_cantidad_maxima", precision = 14, scale = 4)
+    private BigDecimal pedidoProveedorCantidadMaxima;
 
     @Column(length = 40)
     private String telefono;

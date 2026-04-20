@@ -2,7 +2,8 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UsuarioService } from '../../core/api/usuario.service';
 import { UsuarioRow } from '../../core/models/entities.model';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 const ROLES = [
@@ -14,12 +15,18 @@ const ROLES = [
 
 @Component({
   selector: 'app-usuarios',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Usuarios</h1>
+      <header class="page-header">
+        <h1>Usuarios</h1>
+        <p class="page-lead page-header-lead">Alta, edición y activación del equipo (según su rol).</p>
+      </header>
       @if (error()) {
-        <div class="alert alert-error" role="alert">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
@@ -28,7 +35,7 @@ const ROLES = [
         <form [formGroup]="form" (ngSubmit)="save()" class="stack">
           @if (!editingId()) {
             <div class="row">
-              <div class="field" style="flex:1">
+              <div class="field field-flex-1">
                 <label>Email</label>
                 <input type="email" formControlName="email" />
               </div>
@@ -85,15 +92,17 @@ const ROLES = [
                   <span class="badge" [class.badge-ok]="u.activo">{{ u.activo ? 'Sí' : 'No' }}</span>
                 </td>
                 <td>
-                  <button type="button" class="btn btn-ghost" (click)="edit(u)">Editar</button>
-                  <button type="button" class="btn btn-ghost" (click)="toggle(u)">{{ u.activo ? 'Desactivar' : 'Activar' }}</button>
+                  <div class="table-actions">
+                    <button type="button" class="btn btn-ghost" (click)="edit(u)">Editar</button>
+                    <button type="button" class="btn btn-ghost" (click)="toggle(u)">{{ u.activo ? 'Desactivar' : 'Activar' }}</button>
+                  </div>
                 </td>
               </tr>
             }
           </tbody>
         </table>
       </div>
-      <div class="row">
+      <div class="row pager">
         <button type="button" class="btn" [disabled]="page() <= 0" (click)="prev()">Anterior</button>
         <span class="muted">Página {{ page() + 1 }}</span>
         <button type="button" class="btn" [disabled]="!hasNext()" (click)="next()">Siguiente</button>
@@ -115,6 +124,7 @@ export class UsuariosPage implements OnInit {
   readonly saving = signal(false);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.email, Validators.required]],
@@ -137,10 +147,12 @@ export class UsuariosPage implements OnInit {
       next: (p) => {
         this.rows.set(p.content);
         this.totalPages.set(Math.max(1, p.totalPages));
+        this.error.set(null);
+        this.planFollowup.set(null);
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
   }
@@ -186,6 +198,7 @@ export class UsuariosPage implements OnInit {
     }
     this.saving.set(true);
     this.error.set(null);
+    this.planFollowup.set(null);
     const id = this.editingId();
     if (id) {
       const v = this.form.getRawValue();
@@ -194,6 +207,7 @@ export class UsuariosPage implements OnInit {
         .subscribe({
           next: () => {
             this.error.set(null);
+            this.planFollowup.set(null);
             this.message.set('Usuario actualizado.');
             flashSuccess(this.destroyRef, () => this.message.set(null));
             this.cancel();
@@ -201,7 +215,7 @@ export class UsuariosPage implements OnInit {
           },
           error: (e) => {
             this.message.set(null);
-            this.error.set(getApiErrorMessage(e));
+            patchPlanErrorSignals(e, this.error, this.planFollowup);
           },
           complete: () => this.saving.set(false)
         });
@@ -218,6 +232,7 @@ export class UsuariosPage implements OnInit {
         .subscribe({
           next: () => {
             this.error.set(null);
+            this.planFollowup.set(null);
             this.message.set('Usuario creado.');
             flashSuccess(this.destroyRef, () => this.message.set(null));
             this.cancel();
@@ -225,7 +240,7 @@ export class UsuariosPage implements OnInit {
           },
           error: (e) => {
             this.message.set(null);
-            this.error.set(getApiErrorMessage(e));
+            patchPlanErrorSignals(e, this.error, this.planFollowup);
           },
           complete: () => this.saving.set(false)
         });
@@ -236,13 +251,14 @@ export class UsuariosPage implements OnInit {
     this.api.setActivo(u.id, !u.activo).subscribe({
       next: () => {
         this.error.set(null);
+        this.planFollowup.set(null);
         this.message.set('Estado actualizado.');
         flashSuccess(this.destroyRef, () => this.message.set(null));
         this.load();
       },
       error: (e) => {
         this.message.set(null);
-        this.error.set(getApiErrorMessage(e));
+        patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
   }

@@ -4,16 +4,20 @@ import { ReporteService } from '../../core/api/reporte.service';
 import { ProductoService } from '../../core/api/producto.service';
 import { MovimientoList } from '../../core/models/entities.model';
 import { defaultDesdeHasta } from '../../core/util/dates';
-import { getApiErrorMessage } from '../../core/util/api-error';
+import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 
 @Component({
   selector: 'app-kardex',
-  imports: [ReactiveFormsModule, FormsModule],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Kardex por producto</h1>
-      <form [formGroup]="form" (ngSubmit)="search()" class="card row">
-        <div class="field" style="flex:1">
+      <header class="page-header">
+        <h1>Kardex por producto</h1>
+        <p class="page-lead page-header-lead">Movimientos del producto en el rango de fechas.</p>
+      </header>
+      <form [formGroup]="form" (ngSubmit)="search()" class="card row form-export">
+        <div class="field field-flex-1">
           <label>Producto</label>
           <select formControlName="productoId">
             <option [ngValue]="null">—</option>
@@ -33,7 +37,10 @@ import { getApiErrorMessage } from '../../core/util/api-error';
         <button type="submit" class="btn btn-primary">Consultar</button>
       </form>
       @if (error()) {
-        <div class="alert alert-error">{{ error() }}</div>
+        <div class="alert alert-error" role="alert">
+          {{ error() }}
+          <app-plan-block-followup [followup]="planFollowup()" />
+        </div>
       }
       <div class="table-wrap">
         <table class="data">
@@ -57,7 +64,7 @@ import { getApiErrorMessage } from '../../core/util/api-error';
           </tbody>
         </table>
       </div>
-      <div class="row">
+      <div class="row pager">
         <button type="button" class="btn" [disabled]="page() <= 0" (click)="prev()">Anterior</button>
         <span class="muted">Página {{ page() + 1 }} / {{ totalPages() }}</span>
         <button type="button" class="btn" [disabled]="page() + 1 >= totalPages()" (click)="next()">Siguiente</button>
@@ -81,6 +88,7 @@ export class KardexPage implements OnInit {
   readonly page = signal(0);
   readonly totalPages = signal(1);
   readonly error = signal<string | null>(null);
+  readonly planFollowup = signal<PlanBlockFollowup | null>(null);
 
   ngOnInit(): void {
     const { desde, hasta } = defaultDesdeHasta();
@@ -94,10 +102,12 @@ export class KardexPage implements OnInit {
   search(): void {
     const pid = this.form.getRawValue().productoId;
     if (pid == null) {
+      this.planFollowup.set(null);
       this.error.set('Seleccione un producto.');
       return;
     }
     this.error.set(null);
+    this.planFollowup.set(null);
     this.page.set(0);
     this.load();
   }
@@ -109,8 +119,10 @@ export class KardexPage implements OnInit {
       next: (p) => {
         this.rows.set(p.content);
         this.totalPages.set(Math.max(1, p.totalPages));
+        this.error.set(null);
+        this.planFollowup.set(null);
       },
-      error: (e) => this.error.set(getApiErrorMessage(e))
+      error: (e) => patchPlanErrorSignals(e, this.error, this.planFollowup)
     });
   }
 

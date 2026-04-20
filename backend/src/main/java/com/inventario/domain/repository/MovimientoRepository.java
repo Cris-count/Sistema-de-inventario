@@ -46,4 +46,20 @@ public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
             @Param("desde") Instant desde,
             @Param("hasta") Instant hasta,
             Pageable pageable);
+
+    @Query(
+            value = """
+                    SELECT m.proveedor_id FROM movimiento m
+                    INNER JOIN movimiento_detalle d ON d.movimiento_id = m.id
+                    WHERE m.empresa_id = :empresaId
+                      AND m.tipo_movimiento = 'ENTRADA'
+                      AND d.producto_id = :productoId
+                      AND m.proveedor_id IS NOT NULL
+                    ORDER BY m.fecha_movimiento DESC
+                    LIMIT 1
+                    """,
+            nativeQuery = true)
+    Optional<Long> findLatestProveedorIdEntradaProducto(
+            @Param("empresaId") long empresaId,
+            @Param("productoId") long productoId);
 }

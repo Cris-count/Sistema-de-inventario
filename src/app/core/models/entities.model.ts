@@ -13,6 +13,7 @@ export interface Producto {
   categoria: Categoria;
   unidadMedida: string;
   stockMinimo: string;
+  proveedorPreferidoId?: number | null;
   activo: boolean;
 }
 

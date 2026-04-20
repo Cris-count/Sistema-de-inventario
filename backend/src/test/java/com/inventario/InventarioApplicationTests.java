@@ -4,7 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-@SpringBootTest
+@SpringBootTest(
+        properties = {
+            "app.rate-limit.backend=memory",
+            "app.rate-limit.redis.host="
+        })
 @ActiveProfiles("test")
 class InventarioApplicationTests {
 
