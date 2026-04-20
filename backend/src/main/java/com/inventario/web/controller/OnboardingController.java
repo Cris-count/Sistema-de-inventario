@@ -1,6 +1,7 @@
 package com.inventario.web.controller;
 
 import com.inventario.ratelimit.ApplicationRateLimitService;
+import com.inventario.service.onboarding.OnboardingEmailVerificationService;
 import com.inventario.service.onboarding.OnboardingService;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterRequest;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterResponse;
@@ -27,6 +28,7 @@ public class OnboardingController {
 
     private final OnboardingService onboardingService;
     private final OnboardingEmailVerificationService emailVerificationService;
+    private final ApplicationRateLimitService applicationRateLimitService;
 
     @PostMapping("/send-email-verification")
     @SecurityRequirements

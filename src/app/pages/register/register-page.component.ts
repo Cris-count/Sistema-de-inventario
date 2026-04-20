@@ -14,7 +14,8 @@ import {
   type EmpresaForm,
   type OnboardingRegisterResponseDto,
   type PublicPlanDto,
-  type SuperAdminForm
+  type SuperAdminForm,
+  type VerifyEmailResponseDto
 } from './register.models';
 import { RegisterStepPlanComponent } from './steps/register-step-plan.component';
 import { RegisterStepEmailVerifyComponent } from './steps/register-step-email-verify.component';
@@ -25,6 +26,8 @@ import { RegisterStepResultComponent } from './steps/register-step-result.compon
 import { HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.component';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { PlanesService } from '../../core/services/planes.service';
 
 interface RegisterDraft {
   planCodigo: string | null;
@@ -66,12 +69,12 @@ interface RegisterDraft {
           </a>
           <div class="flex items-center gap-2">
             <app-theme-toggle />
-            @if (step() < 5) {
-              <span class="text-xs font-medium text-secondary dark:text-slate-400">Paso {{ step() }} de 4</span>
+            @if (step() >= 1 && step() <= 5) {
+              <span class="text-xs font-medium text-secondary dark:text-slate-400">Paso {{ step() }} de 5</span>
             }
           </div>
         </div>
-        @if (step() < 5) {
+        @if (step() >= 1 && step() <= 5) {
           <div class="mx-auto max-w-3xl px-4 pb-3 sm:px-6">
             <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
@@ -79,46 +82,19 @@ interface RegisterDraft {
                 [style.width.%]="progressPct()"
               ></div>
             </div>
-    <!--
-      Tailwind important selector #lp-root: utility classes must live on a descendant of #lp-root,
-      not on the same element, or background/text tokens won't apply (dark body shows through).
-    -->
-    <div id="lp-root">
-      <div class="min-h-screen bg-background font-sans text-primary antialiased">
-        <header class="border-b border-slate-200/80 bg-surface/90 backdrop-blur">
-          <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-            <a routerLink="/landing" class="text-sm font-semibold text-secondary no-underline hover:text-primary">
-              ← Inventario Pro
-            </a>
-            @if (step() < 6) {
-              <span class="text-xs font-medium text-secondary">Paso {{ step() }} de 5</span>
-            }
           </div>
-          @if (step() < 6) {
-            <div class="mx-auto max-w-3xl px-4 pb-3 sm:px-6">
-              <div class="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  class="h-full rounded-full bg-gradient-to-r from-accent to-teal-600 transition-all duration-300"
-                  [style.width.%]="progressPct()"
-                ></div>
-              </div>
-            </div>
-          }
-        </header>
+        }
+      </header>
 
       <main class="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
-        @if (loadError()) {
-          <p
-            class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-950/55 dark:text-amber-100"
-          >
-            {{ loadError() }}
-          </p>
         @if (loadError(); as loadErr) {
-          <div class="rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-soft">
-            <p class="text-sm font-semibold text-amber-950">{{ loadErr }}</p>
-            <p class="mt-2 text-xs leading-relaxed text-amber-900/90">
+          <div class="rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-soft dark:border-amber-500/40 dark:bg-amber-950/55">
+            <p class="text-sm font-semibold text-amber-950 dark:text-amber-100">{{ loadErr }}</p>
+            <p class="mt-2 text-xs leading-relaxed text-amber-900/90 dark:text-amber-200/90">
               Comprueba que la API responda en
-              <span class="rounded bg-white/80 px-1.5 py-0.5 font-mono text-amber-950">{{ apiBaseUrl }}</span>
+              <span class="rounded bg-white/80 px-1.5 py-0.5 font-mono text-amber-950 dark:bg-slate-900 dark:text-amber-100">{{
+                apiBaseUrl
+              }}</span>
               (por ejemplo <span class="font-mono">/public/planes</span>). Si usás Docker, esperá a que el contenedor
               <span class="font-mono">api</span> esté arriba y reiniciá con <span class="font-mono">npm run up</span>.
             </p>
@@ -126,9 +102,7 @@ interface RegisterDraft {
               <app-ui-button variant="gradient" class="sm:min-w-[200px]" (click)="reloadPlans()">
                 Reintentar cargar planes
               </app-ui-button>
-              <app-ui-button variant="outline" class="sm:min-w-[180px]" to="/landing">
-                Volver al inicio
-              </app-ui-button>
+              <app-ui-button variant="outline" class="sm:min-w-[180px]" to="/landing"> Volver al inicio </app-ui-button>
             </div>
           </div>
         } @else if (step() === 1) {
@@ -188,7 +162,6 @@ interface RegisterDraft {
           }
         }
       </main>
-      </div>
     </div>
   `
 })
@@ -228,8 +201,17 @@ export class RegisterPageComponent implements OnInit {
   readonly progressPct = computed(() => (Math.min(this.step(), 5) / 5) * 100);
 
   ngOnInit(): void {
+    this.loadPlansFromApi();
+  }
+
+  reloadPlans(): void {
+    this.loadError.set(null);
+    this.loadPlansFromApi();
+  }
+
+  private loadPlansFromApi(): void {
     this.planesApi.listPublicPlanes().subscribe({
-      next: (list) => {
+      next: (list: PublicPlanDto[]) => {
         this.plans.set(list);
         const q = this.route.snapshot.queryParamMap.get('plan');
         if (q) {
@@ -329,7 +311,7 @@ export class RegisterPageComponent implements OnInit {
     }
     this.emailVerifyVerifying.set(true);
     this.api.verifyEmail(email, plan, code).subscribe({
-      next: (res) => {
+      next: (res: VerifyEmailResponseDto) => {
         this.emailVerifyVerifying.set(false);
         this.draft.update((x) => ({
           ...x,

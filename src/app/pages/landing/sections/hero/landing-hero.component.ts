@@ -41,15 +41,12 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
               size="lg"
               class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/15"
               to="/login"
-              >Ver demo en vivo</app-ui-button
+              >Probar gratis</app-ui-button
             >
-              Probar gratis
-            </app-ui-button>
-
             <app-ui-button
               variant="landing-on-dark"
               class="w-full sm:w-auto sm:min-w-[220px] !text-base"
-              linkTo="/landing"
+              to="/landing"
               fragment="como-funciona"
             >
               Ver cómo funciona
