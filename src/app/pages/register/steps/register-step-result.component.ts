@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
 import type { OnboardingRegisterResponseDto } from '../register.models';
 import { UiButtonComponent } from '../../../shared/components/ui/button/ui-button.component';
 
