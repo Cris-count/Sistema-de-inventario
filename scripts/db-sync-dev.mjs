@@ -24,12 +24,12 @@ const MIGRATIONS = [
   'database/migrations/004_onboarding_saas.sql',
   'database/migrations/005_billing_compra_pago.sql',
   'database/migrations/006_saas_compra_plan_change.sql',
+  'database/migrations/006_onboarding_email_totp.sql',
   'database/migrations/007_usuario_mfa.sql',
   'database/migrations/008_mfa_cluster_backup_codes.sql',
   'database/migrations/009_refresh_token.sql',
   'database/migrations/010_refresh_token_family_expires.sql',
   'database/migrations/011_pedido_proveedor_mensaje.sql'
-  'database/migrations/006_onboarding_email_totp.sql'
 ];
 
 const PSQL_ENV = {

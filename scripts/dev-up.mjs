@@ -10,6 +10,7 @@
  * Uso: npm run up
  */
 import { spawnSync } from 'node:child_process';
+import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -34,6 +35,24 @@ function runOrFail(command, args, description, useShell = false) {
   if (r.status !== 0) {
     process.exit(r.status ?? 1);
   }
+}
+
+async function waitForPort(port, host = '127.0.0.1', timeoutMs = 120_000, intervalMs = 1000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const open = await new Promise((resolve) => {
+      const s = net.connect({ port, host }, () => {
+        s.end();
+        resolve(true);
+      });
+      s.on('error', () => resolve(false));
+    });
+    if (open) {
+      return;
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  throw new Error(`[dev-up] Timeout esperando ${host}:${port} (${timeoutMs} ms). ¿Docker está en ejecución?`);
 }
 
 async function waitForApiHealth(url, timeoutMs = API_HEALTH_TIMEOUT_MS, intervalMs = 2000) {
@@ -61,13 +80,10 @@ async function waitForApiHealth(url, timeoutMs = API_HEALTH_TIMEOUT_MS, interval
 async function main() {
   runOrFail('docker', ['compose', 'up', '-d', '--build'], '[dev-up] 1/5  Levantando Docker completo (db + api) …');
 
-  console.log('[dev-up] 2/4  Esperando PostgreSQL en 127.0.0.1:5433 …');
+  console.log('[dev-up] 2/5  Esperando PostgreSQL en 127.0.0.1:5433 …');
   await waitForPort(5433);
 
-  console.log(
-    '[dev-up] 3/4  Alineando esquema (migraciones SQL idempotentes en BD existente; ver db-sync-dev.mjs)'
-  );
-  console.log('[dev-up] 2/5  Alineando esquema PostgreSQL (migraciones idempotentes) …');
+  console.log('[dev-up] 3/5  Alineando esquema PostgreSQL (migraciones idempotentes; ver db-sync-dev.mjs) …');
   const { applyDevMigrations } = await import('./db-sync-dev.mjs');
   await applyDevMigrations();
 
