@@ -36,7 +36,7 @@ import { buildWhatsAppLink } from '../../config/landing-contact';
             variant="landing-primary"
             class="w-full min-w-0 px-10! sm:w-auto"
             linkTo="/registro"
-            >Crear cuenta gratis</app-ui-button
+            >Empieza ahora</app-ui-button
           >
           <a
             [href]="whatsappLink"

@@ -4,6 +4,8 @@ import { LandingNavbarComponent } from './sections/navbar/landing-navbar.compone
 import { LandingHeroComponent } from './sections/hero/landing-hero.component';
 import { LandingProblemSolutionComponent } from './sections/problem-solution/landing-problem-solution.component';
 import { LandingBenefitsComponent } from './sections/benefits/landing-benefits.component';
+import { LandingSectorsComponent } from './sections/sectors/landing-sectors.component';
+import { LandingFeaturesComponent } from './sections/features/landing-features.component';
 import { LandingHowItWorksComponent } from './sections/how-it-works/landing-how-it-works.component';
 import { LandingInlineCtaComponent } from './sections/inline-cta/landing-inline-cta.component';
 import { LandingBusinessVisualComponent } from './sections/business-visual/landing-business-visual.component';
@@ -22,6 +24,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
     LandingTopbarComponent,
     LandingNavbarComponent,
     LandingHeroComponent,
+    LandingSectorsComponent,
+    LandingFeaturesComponent,
     LandingProblemSolutionComponent,
     LandingBenefitsComponent,
     LandingHowItWorksComponent,
@@ -43,6 +47,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
       <app-landing-navbar />
       <main>
         <app-landing-hero />
+        <app-landing-sectors />
+        <app-landing-features />
         <app-landing-how-it-works />
         <app-landing-inline-cta variant="organize" />
         <app-landing-problem-solution />
@@ -69,7 +75,7 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
             linkTo="/login"
             >Iniciar sesión</app-ui-button
           >
-          <app-ui-button variant="landing-floating" linkTo="/registro">Empieza gratis</app-ui-button>
+          <app-ui-button variant="landing-floating" linkTo="/registro">Empieza ahora</app-ui-button>
         </div>
       </div>
 
@@ -78,8 +84,8 @@ import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.c
         aria-label="Acciones rápidas móvil"
       >
         <div class="mx-auto flex max-w-lg items-stretch gap-2">
-          <app-ui-button variant="secondary" class="flex-1" to="/login">Entrar</app-ui-button>
-          <app-ui-button variant="gradient" class="flex-1" to="/registro">Crear cuenta</app-ui-button>
+          <app-ui-button variant="secondary" class="flex-1" to="/login">Iniciar sesión</app-ui-button>
+          <app-ui-button variant="gradient" class="flex-1" to="/registro">Empieza ahora</app-ui-button>
         </div>
       </div>
 

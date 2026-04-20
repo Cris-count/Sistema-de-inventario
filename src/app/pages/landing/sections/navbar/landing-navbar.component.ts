@@ -3,8 +3,11 @@ import { RouterLink } from '@angular/router';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
 import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle/theme-toggle.component';
 
+const LANDING = '/landing';
+
 /**
- * Navbar principal. Enlaces a anclas de la misma landing (#producto, #planes, etc.).
+ * Navbar principal. Enlaces a anclas vía `routerLink` + `fragment` para que
+ * funcionen también fuera de la landing (p. ej. /login → /landing#planes).
  *
  * Escritorio: una fila. Móvil: marca + tema, CTAs a ancho completo, anclas con área táctil.
  */
@@ -20,7 +23,7 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
         <!-- Escritorio / tablet: una sola fila -->
         <div class="hidden items-center justify-between gap-6 md:flex">
           <a
-            routerLink="/landing"
+            [routerLink]="LANDING"
             class="flex min-w-0 shrink-0 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
           >
             <span
@@ -31,13 +34,36 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
           </a>
 
           <nav class="flex items-center gap-7 text-sm font-medium text-secondary dark:text-slate-300">
-            <a href="#producto" class="no-underline transition hover:text-primary dark:hover:text-white">Producto</a>
-            <a href="#como-funciona" class="no-underline transition hover:text-primary dark:hover:text-white"
-              >Cómo funciona</a
+            <a
+              [routerLink]="LANDING"
+              fragment="soluciones"
+              class="no-underline transition hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-white"
+              >Soluciones</a
             >
-            <a href="#producto-visual" class="no-underline transition hover:text-primary dark:hover:text-white">Panel</a>
-            <a href="#planes" class="no-underline transition hover:text-primary dark:hover:text-white">Planes</a>
-            <a href="#faq" class="no-underline transition hover:text-primary dark:hover:text-white">FAQ</a>
+            <a
+              [routerLink]="LANDING"
+              fragment="funcionalidades"
+              class="no-underline transition hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-white"
+              >Funcionalidades</a
+            >
+            <a
+              [routerLink]="LANDING"
+              fragment="panel"
+              class="no-underline transition hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-white"
+              >Panel</a
+            >
+            <a
+              [routerLink]="LANDING"
+              fragment="planes"
+              class="no-underline transition hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-white"
+              >Planes</a
+            >
+            <a
+              [routerLink]="LANDING"
+              fragment="faq"
+              class="no-underline transition hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-white"
+              >FAQ</a
+            >
           </nav>
 
           <div class="flex shrink-0 items-center gap-2.5 sm:gap-3">
@@ -49,7 +75,7 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
               >Iniciar sesión</app-ui-button
             >
             <app-ui-button variant="landing-navbar" class="!min-w-0 sm:!min-w-[140px]" linkTo="/registro"
-              >Empieza gratis</app-ui-button
+              >Empieza ahora</app-ui-button
             >
           </div>
         </div>
@@ -58,7 +84,7 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
         <div class="flex flex-col gap-3.5 md:hidden">
           <div class="flex items-center justify-between gap-3">
             <a
-              routerLink="/landing"
+              [routerLink]="LANDING"
               class="flex min-w-0 flex-1 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
             >
               <span
@@ -80,7 +106,7 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
               >Iniciar sesión</app-ui-button
             >
             <app-ui-button variant="landing-navbar" class="!min-h-[44px] w-full !text-sm" linkTo="/registro"
-              >Crear cuenta</app-ui-button
+              >Empieza ahora</app-ui-button
             >
           </div>
 
@@ -89,28 +115,33 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
             aria-label="Secciones"
           >
             <a
-              href="#producto"
-              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
-              >Producto</a
+              [routerLink]="LANDING"
+              fragment="soluciones"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >Soluciones</a
             >
             <a
-              href="#como-funciona"
-              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
-              >Cómo funciona</a
+              [routerLink]="LANDING"
+              fragment="funcionalidades"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >Funcionalidades</a
             >
             <a
-              href="#producto-visual"
-              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              [routerLink]="LANDING"
+              fragment="panel"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
               >Panel</a
             >
             <a
-              href="#planes"
-              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              [routerLink]="LANDING"
+              fragment="planes"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
               >Planes</a
             >
             <a
-              href="#faq"
-              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              [routerLink]="LANDING"
+              fragment="faq"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
               >FAQ</a
             >
           </nav>
@@ -119,4 +150,6 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
     </header>
   `
 })
-export class LandingNavbarComponent {}
+export class LandingNavbarComponent {
+  protected readonly LANDING = LANDING;
+}

@@ -1,11 +1,15 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
+/**
+ * Vista oscura tipo preview del panel operativo (métricas + tabla de stock).
+ * Ancla `#panel`: el navbar enlaza con `routerLink` + `fragment="panel"`.
+ */
 @Component({
   selector: 'app-landing-business-visual',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
-      id="producto-visual"
+      id="panel"
       class="relative scroll-mt-24 overflow-hidden border-y border-slate-800/80 bg-slate-950 py-section-lg text-slate-100"
     >
       <div
