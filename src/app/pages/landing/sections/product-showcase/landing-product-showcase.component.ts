@@ -107,7 +107,7 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
               <app-ui-button variant="landing-primary" linkTo="/registro"
-                >Empieza gratis</app-ui-button
+                >Empieza ahora</app-ui-button
               >
               <app-ui-button
                 variant="landing-secondary"

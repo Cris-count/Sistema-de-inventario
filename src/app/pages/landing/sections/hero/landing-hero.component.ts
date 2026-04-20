@@ -35,21 +35,21 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
             plataforma hecha para el día a día de tu negocio.
           </p>
           <div class="mt-8 flex flex-wrap items-center gap-3">
-            <app-ui-button variant="gradient" size="lg" to="/registro">Empezar gratis</app-ui-button>
+            <app-ui-button variant="gradient" size="lg" to="/registro">Empieza ahora</app-ui-button>
             <app-ui-button
               variant="secondary"
               size="lg"
               class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/15"
               to="/login"
-              >Probar gratis</app-ui-button
+              >Iniciar sesión</app-ui-button
             >
             <app-ui-button
               variant="landing-on-dark"
               class="w-full sm:w-auto sm:min-w-[220px] !text-base"
               to="/landing"
-              fragment="como-funciona"
+              fragment="funcionalidades"
             >
-              Ver cómo funciona
+              Ver funcionalidades
             </app-ui-button>
           </div>
 

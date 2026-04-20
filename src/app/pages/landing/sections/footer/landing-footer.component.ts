@@ -39,16 +39,36 @@ import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../confi
               Producto
             </p>
             <nav class="mt-4 flex flex-col gap-2 text-sm text-secondary dark:text-slate-400">
-              <a href="#soluciones" class="no-underline hover:text-primary dark:hover:text-slate-100"
+              <a
+                routerLink="/landing"
+                fragment="soluciones"
+                class="no-underline hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-slate-100"
                 >Soluciones</a
               >
-              <a href="#funcionalidades" class="no-underline hover:text-primary dark:hover:text-slate-100"
+              <a
+                routerLink="/landing"
+                fragment="funcionalidades"
+                class="no-underline hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-slate-100"
                 >Funcionalidades</a
               >
-              <a href="#beneficios" class="no-underline hover:text-primary dark:hover:text-slate-100"
+              <a
+                routerLink="/landing"
+                fragment="panel"
+                class="no-underline hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-slate-100"
+                >Panel</a
+              >
+              <a
+                routerLink="/landing"
+                fragment="beneficios"
+                class="no-underline hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-slate-100"
                 >Beneficios</a
               >
-              <a href="#planes" class="no-underline hover:text-primary dark:hover:text-slate-100">Planes</a>
+              <a
+                routerLink="/landing"
+                fragment="planes"
+                class="no-underline hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-slate-100"
+                >Planes</a
+              >
             </nav>
           </div>
 
@@ -57,12 +77,17 @@ import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../confi
               Soporte
             </p>
             <nav class="mt-4 flex flex-col gap-2 text-sm text-secondary dark:text-slate-400">
-              <a href="#faq" class="no-underline hover:text-primary dark:hover:text-slate-100">FAQ</a>
+              <a
+                routerLink="/landing"
+                fragment="faq"
+                class="no-underline hover:text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent dark:hover:text-slate-100"
+                >FAQ</a
+              >
               <a routerLink="/login" class="no-underline hover:text-primary dark:hover:text-slate-100"
                 >Iniciar sesión</a
               >
               <a routerLink="/registro" class="no-underline hover:text-primary dark:hover:text-slate-100"
-                >Crear cuenta gratis</a
+                >Empieza ahora</a
               >
               <a [href]="whatsappLink" target="_blank" rel="noopener" class="no-underline hover:text-primary dark:hover:text-slate-100"
                 >Hablar por WhatsApp</a

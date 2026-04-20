@@ -6,7 +6,7 @@ import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../confi
  * Franja superior comercial (tipo "top bar" de sitios SaaS B2B).
  *
  * Desktop: muestra WhatsApp, correo y teléfono + accesos rápidos a área de
- * clientes y CTA de prueba gratis. En móvil sólo se muestra un resumen
+ * clientes y CTA «Empieza ahora» (/registro). En móvil sólo se muestra un resumen
  * compacto para no competir con el navbar.
  *
  * Honesto: sin formularios inventados, todo son enlaces `mailto:`, `tel:` y
@@ -65,7 +65,7 @@ import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../confi
             routerLink="/registro"
             class="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 font-medium text-white no-underline shadow-sm transition hover:brightness-110"
           >
-            Prueba gratis
+            Empieza ahora
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M5 12h14" />
               <path d="m12 5 7 7-7 7" />
