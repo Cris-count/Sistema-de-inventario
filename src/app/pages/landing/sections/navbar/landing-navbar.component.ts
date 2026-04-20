@@ -11,27 +11,30 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
     <header
       class="sticky top-0 z-50 border-b border-white/10 bg-surface/75 backdrop-blur-md supports-[backdrop-filter]:bg-surface/65 dark:border-slate-700/60 dark:bg-slate-900/85"
     >
-      <div class="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between gap-3">
+      <div
+        class="mx-auto max-w-6xl px-5 py-3 sm:px-6 lg:px-8 lp-nav-pad"
+      >
+        <!-- Escritorio / tablet: una sola fila -->
+        <div class="hidden items-center justify-between gap-6 md:flex">
           <a
             routerLink="/landing"
-            class="flex min-w-0 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
+            class="flex min-w-0 shrink-0 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
           >
             <span
               class="flex h-9 w-9 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-accent to-teal-600 text-sm font-bold text-white shadow-soft"
               >IV</span
             >
-            <span class="truncate text-sm font-semibold tracking-tight sm:text-base">Inventario Pro</span>
+            <span class="truncate text-base font-semibold tracking-tight">Inventario Pro</span>
           </a>
 
-          <nav class="hidden items-center gap-7 text-sm font-medium text-secondary dark:text-slate-300 md:flex">
+          <nav class="flex items-center gap-7 text-sm font-medium text-secondary dark:text-slate-300">
             <a href="#producto" class="no-underline transition hover:text-primary dark:hover:text-white">Producto</a>
             <a href="#funciones" class="no-underline transition hover:text-primary dark:hover:text-white">Funciones</a>
             <a href="#planes" class="no-underline transition hover:text-primary dark:hover:text-white">Planes</a>
             <a href="#faq" class="no-underline transition hover:text-primary dark:hover:text-white">FAQ</a>
           </nav>
 
-          <div class="flex flex-none items-center gap-2 sm:gap-3">
+          <div class="flex shrink-0 items-center gap-2.5 sm:gap-3">
             <app-theme-toggle />
             <app-ui-button
               variant="landing-secondary"
@@ -45,19 +48,62 @@ import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle
           </div>
         </div>
 
-        <nav
-          class="-mx-1 mt-3 flex gap-4 overflow-x-auto px-1 pb-1 text-xs font-semibold text-secondary dark:text-slate-300 md:hidden"
-          aria-label="Secciones"
-        >
-          <a href="#producto" class="whitespace-nowrap no-underline hover:text-primary dark:hover:text-white"
-            >Producto</a
+        <!-- Móvil: marca + tema; CTAs a ancho completo; anclas con área táctil -->
+        <div class="flex flex-col gap-3.5 md:hidden">
+          <div class="flex items-center justify-between gap-3">
+            <a
+              routerLink="/landing"
+              class="flex min-w-0 flex-1 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
+            >
+              <span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-teal-600 text-sm font-bold text-white shadow-soft"
+                >IV</span
+              >
+              <span class="truncate text-base font-semibold tracking-tight">Inventario Pro</span>
+            </a>
+            <div class="shrink-0">
+              <app-theme-toggle />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <app-ui-button
+              variant="landing-secondary"
+              class="!min-h-[44px] w-full !px-3 !text-sm"
+              linkTo="/login"
+              >Iniciar sesión</app-ui-button
+            >
+            <app-ui-button variant="landing-navbar" class="!min-h-[44px] w-full !text-sm" linkTo="/registro"
+              >Crear cuenta</app-ui-button
+            >
+          </div>
+
+          <nav
+            class="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            aria-label="Secciones"
           >
-          <a href="#funciones" class="whitespace-nowrap no-underline hover:text-primary dark:hover:text-white"
-            >Funciones</a
-          >
-          <a href="#planes" class="whitespace-nowrap no-underline hover:text-primary dark:hover:text-white">Planes</a>
-          <a href="#faq" class="whitespace-nowrap no-underline hover:text-primary dark:hover:text-white">FAQ</a>
-        </nav>
+            <a
+              href="#producto"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >Producto</a
+            >
+            <a
+              href="#funciones"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >Funciones</a
+            >
+            <a
+              href="#planes"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >Planes</a
+            >
+            <a
+              href="#faq"
+              class="flex min-h-[44px] shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-secondary no-underline hover:bg-slate-100/80 active:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-slate-800/80"
+              >FAQ</a
+            >
+          </nav>
+        </div>
       </div>
     </header>
   `

@@ -12,9 +12,13 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
   imports: [ReactiveFormsModule, FormsModule, RouterLink, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Historial de movimientos</h1>
-      <p class="muted">Parámetros obligatorios en API: <code>desde</code>, <code>hasta</code> (fecha ISO yyyy-MM-dd).</p>
-      <form [formGroup]="form" (ngSubmit)="search()" class="card row">
+      <header class="page-header">
+        <h1>Historial de movimientos</h1>
+        <p class="page-lead page-header-lead">
+          Parámetros obligatorios en API: <code>desde</code>, <code>hasta</code> (fecha ISO yyyy-MM-dd).
+        </p>
+      </header>
+      <form [formGroup]="form" (ngSubmit)="search()" class="card row form-export">
         <div class="field">
           <label>Desde</label>
           <input type="date" formControlName="desde" />
@@ -67,7 +71,7 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
           </tbody>
         </table>
       </div>
-      <div class="row">
+      <div class="row pager">
         <button type="button" class="btn" [disabled]="page() <= 0" (click)="prev()">Anterior</button>
         <span class="muted">Página {{ page() + 1 }} / {{ totalPages() }}</span>
         <button type="button" class="btn" [disabled]="page() + 1 >= totalPages()" (click)="next()">Siguiente</button>

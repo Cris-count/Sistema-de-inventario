@@ -76,6 +76,7 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
                     Misma lista que <code>application.yml</code> / Docker. Si «Credenciales inválidas»: revise mayúsculas y el
                     símbolo <code>!</code> al final.
                   </p>
+                  <div class="table-wrap seed-table-wrap">
                   <table class="seed-table">
                     <thead>
                       <tr>
@@ -107,6 +108,7 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
                       </tr>
                     </tbody>
                   </table>
+                  </div>
                 </details>
               }
             </div>

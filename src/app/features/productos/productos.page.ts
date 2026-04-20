@@ -40,13 +40,15 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
   template: `
     <div class="page stack">
       <header class="page-header">
-        <div class="row" style="justify-content:space-between; align-items:center; width:100%">
-          <div>
-            <h1 style="margin-bottom:0.25rem">Productos</h1>
-            <p class="page-lead" style="margin:0">Catálogo corporativo y unidades de medida.</p>
+        <div class="page-header-row">
+          <div class="page-header-text">
+            <h1 class="page-header-title">Productos</h1>
+            <p class="page-lead page-header-lead">Catálogo corporativo y unidades de medida.</p>
           </div>
           @if (canGestionarProductos()) {
-            <button type="button" class="btn btn-primary" (click)="startCreate()">Nuevo producto</button>
+            <div class="page-header-actions">
+              <button type="button" class="btn btn-primary" (click)="startCreate()">Nuevo producto</button>
+            </div>
           }
         </div>
       </header>
@@ -85,7 +87,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                 <label>Código</label>
                 <input formControlName="codigo" />
               </div>
-              <div class="field" style="flex:1; min-width:200px">
+              <div class="field field-flex-1">
                 <label>Nombre</label>
                 <input formControlName="nombre" />
               </div>
@@ -104,7 +106,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                   }
                 </select>
               </div>
-              <div class="field" style="min-width:220px">
+              <div class="field field-min-220">
                 <label>Unidad de medida</label>
                 <select formControlName="unidadMedida">
                   @for (o of unidadesForSelect(); track o.codigo) {
@@ -116,9 +118,9 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                 <label>Stock mínimo</label>
                 <input formControlName="stockMinimo" type="text" />
               </div>
-              <div class="field" style="flex: 1; min-width: 220px">
+              <div class="field field-min-220">
                 <label>Proveedor preferido (reposición)</label>
-                <p class="muted" style="margin: 0 0 0.35rem; font-size: 0.78rem">
+                <p class="muted muted-hint-below-label">
                   Alertas por stock mínimo usan el correo de este proveedor (debe estar en Proveedores).
                 </p>
                 <select formControlName="proveedorPreferidoId">
@@ -164,10 +166,12 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                 </td>
                 @if (canGestionarProductos()) {
                   <td>
-                    <button type="button" class="btn btn-ghost" (click)="startEdit(p)">Editar</button>
-                    <button type="button" class="btn btn-ghost" (click)="toggleActivo(p)">
-                      {{ p.activo ? 'Desactivar' : 'Activar' }}
-                    </button>
+                    <div class="table-actions">
+                      <button type="button" class="btn btn-ghost" (click)="startEdit(p)">Editar</button>
+                      <button type="button" class="btn btn-ghost" (click)="toggleActivo(p)">
+                        {{ p.activo ? 'Desactivar' : 'Activar' }}
+                      </button>
+                    </div>
                   </td>
                 }
               </tr>
@@ -175,7 +179,7 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
           </tbody>
         </table>
       </div>
-      <div class="row">
+      <div class="row pager">
         <button type="button" class="btn" [disabled]="page() <= 0 || loading()" (click)="prev()">Anterior</button>
         <span class="muted">Página {{ page() + 1 }}</span>
         <button type="button" class="btn" [disabled]="!hasNext() || loading()" (click)="next()">Siguiente</button>

@@ -9,7 +9,7 @@ type FeatureIcon = 'box' | 'layers' | 'arrow' | 'shield' | 'chart' | 'spark';
   imports: [UiCardComponent],
   template: `
     <section id="funciones" class="bg-surface py-section dark:bg-slate-900">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 lp-section-pad">
         <div class="max-w-2xl">
           <h2 class="text-3xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-4xl">
             Todo lo esencial para operar inventario con rigor

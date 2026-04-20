@@ -5,7 +5,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section id="faq" class="bg-surface py-section dark:bg-slate-900">
-      <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-3xl px-5 sm:px-6 lg:px-8 lp-section-pad">
         <h2 class="text-center text-3xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-4xl">
           Preguntas frecuentes
         </h2>

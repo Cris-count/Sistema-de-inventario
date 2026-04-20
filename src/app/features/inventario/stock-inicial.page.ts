@@ -13,10 +13,12 @@ import { flashSuccess } from '../../core/util/page-flash';
   imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Stock inicial</h1>
-      <p class="muted">
-        Carga inicial por producto y bodega. El backend rechaza si ya existe cantidad &gt; 0 en esa pareja (409).
-      </p>
+      <header class="page-header">
+        <h1>Stock inicial</h1>
+        <p class="page-lead page-header-lead">
+          Carga inicial por producto y bodega. El backend rechaza si ya existe cantidad &gt; 0 en esa pareja (409).
+        </p>
+      </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">
           {{ error() }}

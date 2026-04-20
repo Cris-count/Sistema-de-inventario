@@ -102,6 +102,17 @@ import { ThemeService } from '../../../core/services/theme.service';
       border-color: rgba(71, 85, 105, 0.9);
       background: rgba(30, 41, 59, 0.85);
     }
+    /* Marketing móvil: solo icono para no chocar con logo / CTAs */
+    @media (max-width: 767px) {
+      :host-context(#lp-root) .theme-toggle-btn .lbl {
+        display: none;
+      }
+      :host-context(#lp-root) .theme-toggle-btn {
+        min-width: 2.5rem;
+        min-height: 2.5rem;
+        padding: 0.4rem;
+      }
+    }
     /* Barra lateral: aspecto alineado al ítem activo/hover del menú */
     :host-context(.sidebar) .theme-toggle-btn--compact:hover {
       background: var(--accent-soft, rgba(59, 130, 246, 0.14));

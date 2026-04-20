@@ -1,6 +1,9 @@
 spring:
   application:
     name: inventario-api
+  # Si existe `application-local.yml` en resources (no commitear; ver application-local.yml.example), se fusiona aquí.
+  config:
+    import: optional:classpath:application-local.yml
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5433/inventario}
     username: ${SPRING_DATASOURCE_USERNAME:inventario}
@@ -21,7 +24,9 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     time-zone: UTC
-  # Correo (Gmail u otro SMTP). Dejar host vacío en local si no envías alertas; usar variables de entorno para secretos.
+  # Correo (Gmail u otro SMTP). Sin host no se crea JavaMailSender: simulación y alertas quedan en log.
+  # También: producto activo, stock mínimo > 0, proveedor con e-mail (preferido o última entrada COMPRA);
+  # envío automático además requiere «Alertas pedido proveedor» en Mi empresa (la simulación no).
   mail:
     host: ${SPRING_MAIL_HOST:}
     port: ${SPRING_MAIL_PORT:587}

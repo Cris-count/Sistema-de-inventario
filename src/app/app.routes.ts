@@ -77,6 +77,13 @@ export const routes: Routes = [
         loadComponent: () => import('./features/inventario/inventario.page').then((m) => m.InventarioPage)
       },
       {
+        path: 'mensajes-pedido',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_ADMIN },
+        loadComponent: () =>
+          import('./features/mensajes-pedido/mensajes-pedido.page').then((m) => m.MensajesPedidoPage)
+      },
+      {
         path: 'stock-inicial',
         canActivate: [roleGuard],
         data: { roles: ROLES_ADMIN },

@@ -7,7 +7,7 @@ import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.c
   imports: [UiCardComponent],
   template: `
     <section class="bg-background py-section dark:bg-slate-950">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 lp-section-pad">
         <div class="mx-auto max-w-2xl text-center">
           <h2 class="text-3xl font-semibold tracking-tight text-primary dark:text-slate-100 sm:text-4xl">
             De “no sabemos cuánto hay” a decisiones con respaldo

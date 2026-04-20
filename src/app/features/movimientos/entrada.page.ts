@@ -14,7 +14,10 @@ import { flashSuccess } from '../../core/util/page-flash';
   imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Entrada de inventario</h1>
+      <header class="page-header">
+        <h1>Entrada de inventario</h1>
+        <p class="page-lead page-header-lead">Registro de ingreso a bodega con líneas de detalle.</p>
+      </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">
           {{ error() }}
@@ -25,12 +28,12 @@ import { flashSuccess } from '../../core/util/page-flash';
       }
       <form [formGroup]="form" (ngSubmit)="submit()" class="card stack">
         <div class="row">
-          <div class="field" style="flex:1">
+          <div class="field field-flex-1">
             <label>Motivo</label>
             <input formControlName="motivo" placeholder="Ej. COMPRA" />
           </div>
           @if (canPickProveedor()) {
-            <div class="field" style="flex:1">
+            <div class="field field-flex-1">
               <label>Proveedor</label>
               <select formControlName="proveedorId">
                 <option [ngValue]="null">—</option>
@@ -52,7 +55,7 @@ import { flashSuccess } from '../../core/util/page-flash';
             <label>Ref. documento</label>
             <input formControlName="referenciaDocumento" />
           </div>
-          <div class="field" style="flex:2">
+          <div class="field field-flex-2">
             <label>Observación</label>
             <input formControlName="observacion" />
           </div>

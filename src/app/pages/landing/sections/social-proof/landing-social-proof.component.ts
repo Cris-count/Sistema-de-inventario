@@ -5,7 +5,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="border-b border-slate-200/80 bg-background py-section-sm dark:border-slate-700/60 dark:bg-slate-950">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 lp-section-pad">
         <p class="text-center text-xs font-semibold uppercase tracking-widest text-secondary dark:text-slate-400">
           Operaciones que necesitan claridad, no caos
         </p>

@@ -12,7 +12,10 @@ import { flashSuccess } from '../../core/util/page-flash';
   imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Bodegas</h1>
+      <header class="page-header">
+        <h1>Bodegas</h1>
+        <p class="page-lead page-header-lead">Ubicaciones físicas para stock y movimientos.</p>
+      </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">
           {{ error() }}
@@ -30,7 +33,7 @@ import { flashSuccess } from '../../core/util/page-flash';
                 <label>Código</label>
                 <input formControlName="codigo" />
               </div>
-              <div class="field" style="flex:1">
+              <div class="field field-flex-1">
                 <label>Nombre</label>
                 <input formControlName="nombre" />
               </div>

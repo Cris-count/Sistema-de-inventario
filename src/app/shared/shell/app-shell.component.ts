@@ -162,6 +162,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       flex-direction: column;
       padding: 1.15rem 0 0;
       transition: width 0.22s ease;
+      min-height: 0;
     }
     .sidebar--narrow {
       width: 72px;
@@ -174,6 +175,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       align-items: flex-start;
       gap: 0.85rem;
       transition: padding 0.2s ease;
+      flex-shrink: 0;
     }
     .sidebar--narrow .brand {
       justify-content: center;
@@ -264,6 +266,9 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       padding: 0.2rem 0.65rem 0.5rem;
       gap: 0.2rem;
       min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
     .nav-link {
       display: flex;
@@ -361,6 +366,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       margin-top: auto;
       border-top: 1px solid var(--border-subtle);
       background: var(--bg-panel);
+      flex-shrink: 0;
     }
     .sidebar--narrow .user-box {
       display: flex;
@@ -443,7 +449,8 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       display: none;
       align-items: center;
       gap: 0.75rem;
-      padding: 0.65rem 1rem;
+      padding: 0.65rem max(1rem, env(safe-area-inset-right, 0px)) 0.65rem max(1rem, env(safe-area-inset-left, 0px));
+      padding-top: max(0.65rem, env(safe-area-inset-top, 0px));
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky;
@@ -455,6 +462,11 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       font-weight: 600;
       font-size: 0.92rem;
       letter-spacing: -0.02em;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .menu-btn {
       padding: 0.4rem 0.55rem;
@@ -480,6 +492,8 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
     .main-inner {
       flex: 1;
       padding: var(--space-page, 1.5rem);
+      padding-left: max(var(--space-page, 1.5rem), env(safe-area-inset-left, 0px));
+      padding-right: max(var(--space-page, 1.5rem), env(safe-area-inset-right, 0px));
       overflow-x: auto;
       background: var(--bg);
     }
@@ -502,12 +516,14 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
         left: 0;
         height: 100vh;
         height: 100dvh;
+        max-height: 100dvh;
         width: min(280px, 88vw);
         z-index: 200;
         transform: translateX(-100%);
         transition: transform 0.22s ease;
         box-shadow: none;
-        overflow-y: auto;
+        overflow: hidden;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
       }
       /* En móvil el cajón siempre muestra texto + iconos; el modo rail no reduce ancho */
       .sidebar.sidebar--narrow {
@@ -537,6 +553,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       .sidebar.sidebar-open {
         transform: translateX(0);
         box-shadow: 8px 0 32px rgba(0, 0, 0, 0.35);
+        padding-left: max(0, env(safe-area-inset-left, 0px));
       }
       .shell-header {
         display: flex;
@@ -546,6 +563,8 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       }
       .main-inner {
         padding: 1rem;
+        padding-left: max(1rem, env(safe-area-inset-left, 0px));
+        padding-right: max(1rem, env(safe-area-inset-right, 0px));
         padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
       }
     }

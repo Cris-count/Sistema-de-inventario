@@ -34,6 +34,8 @@ public interface InventarioRepository extends JpaRepository<Inventario, Inventar
     @Query("""
             SELECT i FROM Inventario i JOIN i.producto p
             WHERE p.empresa.id = :empresaId
+              AND p.activo = true
+              AND p.stockMinimo > 0
               AND i.cantidad <= p.stockMinimo
               AND (:bodegaId IS NULL OR i.id.bodegaId = :bodegaId)
             """)

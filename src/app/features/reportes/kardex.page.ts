@@ -12,9 +12,12 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
   imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Kardex por producto</h1>
-      <form [formGroup]="form" (ngSubmit)="search()" class="card row">
-        <div class="field" style="flex:1">
+      <header class="page-header">
+        <h1>Kardex por producto</h1>
+        <p class="page-lead page-header-lead">Movimientos del producto en el rango de fechas.</p>
+      </header>
+      <form [formGroup]="form" (ngSubmit)="search()" class="card row form-export">
+        <div class="field field-flex-1">
           <label>Producto</label>
           <select formControlName="productoId">
             <option [ngValue]="null">—</option>
@@ -61,7 +64,7 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
           </tbody>
         </table>
       </div>
-      <div class="row">
+      <div class="row pager">
         <button type="button" class="btn" [disabled]="page() <= 0" (click)="prev()">Anterior</button>
         <span class="muted">Página {{ page() + 1 }} / {{ totalPages() }}</span>
         <button type="button" class="btn" [disabled]="page() + 1 >= totalPages()" (click)="next()">Siguiente</button>

@@ -27,7 +27,8 @@ const MIGRATIONS = [
   'database/migrations/007_usuario_mfa.sql',
   'database/migrations/008_mfa_cluster_backup_codes.sql',
   'database/migrations/009_refresh_token.sql',
-  'database/migrations/010_refresh_token_family_expires.sql'
+  'database/migrations/010_refresh_token_family_expires.sql',
+  'database/migrations/011_pedido_proveedor_mensaje.sql'
 ];
 
 const PSQL_ENV = {

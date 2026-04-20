@@ -49,3 +49,6 @@ Thumbs.db
 
 # Maven (backend Spring Boot)
 backend/target/
+
+# SMTP / overrides locales del API (copiar desde application-local.yml.example)
+backend/src/main/resources/application-local.yml

@@ -10,7 +10,10 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
   imports: [PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Movimiento #{{ id() }}</h1>
+      <header class="page-header">
+        <h1>Movimiento #{{ id() }}</h1>
+        <p class="page-lead page-header-lead">Detalle de cabecera y líneas del movimiento.</p>
+      </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">
           {{ error() }}

@@ -18,7 +18,10 @@ const ROLES = [
   imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Usuarios</h1>
+      <header class="page-header">
+        <h1>Usuarios</h1>
+        <p class="page-lead page-header-lead">Alta, edición y activación del equipo (según su rol).</p>
+      </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">
           {{ error() }}
@@ -32,7 +35,7 @@ const ROLES = [
         <form [formGroup]="form" (ngSubmit)="save()" class="stack">
           @if (!editingId()) {
             <div class="row">
-              <div class="field" style="flex:1">
+              <div class="field field-flex-1">
                 <label>Email</label>
                 <input type="email" formControlName="email" />
               </div>
@@ -89,15 +92,17 @@ const ROLES = [
                   <span class="badge" [class.badge-ok]="u.activo">{{ u.activo ? 'Sí' : 'No' }}</span>
                 </td>
                 <td>
-                  <button type="button" class="btn btn-ghost" (click)="edit(u)">Editar</button>
-                  <button type="button" class="btn btn-ghost" (click)="toggle(u)">{{ u.activo ? 'Desactivar' : 'Activar' }}</button>
+                  <div class="table-actions">
+                    <button type="button" class="btn btn-ghost" (click)="edit(u)">Editar</button>
+                    <button type="button" class="btn btn-ghost" (click)="toggle(u)">{{ u.activo ? 'Desactivar' : 'Activar' }}</button>
+                  </div>
                 </td>
               </tr>
             }
           </tbody>
         </table>
       </div>
-      <div class="row">
+      <div class="row pager">
         <button type="button" class="btn" [disabled]="page() <= 0" (click)="prev()">Anterior</button>
         <span class="muted">Página {{ page() + 1 }}</span>
         <button type="button" class="btn" [disabled]="!hasNext()" (click)="next()">Siguiente</button>

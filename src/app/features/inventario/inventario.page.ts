@@ -14,7 +14,10 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
   imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Inventario</h1>
+      <header class="page-header">
+        <h1>Inventario</h1>
+        <p class="page-lead page-header-lead">Existencias por producto y bodega; filtros y alertas.</p>
+      </header>
       <div class="card stack">
         <h2>Filtros</h2>
         <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="row">
@@ -49,15 +52,22 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
       @if (alertasMode()) {
         <h2>Alertas (bajo mínimo)</h2>
         @if (rows().length > 0) {
-          <p class="muted" style="margin: 0 0 0.75rem; font-size: 0.88rem; max-width: 52rem">
-            El aviso automático y la simulación usan el correo del <strong>proveedor vinculado a ese producto</strong>:
-            primero el «Proveedor preferido» en la ficha del producto; si no hay, el de la última entrada de compra de
-            ese producto. El e-mail se edita en <strong>Proveedores</strong>. Use «Simular» en la fila que corresponda.
+          <p class="muted max-w-readable" style="margin: 0 0 0.75rem; font-size: 0.88rem">
+            Las alertas automáticas y el botón de prueba crean una solicitud en <strong>Mensajes pedido</strong> (solo
+            administradores). Tras aprobar allí, el sistema envía el correo al <strong>proveedor vinculado</strong>
+            (preferido en el producto o última entrada COMPRA; el e-mail está en <strong>Proveedores</strong>).
           </p>
         }
       }
       @if (simMsg()) {
-        <div class="alert alert-success" role="status">{{ simMsg() }}</div>
+        <div
+          class="alert"
+          [class.alert-success]="simModo() === 'pendiente_admin' || simModo() === 'enviado_smtp'"
+          [class.alert-info]="simModo() === 'solo_log'"
+          role="status"
+        >
+          {{ simMsg() }}
+        </div>
       }
       @if (simErr()) {
         <div class="alert alert-error" role="alert">{{ simErr() }}</div>
@@ -72,7 +82,7 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
               <th>Stock mín.</th>
               <th>Actualizado</th>
               @if (alertasMode()) {
-                <th>Simular correo</th>
+                <th>Solicitar revisión</th>
               }
             </tr>
           </thead>
@@ -84,14 +94,14 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
                 <td>{{ r.cantidad }}</td>
                 <td>
                   @if (minEditKey() === r.id.productoId + '-' + r.id.bodegaId) {
-                    <span class="row" style="gap: 0.35rem; align-items: center; flex-wrap: wrap">
+                    <span class="row table-actions">
                       <input
                         type="number"
                         step="any"
                         min="0"
+                        class="input-w-6"
                         [ngModel]="minEditDraft()"
                         (ngModelChange)="onMinDraftChange($event)"
-                        style="width: 6rem"
                       />
                       <button type="button" class="btn btn-primary" [disabled]="minSaving()" (click)="guardarMinimo(r)">
                         Guardar
@@ -99,7 +109,7 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
                       <button type="button" class="btn" [disabled]="minSaving()" (click)="cancelMinEdit()">Cancelar</button>
                     </span>
                   } @else {
-                    <span class="row" style="gap: 0.35rem; align-items: center; flex-wrap: wrap">
+                    <span class="row table-actions">
                       {{ r.producto.stockMinimo }}
                       @if (puedeEditarMinimo()) {
                         <button type="button" class="btn btn-ghost" (click)="startMinEdit(r)">Editar mínimo</button>
@@ -115,12 +125,12 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
                       class="btn btn-ghost"
                       [disabled]="simLoading()"
                       (click)="simularCorreo(r)"
-                      title="Mismo destinatario que el aviso automático: proveedor vinculado a este producto"
+                      title="Registra la solicitud para que un administrador la apruebe en Mensajes pedido"
                     >
                       @if (simLoading()) {
                         <span class="spinner"></span>
                       } @else {
-                        Simular
+                        Solicitar
                       }
                     </button>
                   </td>
@@ -130,7 +140,7 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
           </tbody>
         </table>
       </div>
-      <div class="row">
+      <div class="row pager">
         <button type="button" class="btn" [disabled]="page() <= 0" (click)="prev()">Anterior</button>
         <span class="muted">Página {{ page() + 1 }} / {{ totalPages() }}</span>
         <button type="button" class="btn" [disabled]="page() + 1 >= totalPages()" (click)="next()">Siguiente</button>
@@ -157,6 +167,8 @@ export class InventarioPage implements OnInit {
   readonly minEditDraft = signal('');
   readonly minSaving = signal(false);
   readonly simMsg = signal<string | null>(null);
+  /** Resultado del POST simular-correo: enviado_smtp | solo_log */
+  readonly simModo = signal<string | null>(null);
   readonly simErr = signal<string | null>(null);
   readonly simLoading = signal(false);
 
@@ -206,6 +218,7 @@ export class InventarioPage implements OnInit {
     this.error.set(null);
     this.planFollowup.set(null);
     this.simMsg.set(null);
+    this.simModo.set(null);
     this.simErr.set(null);
     const bodegaId = this.filterForm.getRawValue().bodegaId;
     this.api.alertas(bodegaId ?? undefined).subscribe({
@@ -221,6 +234,7 @@ export class InventarioPage implements OnInit {
   simularCorreo(row: InventarioRow): void {
     this.simLoading.set(true);
     this.simMsg.set(null);
+    this.simModo.set(null);
     this.simErr.set(null);
     this.api
       .simularCorreoStock({
@@ -230,6 +244,7 @@ export class InventarioPage implements OnInit {
       .subscribe({
         next: (r) => {
           this.simLoading.set(false);
+          this.simModo.set(r.modo);
           this.simMsg.set(r.mensaje);
         },
         error: (e) => {

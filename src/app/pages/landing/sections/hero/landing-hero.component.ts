@@ -21,12 +21,16 @@ import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badg
         class="pointer-events-none absolute -left-20 bottom-0 h-64 w-64 rounded-full bg-cyan-400/10 blur-3xl"
       ></div>
 
-      <div class="relative mx-auto grid max-w-6xl gap-12 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8 lg:py-24">
+      <div
+        class="relative mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:gap-12 sm:px-6 sm:py-20 lg:grid-cols-2 lg:items-center lg:gap-16 lg:px-8 lg:py-24 lp-hero-pad"
+      >
         <div class="lp-fade-up max-w-xl">
           <app-ui-badge tone="accent" class="!bg-white/10 !text-teal-100 !ring-white/10"
             >Inventario en tiempo real</app-ui-badge
           >
-          <h1 class="mt-5 text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-[3.25rem] lg:leading-[1.08]">
+          <h1
+            class="mt-5 text-[1.65rem] font-semibold leading-[1.2] tracking-tight text-white sm:text-4xl sm:leading-[1.15] lg:text-[3.25rem] lg:leading-[1.08]"
+          >
             Controla stock, bodegas y movimientos sin hojas de cálculo.
           </h1>
           <p class="mt-5 text-base leading-relaxed text-slate-300 sm:text-lg">

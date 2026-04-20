@@ -11,7 +11,10 @@ import { flashSuccess } from '../../core/util/page-flash';
   imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Categorías</h1>
+      <header class="page-header">
+        <h1>Categorías</h1>
+        <p class="page-lead page-header-lead">Clasificación de productos para informes y filtros.</p>
+      </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">
           {{ error() }}
@@ -23,11 +26,11 @@ import { flashSuccess } from '../../core/util/page-flash';
       <div class="card stack">
         <h2>Nueva / editar</h2>
         <form [formGroup]="form" (ngSubmit)="save()" class="row">
-          <div class="field" style="flex:1">
+          <div class="field field-flex-1">
             <label>Nombre</label>
             <input formControlName="nombre" />
           </div>
-          <div class="field" style="flex:2">
+          <div class="field field-flex-2">
             <label>Descripción</label>
             <input formControlName="descripcion" />
           </div>

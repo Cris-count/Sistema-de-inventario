@@ -55,6 +55,13 @@ export const NAV_ITEMS: NavItem[] = [
     requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock]
   },
   {
+    parts: ['mensajes-pedido'],
+    label: 'Mensajes pedido',
+    icon: '✉️',
+    roles: ROLES_ADMIN,
+    requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock]
+  },
+  {
     parts: ['stock-inicial'],
     label: 'Stock inicial',
     icon: '📥',

@@ -12,10 +12,19 @@ html.dark #lp-root {
 
 /* Landing scope: utilities are prefixed with #lp-root via Tailwind `important` option. */
 
+html {
+  scroll-padding-top: 7rem;
+}
+
+@media (min-width: 768px) {
+  html {
+    scroll-padding-top: 5.5rem;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 5rem;
   }
 }
 
@@ -25,6 +34,32 @@ html.dark #lp-root {
 
 #lp-root .lp-delay-1 {
   animation-delay: 60ms;
+}
+
+/* Safe area + márgenes horizontales (Tailwind usa important: hay que ganar a las utilidades px-*) */
+#lp-root .lp-nav-pad,
+#lp-root .lp-hero-pad,
+#lp-root .lp-section-pad {
+  padding-left: max(1.25rem, env(safe-area-inset-left, 0px)) !important;
+  padding-right: max(1.25rem, env(safe-area-inset-right, 0px)) !important;
+}
+
+@media (min-width: 640px) {
+  #lp-root .lp-nav-pad,
+  #lp-root .lp-hero-pad,
+  #lp-root .lp-section-pad {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  #lp-root .lp-nav-pad,
+  #lp-root .lp-hero-pad,
+  #lp-root .lp-section-pad {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
 }
 
 @keyframes lp-fade-up {

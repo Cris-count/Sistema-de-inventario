@@ -328,6 +328,9 @@ h2 {
 
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -435,6 +438,8 @@ table.data tbody tr:hover td {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
   margin: 1rem 0 0.5rem;
 }
 
@@ -701,4 +706,222 @@ table.data tbody tr:hover td {
 }
 .login-footer-text a:hover {
   color: var(--accent);
+}
+
+/* —— Layout responsivo (panel y formularios) —— */
+.page-header-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  width: 100%;
+}
+.page-header-text {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+.page-header-title {
+  margin-bottom: 0.25rem;
+}
+.page-header-lead {
+  margin: 0.35rem 0 0;
+}
+.muted-hint-below-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+}
+.page-header-actions {
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .page-header-actions {
+    width: 100%;
+  }
+  .page-header-actions .btn {
+    width: 100%;
+  }
+}
+
+.field-flex-1 {
+  flex: 1 1 auto;
+  min-width: min(200px, 100%);
+}
+.field-flex-2 {
+  flex: 2 1 12rem;
+  min-width: min(200px, 100%);
+}
+.field-min-220 {
+  flex: 1 1 auto;
+  min-width: min(220px, 100%);
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.input-w-6 {
+  width: 6rem;
+  max-width: 100%;
+}
+.input-narrow {
+  max-width: 12rem;
+  width: 100%;
+}
+.textarea-fluid {
+  max-width: 36rem;
+  width: 100%;
+}
+
+.max-w-readable {
+  max-width: 52rem;
+}
+.text-sm-tight {
+  font-size: 0.85rem;
+}
+
+.plan-pending-callout {
+  margin: 0 0 1rem;
+  padding: 1rem 1rem 1rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--accent-bright) 32%, var(--border));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent-soft) 65%, transparent);
+  border-left: 4px solid var(--accent-bright);
+}
+
+.plan-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: stretch;
+}
+.plan-card-select {
+  flex: 1 1 220px;
+  min-width: min(100%, 220px);
+  padding: 1rem;
+  box-sizing: border-box;
+  border: 1px solid var(--border-subtle);
+}
+
+.row-between {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.row-between-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.row.row-stretch {
+  align-items: stretch;
+}
+.muted-list {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+}
+.muted-list-spaced {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.form-export.card.row {
+  align-items: flex-end;
+}
+
+.card-bordered {
+  border-color: var(--border);
+}
+
+.card-title-flush {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.pending-plan-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+.p-flush {
+  margin: 0;
+}
+.mt-0 {
+  margin-top: 0;
+}
+.mt-tight {
+  margin-top: 0.25rem;
+}
+.mt-xs {
+  margin-top: 0.25rem;
+}
+.mt-sub {
+  margin-top: 0.35rem;
+}
+.mt-lead {
+  margin-top: 0.5rem;
+}
+.mt-standard {
+  margin-top: 0.5rem;
+}
+.mt-block {
+  margin-top: 0.75rem;
+}
+.mt-loose {
+  margin-top: 0.75rem;
+}
+.mt-actions {
+  margin-top: 0.85rem;
+}
+.row-checkbox {
+  align-items: center;
+  gap: 0.5rem;
+}
+.field-max-280 {
+  max-width: min(280px, 100%);
+}
+
+table.data td,
+table.data th {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .page-header {
+    margin-bottom: 1.15rem;
+    padding-bottom: 1rem;
+  }
+  .btn {
+    min-height: 44px;
+  }
+  .btn-ghost {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.25rem;
+  }
+  .card {
+    padding: 1rem 1.05rem;
+  }
+  table.data {
+    font-size: 0.78rem;
+  }
 }

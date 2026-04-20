@@ -12,8 +12,12 @@ import { flashSuccess } from '../../core/util/page-flash';
   imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Salida de inventario</h1>
-      <p class="muted">Si el stock es insuficiente, el API responde 409 con mensaje de negocio.</p>
+      <header class="page-header">
+        <h1>Salida de inventario</h1>
+        <p class="page-lead page-header-lead">
+          Si el stock es insuficiente, el API responde 409 con mensaje de negocio.
+        </p>
+      </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">
           {{ error() }}
@@ -24,7 +28,7 @@ import { flashSuccess } from '../../core/util/page-flash';
       }
       <form [formGroup]="form" (ngSubmit)="submit()" class="card stack">
         <div class="row">
-          <div class="field" style="flex:1">
+          <div class="field field-flex-1">
             <label>Motivo</label>
             <input formControlName="motivo" />
           </div>
@@ -32,7 +36,7 @@ import { flashSuccess } from '../../core/util/page-flash';
             <label>Ref. documento</label>
             <input formControlName="referenciaDocumento" />
           </div>
-          <div class="field" style="flex:1">
+          <div class="field field-flex-1">
             <label>Observación</label>
             <input formControlName="observacion" />
           </div>

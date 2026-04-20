@@ -50,14 +50,14 @@ const MODULO_LABELS: Record<string, string> = {
         </div>
       } @else if (empresa(); as e) {
         <section class="card stack">
-          <div class="row" style="justify-content: space-between; align-items: center;">
-            <h2 style="margin: 0">{{ e.nombre }}</h2>
+          <div class="row-between">
+            <h2 class="card-title-flush">{{ e.nombre }}</h2>
             <span class="badge" [class.badge-ok]="statusInfo().kind === 'ok'" [class.badge-off]="statusInfo().kind !== 'ok'">
               {{ statusInfo().title }}
             </span>
           </div>
-          <p class="muted" style="margin-top: 0.25rem">{{ statusInfo().description }}</p>
-          <p class="page-lead" style="margin-top: 0.5rem">
+          <p class="muted mt-tight">{{ statusInfo().description }}</p>
+          <p class="page-lead mt-lead">
             <strong>Acceso:</strong> {{ accessInfo() }}
           </p>
         </section>
@@ -65,11 +65,11 @@ const MODULO_LABELS: Record<string, string> = {
         <section class="card stack">
           <h2>Suscripción</h2>
           <div class="row">
-            <div class="field" style="flex: 1">
+            <div class="field field-flex-1">
               <label>Tu plan actual</label>
               <p>{{ e.planNombre || 'No disponible' }}</p>
             </div>
-            <div class="field" style="flex: 1">
+            <div class="field field-flex-1">
               <label>Estado de suscripción</label>
               <p>{{ subscriptionLabel() }}</p>
             </div>
@@ -85,23 +85,11 @@ const MODULO_LABELS: Record<string, string> = {
             <div class="alert alert-error" role="alert">{{ cambioPlanErr() }}</div>
           }
           @if (e.cambioPlanPendientePagoId) {
-            <div
-              id="cambio-pendiente"
-              class="stack"
-              role="status"
-              style="
-                margin: 0 0 1rem;
-                padding: 1rem 1rem 1rem 0.85rem;
-                border: 1px solid rgba(13, 148, 136, 0.35);
-                border-radius: 6px;
-                background: rgba(13, 148, 136, 0.06);
-                border-left: 4px solid var(--accent, #0d9488);
-              "
-            >
-              <div class="row" style="justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem">
+            <div id="cambio-pendiente" class="stack plan-pending-callout" role="status">
+              <div class="row-between-top">
                 <div>
-                  <h3 style="margin: 0; font-size: 1.1rem">Tienes un cambio de plan pendiente de pago</h3>
-                  <p class="muted" style="margin: 0.35rem 0 0">
+                  <h3 class="pending-plan-title">Tienes un cambio de plan pendiente de pago</h3>
+                  <p class="muted mt-sub">
                     Tu plan actual sigue activo hasta que se confirme el pago. No pierdas este cambio: completa el proceso
                     antes de la fecha límite.
                   </p>
@@ -114,57 +102,57 @@ const MODULO_LABELS: Record<string, string> = {
                   {{ pendingUrgency().label }}
                 </span>
               </div>
-              <div class="row" style="margin-top: 1rem; align-items: stretch">
-                <div class="field" style="flex: 1; min-width: 200px">
+              <div class="row row-stretch mt-block">
+                <div class="field field-flex-1">
                   <label>Plan actual</label>
-                  <p style="margin: 0"><strong>{{ e.planNombre || e.planCodigo || '—' }}</strong></p>
+                  <p class="p-flush"><strong>{{ e.planNombre || e.planCodigo || '—' }}</strong></p>
                 </div>
-                <div class="field" style="flex: 1; min-width: 200px">
+                <div class="field field-flex-1">
                   <label>Plan que solicitaste</label>
-                  <p style="margin: 0">
+                  <p class="p-flush">
                     <strong>{{ e.cambioPlanPendientePlanNombre || e.cambioPlanPendientePlanCodigo || '—' }}</strong>
                   </p>
                 </div>
               </div>
               @if (planDestinoPublico(); as pub) {
-                <p class="page-lead" style="margin: 0.75rem 0 0">{{ pub.descripcionCorta }}</p>
+                <p class="page-lead mt-block">{{ pub.descripcionCorta }}</p>
                 @if (pub.features.length) {
-                  <p class="muted" style="margin: 0.5rem 0 0"><strong>En este plan destacan:</strong></p>
-                  <ul style="margin: 0.35rem 0 0; padding-left: 1.25rem">
+                  <p class="muted mt-standard"><strong>En este plan destacan:</strong></p>
+                  <ul class="muted-list">
                     @for (f of pub.features.slice(0, 4); track f) {
                       <li>{{ f }}</li>
                     }
                   </ul>
                 }
               } @else {
-                <p class="page-lead" style="margin: 0.75rem 0 0">
+                <p class="page-lead mt-block">
                   Cuando el pago quede confirmado, tu suscripción adoptará los límites y funciones del plan que elegiste.
                 </p>
               }
               @if (tiempoRestanteLinea(); as tl) {
-                <p class="page-lead" style="margin: 0.75rem 0 0">{{ tl }}</p>
+                <p class="page-lead mt-block">{{ tl }}</p>
               }
-              <p class="muted" style="margin: 0.5rem 0 0">
+              <p class="muted mt-standard">
                 Si no completas el proceso antes de la fecha límite, este cambio se cancelará automáticamente y podrás
                 iniciar uno nuevo. Puedes cancelarlo tú mismo si ya no lo necesitas.
               </p>
-              <p class="muted" style="margin: 0.35rem 0 0">
+              <p class="muted mt-sub">
                 <strong>Referencia para soporte o seguimiento:</strong> {{ e.cambioPlanPendientePagoId }}
                 <span class="muted"> (también puedes indicar <strong>PAGO-{{ e.cambioPlanPendientePagoId }}</strong>)</span>
               </p>
               @if (e.cambioPlanPendienteCreadoAt) {
-                <p class="muted" style="margin: 0.25rem 0 0">Solicitado: {{ fmtDateTime(e.cambioPlanPendienteCreadoAt) }}</p>
+                <p class="muted mt-xs">Solicitado: {{ fmtDateTime(e.cambioPlanPendienteCreadoAt) }}</p>
               }
               @if (e.cambioPlanPendienteExpiraAt) {
-                <p class="muted" style="margin: 0.25rem 0 0">
+                <p class="muted mt-xs">
                   Fecha límite: {{ fmtDateTime(e.cambioPlanPendienteExpiraAt) }}
                 </p>
               }
-              <p class="muted" style="margin: 0.5rem 0 0">
+              <p class="muted mt-standard">
                 El cobro y la confirmación los gestiona el proceso de facturación de la plataforma; aquí ves el estado de
                 tu solicitud.
               </p>
-              <div class="row" style="margin-top: 0.85rem; flex-wrap: wrap; gap: 0.5rem">
+              <div class="row mt-actions">
                 <button
                   type="button"
                   class="btn btn-primary"
@@ -203,21 +191,17 @@ const MODULO_LABELS: Record<string, string> = {
           } @else if (publicPlanesErr()) {
             <p class="muted">{{ publicPlanesErr() }}</p>
           } @else {
-            <div id="planes-disponibles" class="row" style="flex-wrap: wrap; gap: 1rem">
+            <div id="planes-disponibles" class="plan-grid">
               @for (p of publicPlanes(); track p.codigo) {
-                <div
-                  class="card"
-                  style="flex: 1; min-width: 220px; padding: 1rem; box-sizing: border-box; border: 1px solid rgba(0, 0, 0, 0.08)"
-                >
-                  <p style="margin: 0"><strong>{{ p.nombre }}</strong></p>
+                <div class="card plan-card-select">
+                  <p class="p-flush"><strong>{{ p.nombre }}</strong></p>
                   @if (p.codigo === e.planCodigo) {
-                    <p class="muted" style="margin: 0.35rem 0 0">Tu plan actual</p>
+                    <p class="muted mt-sub">Tu plan actual</p>
                   } @else {
-                    <p class="muted" style="margin: 0.35rem 0">{{ etiquetaPrecioPublico(p) }}</p>
+                    <p class="muted mt-sub">{{ etiquetaPrecioPublico(p) }}</p>
                     <button
                       type="button"
-                      class="btn btn-primary"
-                      style="margin-top: 0.5rem"
+                      class="btn btn-primary mt-sub"
                       [disabled]="planChangeBusy() || cancelPlanBusy() || !!e.cambioPlanPendientePagoId"
                       (click)="iniciarCambioPlan(p.codigo)"
                     >
@@ -242,13 +226,13 @@ const MODULO_LABELS: Record<string, string> = {
           @if (modulosOrdenados().length === 0) {
             <p class="muted">No hay lista de módulos disponible por ahora.</p>
           } @else {
-            <ul style="margin: 0.5rem 0 0; padding-left: 1.25rem">
+            <ul class="muted-list-spaced">
               @for (m of modulosOrdenados(); track m) {
                 <li>{{ etiquetaModulo(m) }}</li>
               }
             </ul>
           }
-          <p class="muted" style="margin-top: 0.75rem">
+          <p class="muted mt-loose">
             Si algo aparece aquí y no ves la opción en el menú, puede estar en preparación: no es un fallo técnico.
           </p>
         </section>
@@ -278,7 +262,7 @@ const MODULO_LABELS: Record<string, string> = {
               </p>
               <div class="row">
                 @for (r of cap.resources; track r.key) {
-                  <div class="field" style="flex: 1; min-width: 220px">
+                  <div class="field field-min-220">
                     <label>{{ r.label }}</label>
                     @if (r.used == null) {
                       <p>No disponible</p>
@@ -306,15 +290,15 @@ const MODULO_LABELS: Record<string, string> = {
         <section class="card stack">
           <h2>Datos de contacto</h2>
           <div class="row">
-            <div class="field" style="flex: 1">
+            <div class="field field-flex-1">
               <label>Identificación</label>
               <p>{{ e.identificacion || 'No registrada' }}</p>
             </div>
-            <div class="field" style="flex: 1">
+            <div class="field field-flex-1">
               <label>Email de contacto</label>
               <p>{{ e.emailContacto || 'No registrado' }}</p>
             </div>
-            <div class="field" style="flex: 1">
+            <div class="field field-flex-1">
               <label>Teléfono</label>
               <p>{{ e.telefono || 'No registrado' }}</p>
             </div>
@@ -324,7 +308,7 @@ const MODULO_LABELS: Record<string, string> = {
         @if (canConfigurarAlertas()) {
           <section class="card stack">
             <h2>Alertas de inventario (pedidos a proveedor)</h2>
-            <p class="muted" style="margin-top: 0">
+            <p class="muted mt-0">
               Correo a la empresa en copia cuando el stock llega al mínimo; el mensaje va al proveedor del producto (o al
               de la última entrada). Requiere módulo de proveedores y correo del proveedor configurado.
             </p>
@@ -338,21 +322,21 @@ const MODULO_LABELS: Record<string, string> = {
               <div class="field">
                 <label>Email de notificaciones (copia en el correo al proveedor)</label>
                 <input type="email" formControlName="emailNotificacionesInventario" placeholder="ej. compras@miempresa.com" />
-                <p class="muted" style="margin: 0.25rem 0 0">
+                <p class="muted mt-xs">
                   Si lo deja vacío, se usa el email de contacto de la empresa. Debe ser un correo de la empresa, no del
                   usuario que inicia sesión.
                 </p>
               </div>
               <div class="field">
-                <label class="row" style="align-items: center; gap: 0.5rem">
+                <label class="row row-checkbox">
                   <input type="checkbox" formControlName="alertasPedidoProveedorActivas" />
                   Enviar alertas automáticas al proveedor cuando el stock esté en o bajo el mínimo
                 </label>
               </div>
-              <div class="field" style="max-width: 280px">
+              <div class="field field-max-280">
                 <label>Cantidad máxima por pedido sugerido (opcional)</label>
                 <input type="number" step="any" min="0" formControlName="pedidoProveedorCantidadMaxima" placeholder="Sin tope" />
-                <p class="muted" style="margin: 0.25rem 0 0">
+                <p class="muted mt-xs">
                   Tope de unidades en un solo correo. Vacío o 0 = sin límite explícito (el texto del correo lo indica).
                 </p>
               </div>

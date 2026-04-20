@@ -7,7 +7,7 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
   imports: [UiButtonComponent],
   template: `
     <section
-      class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-teal-900 px-4 py-16 text-slate-50 sm:px-6 sm:py-20 lg:px-8"
+      class="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-teal-900 px-5 py-16 text-slate-50 sm:px-6 sm:py-20 lg:px-8 lp-section-pad"
     >
       <div
         class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_80%_0%,rgba(45,212,191,0.35),transparent)]"

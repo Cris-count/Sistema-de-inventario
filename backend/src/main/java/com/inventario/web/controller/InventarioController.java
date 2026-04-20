@@ -3,7 +3,7 @@ package com.inventario.web.controller;
 import com.inventario.domain.entity.Inventario;
 import com.inventario.service.MovimientoService;
 import com.inventario.service.catalog.InventarioQueryService;
-import com.inventario.service.inventory.StockProveedorAlertProcessor;
+import com.inventario.service.inventory.PedidoProveedorMensajeService;
 import com.inventario.service.CurrentUserService;
 import com.inventario.service.saas.PlanEntitlementCodes;
 import com.inventario.service.saas.PlanEntitlementService;
@@ -30,7 +30,7 @@ public class InventarioController {
 
     private final InventarioQueryService inventarioQueryService;
     private final MovimientoService movimientoService;
-    private final StockProveedorAlertProcessor stockProveedorAlertProcessor;
+    private final PedidoProveedorMensajeService pedidoProveedorMensajeService;
     private final CurrentUserService currentUserService;
     private final PlanEntitlementService planEntitlementService;
 
@@ -54,14 +54,14 @@ public class InventarioController {
     @PostMapping("/alertas/simular-correo")
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
     @Operation(
-            summary = "Simula el correo de pedido sugerido por bajo stock",
+            summary = "Registrar solicitud de pedido (antes «simular correo»)",
             description =
-                    "Mismo cuerpo que el envío automático. El destinatario es el correo del proveedor vinculado al producto "
-                            + "(preferido en el producto, o proveedor de la última entrada si no hay preferido).")
+                    "Crea un mensaje en la bandeja de administradores. Tras aprobar en «Mensajes pedido», se envía el correo al proveedor "
+                            + "vinculado (preferido o última entrada COMPRA).")
     public SimularCorreoStockResponse simularCorreoStock(@Valid @RequestBody SimularCorreoStockRequest req) {
         Long empresaId = currentUserService.requireEmpresaId();
         planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.CONSULTA_STOCK);
-        return stockProveedorAlertProcessor.simularCorreo(empresaId, req.productoId(), req.bodegaId());
+        return pedidoProveedorMensajeService.simularSolicitud(empresaId, req.productoId(), req.bodegaId());
     }
 
     @PostMapping("/stock-inicial")

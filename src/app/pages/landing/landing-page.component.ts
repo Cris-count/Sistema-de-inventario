@@ -12,7 +12,6 @@ import { LandingFaqComponent } from './sections/faq/landing-faq.component';
 import { LandingCtaComponent } from './sections/cta/landing-cta.component';
 import { LandingFooterComponent } from './sections/footer/landing-footer.component';
 import { UiButtonComponent } from '../../shared/components/ui/button/ui-button.component';
-import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-landing-page',
@@ -30,8 +29,7 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
     LandingFaqComponent,
     LandingCtaComponent,
     LandingFooterComponent,
-    UiButtonComponent,
-    ThemeToggleComponent
+    UiButtonComponent
   ],
   template: `
     <div
@@ -71,12 +69,9 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
       </div>
 
       <div
-        class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-surface/95 p-3 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-600/60 dark:bg-slate-900/95 sm:hidden"
+        class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200/80 bg-surface/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur dark:border-slate-600/60 dark:bg-slate-900/95 sm:hidden"
         aria-label="Acciones rápidas móvil"
       >
-        <div class="mx-auto mb-2 flex max-w-lg justify-end sm:hidden">
-          <app-theme-toggle />
-        </div>
         <div class="mx-auto flex max-w-lg items-stretch gap-2.5">
           <app-ui-button variant="landing-secondary" class="flex-1 !min-h-[48px]" linkTo="/login"
             >Iniciar sesión</app-ui-button
@@ -87,7 +82,8 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
         </div>
       </div>
 
-      <div class="h-20 sm:h-0" aria-hidden="true"></div>
+      <!-- Evita que el contenido quede bajo la barra fija móvil (sin duplicar toggle de tema) -->
+      <div class="h-[4.75rem] sm:h-0" aria-hidden="true"></div>
     </div>
   `
 })

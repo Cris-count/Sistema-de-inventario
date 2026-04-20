@@ -11,8 +11,12 @@ import { flashSuccess } from '../../core/util/page-flash';
   imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
   template: `
     <div class="page stack">
-      <h1>Exportar movimientos (CSV)</h1>
-      <p class="muted">Endpoint real: <code>GET /reportes/movimientos/export?desde&amp;hasta</code></p>
+      <header class="page-header">
+        <h1>Exportar movimientos (CSV)</h1>
+        <p class="page-lead page-header-lead">
+          Endpoint: <code>GET /reportes/movimientos/export?desde&amp;hasta</code>
+        </p>
+      </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">
           {{ error() }}
@@ -21,7 +25,7 @@ import { flashSuccess } from '../../core/util/page-flash';
       } @else if (message()) {
         <div class="alert alert-success" role="status">{{ message() }}</div>
       }
-      <form [formGroup]="form" (ngSubmit)="download()" class="card row">
+      <form [formGroup]="form" (ngSubmit)="download()" class="card row form-export">
         <div class="field">
           <label>Desde</label>
           <input type="date" formControlName="desde" />
