@@ -54,9 +54,9 @@ export class LandingInlineCtaComponent {
       case 'organize':
         return 'Registrar mi empresa';
       case 'account':
-        return 'Crear cuenta';
+        return 'Empieza ahora';
       default:
-        return 'Registrarme gratis';
+        return 'Empieza ahora';
     }
   });
 

@@ -167,6 +167,11 @@ management:
       status:
         # DEGRADED / MISCONFIGURED (rate limiting) entre UNKNOWN y UP para no tumbar el agregado como DOWN.
         order: DOWN,OUT_OF_SERVICE,UNKNOWN,MISCONFIGURED,DEGRADED,UP
+  health:
+    mail:
+      # Sin SMTP completo el indicador marca DOWN y `/actuator/health` responde 503 (rompe `npm run up`).
+      # En producción con correo real: MANAGEMENT_HEALTH_MAIL_ENABLED=true
+      enabled: ${MANAGEMENT_HEALTH_MAIL_ENABLED:false}
 
 logging:
   level:
