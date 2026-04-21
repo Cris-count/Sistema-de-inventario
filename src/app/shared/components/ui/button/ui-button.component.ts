@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostBinding, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 /**
@@ -66,9 +66,6 @@ function resolveSize(v: UiButtonVariant, explicit: UiButtonSize): UiButtonSize {
 @Component({
   selector: 'app-ui-button',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    class: 'inline-flex max-w-full'
-  },
   imports: [RouterLink],
   template: `
     <!-- Un solo <ng-content>: varias ramas @if con ng-content rompen la proyección en Angular (el texto no llega al DOM). -->
@@ -100,9 +97,23 @@ export class UiButtonComponent {
   readonly type = input<'button' | 'submit'>('button');
   readonly disabled = input(false);
   readonly class = input<string>('');
+  /**
+   * Clases en el host (`<app-ui-button>`). Usar p. ej. `contents` para que el botón
+   * participe directo en el flex del padre sin caja intermedia.
+   */
+  readonly hostClass = input<string>('');
 
   /** Ruta efectiva para RouterLink (`linkTo` o `to`). */
   protected readonly navPath = computed(() => this.linkTo() ?? this.to());
+
+  @HostBinding('class')
+  protected get hostClassBinding(): string {
+    const extra = this.hostClass().trim();
+    if (/\bcontents\b/.test(extra)) {
+      return extra;
+    }
+    return extra ? `inline-flex max-w-full ${extra}` : 'inline-flex max-w-full';
+  }
 
   protected readonly classes = computed(() => {
     const raw = this.variant();

@@ -25,9 +25,13 @@ export const LANDING_CONTACT: LandingContact = {
   whatsappNumber: '573000000000',
   phoneDisplay: '+57 300 000 0000',
   phoneHref: 'tel:+573000000000',
-  email: 'hola@inventariopro.co',
-  whatsappGreeting: 'Hola, me gustaría que me asesoren sobre el sistema de inventario.'
+  email: 'hola@cersik.co',
+  whatsappGreeting: 'Hola, me gustaría información sobre Cersik.'
 };
+
+/** Mensaje corto para topbar / ticker (misma línea comercial en todo el sitio público). */
+export const LANDING_COMMERCIAL_TAGLINE =
+  'Controla inventario, compras y ventas desde un solo lugar';
 
 /** Construye el link wa.me con mensaje codificado listo para abrir en móvil/desktop. */
 export function buildWhatsAppLink(contact: LandingContact = LANDING_CONTACT): string {
@@ -37,6 +41,6 @@ export function buildWhatsAppLink(contact: LandingContact = LANDING_CONTACT): st
 
 /** Construye el link mailto con asunto genérico comercial. */
 export function buildMailtoLink(contact: LandingContact = LANDING_CONTACT): string {
-  const subject = encodeURIComponent('Consulta comercial — Inventario Pro');
+  const subject = encodeURIComponent('Consulta comercial — Cersik');
   return `mailto:${contact.email}?subject=${subject}`;
 }

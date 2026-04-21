@@ -18,49 +18,275 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
   selector: 'app-mi-empresa',
   imports: [ReactiveFormsModule],
   animations: [fadeIn, fadeUp, slideDown, staggerList],
+  styles: `
+    .me-exec-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-ds-4);
+      margin-bottom: var(--space-ds-4);
+    }
+    .me-exec-title {
+      margin: 0 0 var(--space-ds-2);
+      font-size: var(--text-section-title);
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: var(--tracking-tight);
+      line-height: var(--text-h3-lh);
+    }
+    .me-exec-meta {
+      display: grid;
+      gap: var(--space-ds-4);
+      grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    }
+    .me-stat-label {
+      margin: 0 0 var(--space-ds-1);
+      font-size: var(--text-caption);
+      font-weight: var(--font-weight-semibold);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    .me-stat-value {
+      margin: 0;
+      font-size: var(--text-body);
+      font-weight: var(--font-weight-medium);
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .me-capacity-grid {
+      display: grid;
+      gap: var(--space-ds-3);
+      grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    }
+    .me-cap-card {
+      padding: var(--space-ds-4);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: color-mix(in srgb, var(--bg-panel) 45%, var(--surface));
+    }
+    .me-cap-card__head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-ds-2);
+      margin-bottom: var(--space-ds-2);
+    }
+    .me-cap-card__label {
+      margin: 0;
+      font-size: var(--text-caption);
+      font-weight: var(--font-weight-semibold);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .me-cap-card__metric {
+      margin: 0;
+      font-size: var(--text-body-lg);
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: var(--tracking-tight);
+      color: var(--text);
+    }
+    .me-cap-card__hint {
+      margin: var(--space-ds-2) 0 0;
+      font-size: var(--text-helper);
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .me-plan-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-ds-4);
+      align-items: stretch;
+    }
+    .me-plan-card {
+      flex: 1 1 220px;
+      min-width: min(100%, 220px);
+      position: relative;
+      padding: var(--space-ds-4);
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+    .me-plan-card--highlight {
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+      box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent),
+        var(--shadow-sm);
+    }
+    .me-plan-card__badge {
+      position: absolute;
+      top: -0.5rem;
+      left: var(--space-ds-4);
+    }
+    .me-plan-card__name {
+      margin: 0;
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--text-body);
+    }
+    .me-rec-card {
+      padding: var(--space-ds-4);
+      border-radius: var(--radius);
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+      background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface));
+      box-shadow: var(--shadow-xs);
+    }
+    .me-rec-card__kicker {
+      margin: 0;
+      font-size: 0.68rem;
+      font-weight: var(--font-weight-bold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .me-rec-card__title {
+      margin: var(--space-ds-2) 0 0;
+      font-size: var(--text-body-lg);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.3;
+    }
+    .me-rec-card__sub {
+      margin: var(--space-ds-1) 0 0;
+      font-size: var(--text-body-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--muted);
+    }
+    .me-rec-card__list {
+      margin: var(--space-ds-2) 0 0;
+      padding-left: 1.25rem;
+      font-size: var(--text-body-sm);
+      line-height: 1.55;
+      color: var(--text);
+    }
+    .me-rec-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-ds-3);
+      margin-top: var(--space-ds-4);
+    }
+    .me-inline-hint {
+      margin: var(--space-ds-3) 0 0;
+      font-size: var(--text-helper);
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 65ch;
+    }
+    .me-mod-list {
+      margin: var(--space-ds-3) 0 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-ds-2);
+    }
+    .me-mod-list li {
+      position: relative;
+      padding-left: 1.15rem;
+      font-size: var(--text-body-sm);
+      line-height: 1.45;
+      color: var(--text);
+    }
+    .me-mod-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.55rem;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent-bright);
+    }
+    @media (max-width: 640px) {
+      .me-exec-head .btn-primary {
+        width: 100%;
+      }
+    }
+  `,
   template: `
     <div class="page stack">
-      <header class="page-header">
-        <h1>Mi empresa</h1>
-        <p class="page-lead">Resumen de tu cuenta empresarial, plan actual y estado de acceso.</p>
+      <header class="page-header page-header--split">
+        <div class="page-header__intro">
+          <h1>Mi empresa</h1>
+          <p class="page-lead">Centro de control de cuenta, plan, capacidad y notificaciones.</p>
+        </div>
       </header>
 
       @if (loading()) {
-        <div class="card"><span class="spinner"></span></div>
-      } @else if (error()) {
-        <div class="alert alert-error" role="alert">
-          {{ error() }}
+        <div class="card card--info">
+          <div class="table-loading">
+            <span class="spinner" aria-hidden="true"></span>
+            Cargando datos de la empresa…
+          </div>
         </div>
+      } @else if (error()) {
+        <div class="alert alert-error" role="alert">{{ error() }}</div>
       } @else if (empresa(); as e) {
-        <section class="card stack">
-          <div class="row-between">
-            <h2 class="card-title-flush">{{ e.nombre }}</h2>
-            <span class="badge" [class.badge-ok]="statusInfo().kind === 'ok'" [class.badge-off]="statusInfo().kind !== 'ok'">
-              {{ statusInfo().title }}
-            </span>
-          </div>
-          <p class="muted mt-tight">{{ statusInfo().description }}</p>
-          <p class="page-lead mt-lead">
-            <strong>Acceso:</strong> {{ accessInfo() }}
-          </p>
-        </section>
-
-        <section class="card stack">
-          <h2>Suscripción</h2>
-          <div class="row">
-            <div class="field field-flex-1">
-              <label>Tu plan actual</label>
-              <p>{{ e.planNombre || 'No disponible' }}</p>
+        <div class="page-body">
+          <!-- Bloque 1: Resumen ejecutivo -->
+          <section class="card card--status stack stack--tight">
+            <div class="me-exec-head">
+              <div>
+                <p class="card-eyebrow">Resumen de cuenta</p>
+                <h2 class="me-exec-title">{{ e.nombre }}</h2>
+                <p class="muted" style="margin: 0; max-width: 52ch">{{ statusInfo().description }}</p>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center">
+                <span
+                  class="badge"
+                  [class.badge-active]="statusBadgeKind() === 'active'"
+                  [class.badge-pending]="statusBadgeKind() === 'pending'"
+                  [class.badge-inactive]="statusBadgeKind() === 'inactive'"
+                  [class.badge-warning]="statusBadgeKind() === 'warning'"
+                >
+                  {{ statusInfo().title }}
+                </span>
+                <span
+                  class="badge"
+                  [class.badge-active]="subscriptionBadgeKind() === 'active'"
+                  [class.badge-info]="subscriptionBadgeKind() === 'trial'"
+                  [class.badge-pending]="subscriptionBadgeKind() === 'pending'"
+                  [class.badge-inactive]="subscriptionBadgeKind() === 'inactive'"
+                  [class.badge-off]="subscriptionBadgeKind() === 'neutral'"
+                >
+                  {{ subscriptionLabel() }}
+                </span>
+              </div>
             </div>
-            <div class="field field-flex-1">
-              <label>Estado de suscripción</label>
-              <p>{{ subscriptionLabel() }}</p>
+            <div class="me-exec-meta">
+              <div>
+                <p class="me-stat-label">Plan actual</p>
+                <p class="me-stat-value">{{ e.planNombre || 'Sin plan asignado' }}</p>
+              </div>
+              <div>
+                <p class="me-stat-label">Acceso al panel</p>
+                <p class="me-stat-value">{{ accessInfo() }}</p>
+              </div>
             </div>
-          </div>
-        </section>
+            <div class="row row-actions" style="margin-top: 0.25rem; border: none; padding: 0">
+              @if (e.cambioPlanPendientePagoId) {
+                <button type="button" class="btn btn-primary" (click)="scrollToPendingPayment()">
+                  Completar pago pendiente
+                </button>
+                <button type="button" class="btn btn-secondary" (click)="scrollToPlanSection()">Ver detalle del cambio</button>
+              } @else if (!e.planCodigo && !e.planNombre) {
+                <button type="button" class="btn btn-primary" (click)="scrollToPlanSection()">Elegir un plan</button>
+              } @else {
+                <button type="button" class="btn btn-primary" (click)="scrollToPlanSection()">Gestionar plan</button>
+                <button type="button" class="btn btn-text" (click)="scrollToCambioPlanCards()">Ver comparativa de planes</button>
+              }
+            </div>
+          </section>
 
-        <section id="cambio-plan" class="card stack">
-          <h2>Cambiar de plan</h2>
+          <!-- Bloque 2: Plan y suscripción -->
+          <section id="cambio-plan" class="card card--action stack">
+            <div>
+              <h2 class="ds-section-title" style="margin-bottom: 0.35rem">Plan y suscripción</h2>
+              <p class="field-hint" style="margin: 0; max-width: 60ch">
+                Estado de facturación, recomendación y cambio de plan. Una sola acción principal evita confusiones.
+              </p>
+            </div>
           @if (cambioPlanMsg()) {
             <p class="page-lead">{{ cambioPlanMsg() }}</p>
           }
@@ -71,7 +297,7 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
             <div
               @slideDown
               id="cambio-pendiente"
-              class="stack plan-pending-callout"
+              class="stack card card--alert"
               role="status"
             >
               <div class="row-between-top">
@@ -84,8 +310,8 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
                 </div>
                 <span
                   class="badge"
-                  [class.badge-ok]="pendingUrgency().level === 'normal'"
-                  [class.badge-off]="pendingUrgency().level === 'high'"
+                  [class.badge-pending]="pendingUrgency().level === 'normal'"
+                  [class.badge-warning]="pendingUrgency().level === 'high'"
                 >
                   {{ pendingUrgency().label }}
                 </span>
@@ -140,7 +366,7 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
                 El cobro y la confirmación los gestiona el proceso de facturación de la plataforma; aquí ves el estado de
                 tu solicitud.
               </p>
-              <div class="row mt-actions">
+              <div class="form-actions" style="border: none; padding: 0; margin-top: var(--space-ds-4)">
                 <button
                   type="button"
                   class="btn btn-primary"
@@ -149,15 +375,17 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
                 >
                   {{ referenciaCopiadaFlashing() ? 'Referencia copiada' : 'Copiar referencia de pago' }}
                 </button>
-                <button type="button" class="btn" (click)="scrollToCambioPlanCards()">Ver planes otra vez</button>
+                <button type="button" class="btn btn-secondary" (click)="scrollToCambioPlanCards()">
+                  Ver planes otra vez
+                </button>
                 <button
                   type="button"
-                  class="btn"
+                  class="btn btn-text"
                   [disabled]="cancelPlanBusy() || planChangeBusy()"
                   (click)="cancelarCambioPendiente()"
                 >
                   @if (cancelPlanBusy()) {
-                    Cancelando...
+                    Cancelando…
                   } @else {
                     Cancelar este cambio
                   }
@@ -169,120 +397,76 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
             <div class="alert alert-info" role="status">{{ e.cambioPlanMensaje }}</div>
           }
           @if (publicPlanesLoading()) {
-            <p><span class="spinner"></span></p>
+            <div class="table-loading"><span class="spinner" aria-hidden="true"></span> Cargando planes…</div>
           } @else if (publicPlanesErr()) {
-            <p class="muted">{{ publicPlanesErr() }}</p>
+            <div class="alert alert-warning" role="status">{{ publicPlanesErr() }}</div>
           } @else {
             @if (contextualRecommendation(); as rec) {
-              <div
-                @fadeUp
-                class="stack"
-                style="
-                  margin: 0;
-                  padding: 1rem 1.1rem;
-                  border: 1px solid rgb(var(--color-accent) / 0.35);
-                  border-radius: 8px;
-                  background: rgb(var(--color-accent) / 0.08);
-                "
-              >
-                <div
-                  class="row"
-                  style="justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem"
-                >
+              <div @fadeUp class="me-rec-card">
+                <div class="row-between-top">
                   <div>
-                    <p
-                      class="muted"
-                      style="margin: 0; letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.72rem"
-                    >
-                      {{ rec.reason === 'fallback' ? 'Plan recomendado para ti' : 'Recomendación para tu caso' }}
+                    <p class="me-rec-card__kicker">
+                      {{ rec.reason === 'fallback' ? 'Plan recomendado' : 'Recomendación para tu caso' }}
                     </p>
-                    <h3 style="margin: 0.15rem 0 0; font-size: 1.15rem">
-                      {{ rec.title }}
-                      <span class="muted" style="font-weight: 400; font-size: 0.95rem; display: block; margin-top: 0.2rem">
-                        {{ rec.plan.nombre }} · {{ etiquetaPrecioPublico(rec.plan) }}
-                      </span>
-                    </h3>
+                    <h3 class="me-rec-card__title">{{ rec.title }}</h3>
+                    <p class="me-rec-card__sub">{{ rec.plan.nombre }} · {{ etiquetaPrecioPublico(rec.plan) }}</p>
                   </div>
-                  <span class="badge badge-ok">
-                    {{ rec.reason === 'fallback' ? 'Más elegido' : 'Según tu uso' }}
+                  <span class="badge badge-recommended">
+                    {{ rec.reason === 'fallback' ? 'Popular' : 'Según uso' }}
                   </span>
                 </div>
-                <p class="page-lead" style="margin: 0.5rem 0 0">{{ rec.body }}</p>
+                <p class="page-lead" style="margin: var(--space-ds-3) 0 0">{{ rec.body }}</p>
                 @if (rec.benefits.length) {
-                  <ul style="margin: 0.35rem 0 0; padding-left: 1.25rem">
+                  <ul class="me-rec-card__list">
                     @for (b of rec.benefits; track b) {
                       <li>{{ b }}</li>
                     }
                   </ul>
                 }
-                <div class="row" style="margin-top: 0.85rem; flex-wrap: wrap; gap: 0.5rem">
+                <div class="me-rec-actions">
                   <button
                     type="button"
                     class="btn btn-primary"
+                    [class.is-loading]="planChangeBusy()"
                     [disabled]="planChangeBusy() || cancelPlanBusy()"
                     (click)="iniciarCambioPlan(rec.plan.codigo)"
                   >
                     @if (planChangeBusy()) {
-                      …
+                      <span class="spinner" aria-hidden="true"></span> Procesando…
                     } @else {
                       {{ rec.primaryCtaLabel }}
                     }
                   </button>
-                  <button type="button" class="btn" (click)="scrollToCambioPlanCards()">
+                  <button type="button" class="btn btn-secondary" (click)="scrollToCambioPlanCards()">
                     Ver todos los planes
                   </button>
                 </div>
               </div>
             }
 
-            <div
-              id="planes-disponibles"
-              class="row"
-              style="flex-wrap: wrap; gap: 1rem; align-items: stretch"
-              [@staggerList]="publicPlanes().length"
-            >
+            <div id="planes-disponibles" class="me-plan-grid" [@staggerList]="publicPlanes().length">
               @for (p of publicPlanes(); track p.codigo) {
                 <div
-                  class="card"
-                  [style.flex]="'1'"
-                  [style.minWidth]="'220px'"
-                  [style.padding]="'1rem'"
-                  [style.boxSizing]="'border-box'"
-                  [style.position]="'relative'"
-                  [style.border]="
-                    isHighlightedPlan(p, e.planCodigo)
-                      ? '1px solid rgb(var(--color-accent) / 0.5)'
-                      : '1px solid var(--border)'
-                  "
-                  [style.boxShadow]="
-                    isHighlightedPlan(p, e.planCodigo)
-                      ? '0 0 0 2px rgb(var(--color-accent) / 0.35)'
-                      : 'none'
-                  "
-                  [style.transform]="isHighlightedPlan(p, e.planCodigo) ? 'scale(1.03)' : 'none'"
-                  [style.zIndex]="isHighlightedPlan(p, e.planCodigo) ? '1' : 'auto'"
+                  class="me-plan-card"
+                  [class.me-plan-card--highlight]="isHighlightedPlan(p, e.planCodigo)"
                 >
                   @if (isHighlightedPlan(p, e.planCodigo)) {
-                    <span
-                      class="badge badge-ok"
-                      style="position: absolute; top: -0.6rem; left: 1rem; font-size: 0.72rem"
-                    >
-                      Recomendado
-                    </span>
+                    <span class="badge badge-recommended me-plan-card__badge">Recomendado</span>
                   }
-                  <p style="margin: 0"><strong>{{ p.nombre }}</strong></p>
+                  <p class="me-plan-card__name">{{ p.nombre }}</p>
                   @if (p.codigo === e.planCodigo) {
-                    <p class="muted mt-sub">Tu plan actual</p>
+                    <p class="muted mt-sub"><span class="badge badge-info">Tu plan actual</span></p>
                   } @else {
                     <p class="muted mt-sub">{{ etiquetaPrecioPublico(p) }}</p>
                     <button
                       type="button"
                       class="btn btn-primary mt-sub"
+                      [class.is-loading]="planChangeBusy()"
                       [disabled]="planChangeBusy() || cancelPlanBusy() || !!e.cambioPlanPendientePagoId"
                       (click)="iniciarCambioPlan(p.codigo)"
                     >
                       @if (planChangeBusy()) {
-                        …
+                        <span class="spinner" aria-hidden="true"></span>
                       } @else {
                         Cambiar a este plan
                       }
@@ -292,109 +476,81 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
               }
             </div>
 
-            <div @fadeUp class="stack" style="margin-top: 0.25rem">
-              <h3 style="margin: 0; font-size: 1.05rem">Por qué cambiar de plan</h3>
-              <ul style="margin: 0.35rem 0 0; padding-left: 1.25rem">
+            <div @fadeUp class="stack stack--tight" style="margin-top: var(--space-ds-4)">
+              <h3 class="ds-section-title">Por qué cambiar de plan</h3>
+              <ul class="muted-list-spaced" style="margin-top: 0.35rem">
                 <li>Más bodegas y usuarios a medida que crece tu operación, sin cambiar de sistema.</li>
                 <li>Mismos datos y misma forma de trabajar: solo se amplían los límites y módulos incluidos.</li>
-                <li>Puedes iniciar el cambio cuando quieras y tu plan actual sigue activo hasta que se confirme el pago.</li>
+                <li>Puedes iniciar el cambio cuando quieras; tu plan actual sigue activo hasta que se confirme el pago.</li>
               </ul>
             </div>
 
             @if (!e.cambioPlanPendientePagoId) {
-              <div
-                @fadeUp
-                class="row"
-                style="
-                  justify-content: space-between;
-                  align-items: center;
-                  flex-wrap: wrap;
-                  gap: 0.75rem;
-                  margin-top: 0.25rem;
-                  padding: 1rem 1.1rem;
-                  border: 1px solid var(--border);
-                  border-radius: 8px;
-                "
-              >
+              <div @fadeUp class="card card--info row-between" style="margin-top: var(--space-ds-4); align-items: center">
                 <div style="flex: 1; min-width: 220px">
-                  <p style="margin: 0; font-weight: 600">¿Listo para escalar tu operación?</p>
-                  <p class="muted" style="margin: 0.2rem 0 0">
+                  <p style="margin: 0; font-weight: var(--font-weight-semibold)">¿Listo para escalar tu operación?</p>
+                  <p class="muted" style="margin: 0.25rem 0 0">
                     Elige el plan que mejor acompañe tu crecimiento y actívalo cuando quieras.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-primary"
-                  (click)="scrollToCambioPlanCards()"
-                >
-                  Elegir plan ahora
-                </button>
+                <button type="button" class="btn btn-primary" (click)="scrollToCambioPlanCards()">Elegir plan</button>
               </div>
             }
           }
         </section>
 
-        <section class="card stack">
-          <h2>Incluido en tu plan</h2>
-          <p class="muted">
-            Esto refleja tu suscripción actual. El menú solo muestra lo que puedes usar hoy en la aplicación.
+        <!-- Bloque 3: Capacidad -->
+        <section @fadeUp class="card card--info stack">
+          <h2 class="ds-section-title">Capacidad del plan</h2>
+          <p class="field-hint" style="margin: 0; max-width: 62ch">
+            Uso frente a los límites de tu suscripción. A partir del 80% marcamos “cerca del límite” como aviso
+            preventivo.
           </p>
-          @if (modulosOrdenados().length === 0) {
-            <p class="muted">No hay lista de módulos disponible por ahora.</p>
-          } @else {
-            <ul class="muted-list-spaced">
-              @for (m of modulosOrdenados(); track m) {
-                <li>{{ etiquetaModulo(m) }}</li>
-              }
-            </ul>
-          }
-          <p class="muted mt-loose">
-            Si algo aparece aquí y no ves la opción en el menú, puede estar en preparación: no es un fallo técnico.
-          </p>
-        </section>
-
-        <section @fadeUp class="card stack">
-          <h2>Capacidad del plan</h2>
           @if (capacityLoading()) {
-            <p><span class="spinner"></span></p>
+            <div class="table-loading"><span class="spinner" aria-hidden="true"></span> Cargando capacidad…</div>
           } @else {
             @if (capacityNearHint(); as hint) {
-              <div class="alert alert-info" role="status">{{ hint }}</div>
+              <div class="alert alert-warning" role="status">{{ hint }}</div>
             }
             @if (capacityError()) {
               <div class="alert alert-error" role="alert">{{ capacityError() }}</div>
             }
             @if (capacity(); as cap) {
               @if (cap.plan) {
-                <p class="page-lead">
-                  Tu plan activo es <strong>{{ cap.plan.nombre }}</strong
-                  >.
-                </p>
+                <p class="page-lead" style="margin: 0">Plan de referencia: <strong>{{ cap.plan.nombre }}</strong></p>
               } @else if (e.planNombre) {
-                <p class="page-lead">Tu plan activo es <strong>{{ e.planNombre }}</strong>.</p>
+                <p class="page-lead" style="margin: 0">Plan de referencia: <strong>{{ e.planNombre }}</strong></p>
               }
-              <p class="muted">
-                Regla visual de capacidad: desde 80% se marca como “cerca del límite” (no cambia reglas de negocio).
-              </p>
-              <div class="row">
+              <div class="me-capacity-grid">
                 @for (r of cap.resources; track r.key) {
-                  <div class="field field-min-220">
-                    <label>{{ r.label }}</label>
+                  <div class="me-cap-card">
+                    <div class="me-cap-card__head">
+                      <p class="me-cap-card__label">{{ r.label }}</p>
+                      @if (r.used == null) {
+                        <span class="badge badge-off">Sin dato</span>
+                      } @else if (r.limit == null) {
+                        <span class="badge badge-available">Ilimitado en plan</span>
+                      } @else if (r.status === 'full') {
+                        <span class="badge badge-error">Límite alcanzado</span>
+                      } @else if (r.status === 'near') {
+                        <span class="badge badge-warning">Cerca del límite</span>
+                      } @else if (r.status === 'ok') {
+                        <span class="badge badge-available">Disponible</span>
+                      } @else {
+                        <span class="badge badge-info">En revisión</span>
+                      }
+                    </div>
                     @if (r.used == null) {
-                      <p>No disponible</p>
+                      <p class="me-cap-card__metric">—</p>
+                      <p class="me-cap-card__hint">Aún no hay consumo registrado para este concepto.</p>
                     } @else if (r.limit == null) {
-                      <p>{{ r.used }} usados</p>
+                      <p class="me-cap-card__metric">{{ r.used }} en uso</p>
+                      <p class="me-cap-card__hint">Tu plan no fija tope numérico para este recurso.</p>
                     } @else {
-                      <p>{{ r.used }} de {{ r.limit }} usados</p>
-                      <p class="muted">Uso: {{ r.usagePct }}%</p>
-                    }
-                    <p class="muted">{{ r.helper }}</p>
-                    @if (r.status === 'near') {
-                      <span @fadeIn class="badge badge-warn">Cerca del límite</span>
-                    } @else if (r.status === 'full') {
-                      <span class="badge badge-danger">Límite alcanzado</span>
-                    } @else if (r.status === 'ok') {
-                      <span class="badge badge-ok">Capacidad disponible</span>
+                      <p class="me-cap-card__metric">{{ r.used }} / {{ r.limit }}</p>
+                      <p class="me-cap-card__hint">
+                        {{ r.usagePct != null ? 'Uso ' + r.usagePct + '%. ' : '' }}{{ r.helper }}
+                      </p>
                     }
                   </div>
                 }
@@ -403,30 +559,62 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
           }
         </section>
 
-        <section class="card stack">
-          <h2>Datos de contacto</h2>
-          <div class="row">
-            <div class="field field-flex-1">
-              <label>Identificación</label>
-              <p>{{ e.identificacion || 'No registrada' }}</p>
+        <!-- Bloque 4: Incluido en tu plan -->
+        <section class="card card--info stack stack--tight">
+          <h2 class="ds-section-title">Incluido en tu plan</h2>
+          <p class="field-hint" style="margin: 0; max-width: 60ch">
+            Lo que tu suscripción habilita hoy. El menú lateral solo muestra lo que puedes usar.
+          </p>
+          @if (modulosOrdenados().length === 0) {
+            <div class="table-empty" style="margin-top: var(--space-ds-3)">
+              <p class="table-empty__title">Sin módulos listados</p>
+              <p class="table-empty__hint">
+                El servidor aún no devolvió la lista de módulos, o tu plan no tiene asignaciones visibles. No indica un
+                error del sistema.
+              </p>
             </div>
-            <div class="field field-flex-1">
-              <label>Email de contacto</label>
-              <p>{{ e.emailContacto || 'No registrado' }}</p>
+          } @else {
+            <ul class="me-mod-list">
+              @for (m of modulosOrdenados(); track m) {
+                <li>{{ etiquetaModulo(m) }}</li>
+              }
+            </ul>
+          }
+          <p class="me-inline-hint">
+            Si un módulo aparece aquí y no ves la opción en el menú, puede estar en despliegue: no es un fallo por tu parte.
+          </p>
+        </section>
+
+        <!-- Bloque 5: Contacto -->
+        <section class="card card--info stack stack--tight">
+          <h2 class="ds-section-title">Datos de contacto</h2>
+          <p class="field-hint" style="margin: 0">Información registrada en la cuenta (solo lectura en esta vista).</p>
+          <div class="me-exec-meta" style="margin-top: var(--space-ds-3)">
+            <div>
+              <p class="me-stat-label">Nombre</p>
+              <p class="me-stat-value">{{ e.nombre }}</p>
             </div>
-            <div class="field field-flex-1">
-              <label>Teléfono</label>
-              <p>{{ e.telefono || 'No registrado' }}</p>
+            <div>
+              <p class="me-stat-label">NIT / identificación</p>
+              <p class="me-stat-value">{{ e.identificacion || 'No registrada' }}</p>
+            </div>
+            <div>
+              <p class="me-stat-label">Correo</p>
+              <p class="me-stat-value">{{ e.emailContacto || 'No registrado' }}</p>
+            </div>
+            <div>
+              <p class="me-stat-label">Teléfono</p>
+              <p class="me-stat-value">{{ e.telefono || 'No registrado' }}</p>
             </div>
           </div>
         </section>
 
         @if (canConfigurarAlertas()) {
-          <section class="card stack">
-            <h2>Alertas de inventario (pedidos a proveedor)</h2>
-            <p class="muted mt-0">
-              Correo a la empresa en copia cuando el stock llega al mínimo; el mensaje va al proveedor del producto (o al
-              de la última entrada). Requiere módulo de proveedores y correo del proveedor configurado.
+          <section class="card card--info stack">
+            <h2 class="ds-section-title">Alertas a proveedor</h2>
+            <p class="field-hint" style="margin: 0; max-width: 62ch">
+              Cuando el stock llega al mínimo, puedes notificar en copia a tu empresa y enviar el aviso al proveedor del
+              producto. Requiere módulo de proveedores y correo del proveedor configurado.
             </p>
             @if (alertasMsg()) {
               <div class="alert alert-success" role="status">{{ alertasMsg() }}</div>
@@ -434,34 +622,55 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
             @if (alertasErr()) {
               <div class="alert alert-error" role="alert">{{ alertasErr() }}</div>
             }
-            <form [formGroup]="alertasForm" (ngSubmit)="guardarAlertas()" class="stack">
-              <div class="field">
-                <label>Email de notificaciones (copia en el correo al proveedor)</label>
-                <input type="email" formControlName="emailNotificacionesInventario" placeholder="ej. compras@miempresa.com" />
-                <p class="muted mt-xs">
-                  Si lo deja vacío, se usa el email de contacto de la empresa. Debe ser un correo de la empresa, no del
-                  usuario que inicia sesión.
-                </p>
-              </div>
-              <div class="field">
-                <label class="row row-checkbox">
-                  <input type="checkbox" formControlName="alertasPedidoProveedorActivas" />
-                  Enviar alertas automáticas al proveedor cuando el stock esté en o bajo el mínimo
-                </label>
-              </div>
-              <div class="field field-max-280">
-                <label>Cantidad máxima por pedido sugerido (opcional)</label>
-                <input type="number" step="any" min="0" formControlName="pedidoProveedorCantidadMaxima" placeholder="Sin tope" />
-                <p class="muted mt-xs">
-                  Tope de unidades en un solo correo. Vacío o 0 = sin límite explícito (el texto del correo lo indica).
-                </p>
-              </div>
-              <div class="row">
-                <button type="submit" class="btn btn-primary" [disabled]="alertasGuardando()">Guardar ajustes</button>
+            <form [formGroup]="alertasForm" (ngSubmit)="guardarAlertas()" class="form-stack form-stack--tight">
+              <fieldset class="form-section">
+                <legend class="form-section__legend">Correo y envío</legend>
+                <div class="form-grid">
+                  <div class="field form-grid__full">
+                    <label>Email de notificaciones (copia)</label>
+                    <input
+                      type="email"
+                      formControlName="emailNotificacionesInventario"
+                      placeholder="ej. compras@miempresa.com"
+                      autocomplete="email"
+                    />
+                    <p class="field-hint">
+                      Si lo deja vacío, se usa el email de contacto de la empresa. Debe ser un correo corporativo.
+                    </p>
+                  </div>
+                  <div class="field field--check form-grid__full">
+                    <input type="checkbox" id="chk-alertas-prov" formControlName="alertasPedidoProveedorActivas" />
+                    <label class="field-label--check" for="chk-alertas-prov">
+                      Enviar alertas automáticas al proveedor cuando el stock esté en o bajo el mínimo
+                    </label>
+                  </div>
+                  <div class="field field-max-280">
+                    <label>Tope de unidades por correo (opcional)</label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      formControlName="pedidoProveedorCantidadMaxima"
+                      placeholder="Sin tope"
+                    />
+                    <p class="field-hint">Vacío o 0 = sin límite explícito en el texto del correo.</p>
+                  </div>
+                </div>
+              </fieldset>
+              <div class="form-actions" style="border: none; padding-top: var(--space-ds-3)">
+                <button type="submit" class="btn btn-primary" [class.is-loading]="alertasGuardando()" [disabled]="alertasGuardando()">
+                  @if (alertasGuardando()) {
+                    <span class="spinner" aria-hidden="true"></span>
+                    Guardando…
+                  } @else {
+                    Guardar ajustes
+                  }
+                </button>
               </div>
             </form>
           </section>
         }
+        </div>
       }
     </div>
   `
@@ -518,6 +727,34 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
   readonly statusInfo = computed(() => mapEmpresaStatus(this.empresa()?.estado));
   readonly accessInfo = computed(() => (this.statusInfo().kind === 'ok' ? 'Habilitado para ingresar' : 'Pendiente o restringido'));
   readonly subscriptionLabel = computed(() => mapSuscripcionStatus(this.empresa()?.suscripcionEstado));
+
+  /** Tono de badge para estado comercial de la empresa (sin usar error para “no disponible”). */
+  readonly statusBadgeKind = computed((): 'active' | 'pending' | 'inactive' | 'warning' => {
+    const e = this.empresa();
+    const st = e?.estado;
+    if (this.statusInfo().kind === 'ok') return 'active';
+    if (st === 'COMERCIAL_PENDIENTE') return 'pending';
+    if (st === 'INACTIVA') return 'inactive';
+    return 'warning';
+  });
+
+  readonly subscriptionBadgeKind = computed((): 'active' | 'trial' | 'pending' | 'inactive' | 'neutral' => {
+    const raw = this.empresa()?.suscripcionEstado;
+    switch (raw) {
+      case 'ACTIVA':
+        return 'active';
+      case 'TRIAL':
+        return 'trial';
+      case 'PENDIENTE_PAGO':
+        return 'pending';
+      case 'CANCELADA':
+      case 'EXPIRADA':
+        return 'inactive';
+      default:
+        return 'neutral';
+    }
+  });
+
   readonly modulosOrdenados = computed(() => {
     const raw = this.empresa()?.modulosHabilitados ?? [];
     return [...raw].sort((a, b) => a.localeCompare(b));
@@ -932,6 +1169,14 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
 
   scrollToCambioPlanCards(): void {
     globalThis.document.getElementById('planes-disponibles')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  scrollToPlanSection(): void {
+    globalThis.document.getElementById('cambio-plan')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  scrollToPendingPayment(): void {
+    globalThis.document.getElementById('cambio-pendiente')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   cancelarCambioPendiente(): void {

@@ -111,6 +111,142 @@ html {
   transition-delay: 320ms;
 }
 
+/* Stagger grids 8 cards (Funcionalidades + Soluciones): mismo ritmo, sin sistema paralelo. */
+#lp-root .lp-stagger-features > .lp-reveal:nth-child(1),
+#lp-root .lp-stagger-soluciones > .lp-reveal:nth-child(1) {
+  transition-delay: 0ms;
+}
+#lp-root .lp-stagger-features > .lp-reveal:nth-child(2),
+#lp-root .lp-stagger-soluciones > .lp-reveal:nth-child(2) {
+  transition-delay: 65ms;
+}
+#lp-root .lp-stagger-features > .lp-reveal:nth-child(3),
+#lp-root .lp-stagger-soluciones > .lp-reveal:nth-child(3) {
+  transition-delay: 130ms;
+}
+#lp-root .lp-stagger-features > .lp-reveal:nth-child(4),
+#lp-root .lp-stagger-soluciones > .lp-reveal:nth-child(4) {
+  transition-delay: 195ms;
+}
+#lp-root .lp-stagger-features > .lp-reveal:nth-child(5),
+#lp-root .lp-stagger-soluciones > .lp-reveal:nth-child(5) {
+  transition-delay: 260ms;
+}
+#lp-root .lp-stagger-features > .lp-reveal:nth-child(6),
+#lp-root .lp-stagger-soluciones > .lp-reveal:nth-child(6) {
+  transition-delay: 325ms;
+}
+#lp-root .lp-stagger-features > .lp-reveal:nth-child(7),
+#lp-root .lp-stagger-soluciones > .lp-reveal:nth-child(7) {
+  transition-delay: 390ms;
+}
+#lp-root .lp-stagger-features > .lp-reveal:nth-child(n + 8),
+#lp-root .lp-stagger-soluciones > .lp-reveal:nth-child(n + 8) {
+  transition-delay: 455ms;
+}
+
+/* Reveal cards Funcionalidades / Soluciones / Cómo funciona: leve scale + duración controlada. */
+#lp-root .lp-reveal.lp-feature-reveal,
+#lp-root .lp-reveal.lp-sector-reveal,
+#lp-root .lp-reveal.lp-how-card-reveal {
+  transform: translateY(16px) scale(0.985);
+  transition:
+    opacity 300ms cubic-bezier(0.22, 1, 0.36, 1) var(--lp-reveal-delay),
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1) var(--lp-reveal-delay);
+}
+#lp-root .lp-reveal.lp-feature-reveal.lp-reveal-in,
+#lp-root .lp-reveal.lp-sector-reveal.lp-reveal-in,
+#lp-root .lp-reveal.lp-how-card-reveal.lp-reveal-in {
+  transform: translateY(0) scale(1);
+}
+
+/* Carrusel pilares (#como-funciona): scroll-snap en viewport < xl; sin autoplay. */
+#lp-root .lp-how-carousel {
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-inline: max(1rem, env(safe-area-inset-left, 0px));
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+#lp-root .lp-how-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Tarjetas pilares: profundidad y hover alineados a funcionalidades. */
+#lp-root .lp-how-pillar {
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.05),
+    0 10px 28px rgb(15 23 42 / 0.07);
+  transition:
+    transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+#lp-root .lp-how-pillar:hover {
+  box-shadow:
+    0 2px 6px rgb(15 23 42 / 0.07),
+    0 16px 36px rgb(15 23 42 / 0.1);
+  border-color: rgb(20 184 166 / 0.22);
+}
+html.dark #lp-root .lp-how-pillar {
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.28),
+    0 10px 28px rgb(0 0 0 / 0.38);
+}
+html.dark #lp-root .lp-how-pillar:hover {
+  box-shadow:
+    0 2px 6px rgb(0 0 0 / 0.35),
+    0 16px 36px rgb(0 0 0 / 0.48);
+  border-color: rgb(45 212 191 / 0.3);
+}
+
+/* Cómo funciona: atmósfera sutil. */
+#lp-root .lp-how-section {
+  position: relative;
+}
+#lp-root .lp-how-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 70% 45% at 30% 0%,
+    rgb(20 184 166 / 0.04) 0%,
+    transparent 55%
+  );
+}
+html.dark #lp-root .lp-how-section::before {
+  background: radial-gradient(
+    ellipse 68% 42% at 28% 0%,
+    rgb(45 212 191 / 0.05) 0%,
+    transparent 52%
+  );
+}
+
+/* Funcionalidades: atmósfera muy sutil (sin animación continua). */
+#lp-root .lp-features-section {
+  position: relative;
+}
+#lp-root .lp-features-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 85% 55% at 50% -8%,
+    rgb(20 184 166 / 0.055) 0%,
+    transparent 52%
+  );
+}
+html.dark #lp-root .lp-features-section::before {
+  background: radial-gradient(
+    ellipse 85% 50% at 50% -5%,
+    rgb(45 212 191 / 0.06) 0%,
+    transparent 50%
+  );
+}
+
 /* Hover sutil en cards destacadas (pricing / beneficios). Microinteracción a 140ms, sin rebote. */
 #lp-root .lp-card-hover {
   transition:
@@ -132,6 +268,7 @@ html {
   box-shadow:
     0 2px 4px rgb(15 23 42 / 0.06),
     0 14px 32px rgb(15 23 42 / 0.09);
+  border-color: rgb(20 184 166 / 0.2);
 }
 html.dark #lp-root .lp-sector-card {
   box-shadow:
@@ -142,6 +279,30 @@ html.dark #lp-root .lp-sector-card:hover {
   box-shadow:
     0 2px 4px rgb(0 0 0 / 0.3),
     0 14px 32px rgb(0 0 0 / 0.45);
+  border-color: rgb(45 212 191 / 0.28);
+}
+
+/* Soluciones: atmósfera muy sutil (estático; alineado a Funcionalidades). */
+#lp-root .lp-soluciones-section {
+  position: relative;
+}
+#lp-root .lp-soluciones-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 82% 50% at 50% 102%,
+    rgb(20 184 166 / 0.045) 0%,
+    transparent 55%
+  );
+}
+html.dark #lp-root .lp-soluciones-section::before {
+  background: radial-gradient(
+    ellipse 80% 48% at 50% 100%,
+    rgb(45 212 191 / 0.05) 0%,
+    transparent 52%
+  );
 }
 
 /* Tarjetas Funcionalidades (misma elevación que Soluciones para coherencia visual) */
@@ -154,6 +315,7 @@ html.dark #lp-root .lp-sector-card:hover {
   box-shadow:
     0 2px 4px rgb(15 23 42 / 0.06),
     0 14px 32px rgb(15 23 42 / 0.09);
+  border-color: rgb(20 184 166 / 0.2);
 }
 html.dark #lp-root .lp-feature-card {
   box-shadow:
@@ -164,6 +326,7 @@ html.dark #lp-root .lp-feature-card:hover {
   box-shadow:
     0 2px 4px rgb(0 0 0 / 0.3),
     0 14px 32px rgb(0 0 0 / 0.45);
+  border-color: rgb(45 212 191 / 0.28);
 }
 
 /* Tarjetas Planes (pricing) */
@@ -329,76 +492,50 @@ html.dark #lp-root .lp-visual-grid {
 /* ===== HERO NUEVO: más comercial, más premium, menos genérico ===== */
 
 #lp-root .lp-hero {
-  background:
-    linear-gradient(90deg, #07111a 0%, #07111a 48%, #09151d 48%, #0a1820 100%);
+  /* Base bajo la foto; la imagen y scrims aportan el resto del ambiente. */
+  background: #07111a;
   position: relative;
 }
 
 #lp-root .lp-hero-bg {
   position: absolute;
   inset: -2%;
-  z-index: 0;
+  z-index: 2;
+  /* Tinte Cersik muy suave: no compite con la fotografía */
   background:
-    radial-gradient(circle at 76% 34%, rgba(17, 94, 89, 0.3) 0%, rgba(17, 94, 89, 0.14) 22%, transparent 52%),
-    radial-gradient(circle at 86% 54%, rgba(13, 46, 51, 0.46) 0%, transparent 58%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.018) 0%, rgba(255, 255, 255, 0) 100%);
+    radial-gradient(circle at 48% 38%, rgba(17, 94, 89, 0.1) 0%, rgba(17, 94, 89, 0.04) 32%, transparent 58%),
+    radial-gradient(ellipse 70% 55% at 72% 52%, rgba(13, 46, 51, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.006) 0%, rgba(255, 255, 255, 0) 100%);
   transform-origin: center;
   animation: lp-hero-bg-drift 24s ease-in-out infinite alternate;
 }
 
 #lp-root .lp-hero-right-glow {
   position: absolute;
-  right: -4%;
-  top: 8%;
-  width: min(46vw, 44rem);
-  height: min(46vw, 44rem);
+  right: -2%;
+  top: 10%;
+  width: min(40vw, 36rem);
+  height: min(40vw, 36rem);
   border-radius: 9999px;
-  z-index: 0;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.18) 0%, rgba(13, 46, 51, 0.16) 32%, transparent 72%);
-  filter: blur(26px);
+  z-index: 2;
+  opacity: 0.48;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.09) 0%, rgba(13, 46, 51, 0.08) 38%, transparent 74%);
+  filter: blur(20px);
   transform-origin: center;
   animation: lp-hero-right-glow 14s ease-in-out infinite;
-}
-
-#lp-root .lp-hero-grid {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  opacity: 0.075;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: linear-gradient(90deg, transparent 0%, transparent 42%, rgba(0, 0, 0, 0.95) 58%, rgba(0, 0, 0, 1) 100%);
-  animation: lp-hero-grid-drift 36s linear infinite alternate;
 }
 
 #lp-root .lp-hero-vignette {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 3;
   background: linear-gradient(
     180deg,
-    rgba(5, 8, 13, 0.08) 0%,
-    rgba(5, 8, 13, 0.18) 52%,
-    rgba(5, 8, 13, 0.34) 100%
+    rgba(5, 8, 13, 0.04) 0%,
+    rgba(5, 8, 13, 0.06) 50%,
+    rgba(5, 8, 13, 0.14) 100%
   );
   pointer-events: none;
-}
-
-#lp-root .lp-hero-panel-wrap {
-  isolation: isolate;
-}
-
-#lp-root .lp-hero-panel-halo {
-  position: absolute;
-  inset: -1.5rem -1rem -1rem -1rem;
-  border-radius: 2rem;
-  z-index: 0;
-  background:
-    radial-gradient(circle at 50% 35%, rgba(20, 184, 166, 0.18) 0%, rgba(15, 23, 42, 0.08) 38%, transparent 74%);
-  filter: blur(18px);
-  animation: lp-hero-panel-halo 14s ease-in-out infinite;
 }
 
 @keyframes lp-hero-bg-drift {
@@ -413,36 +550,23 @@ html.dark #lp-root .lp-visual-grid {
   }
 }
 
-@keyframes lp-hero-grid-drift {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-18px, 10px, 0);
-  }
-}
-
 @keyframes lp-hero-right-glow {
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.82;
   }
   50% {
     transform: translate3d(2.2%, -1.4%, 0) scale(1.06);
-    opacity: 1;
   }
 }
 
-@keyframes lp-hero-panel-halo {
+@keyframes lp-hero-right-glow-centered {
   0%,
   100% {
-    transform: scale(1);
-    opacity: 0.9;
+    transform: translateX(50%) translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: scale(1.03);
-    opacity: 1;
+    transform: translateX(50%) translate3d(2.2%, -1.4%, 0) scale(1.06);
   }
 }
 
@@ -453,30 +577,22 @@ html.dark #lp-root .lp-visual-grid {
 
   #lp-root .lp-hero-right-glow {
     right: 50%;
-    transform: translateX(50%);
-    top: 34%;
-    width: min(88vw, 34rem);
-    height: min(88vw, 34rem);
-    opacity: 0.9;
-  }
-
-  #lp-root .lp-hero-grid {
-    opacity: 0.045;
-    mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.4) 30%, rgba(0, 0, 0, 1) 100%);
+    top: 36%;
+    width: min(92vw, 30rem);
+    height: min(92vw, 30rem);
+    opacity: 0.32;
+    filter: blur(18px);
+    animation: lp-hero-right-glow-centered 14s ease-in-out infinite;
   }
 }
 
 @media (max-width: 639px) {
   #lp-root .lp-hero-right-glow {
-    width: 22rem;
-    height: 22rem;
-    top: 39%;
-    filter: blur(22px);
-  }
-
-  #lp-root .lp-hero-panel-halo {
-    inset: -1rem;
-    filter: blur(14px);
+    width: 18rem;
+    height: 18rem;
+    top: 42%;
+    opacity: 0.22;
+    filter: blur(16px);
   }
 }
 
@@ -491,17 +607,28 @@ html.dark #lp-root .lp-visual-grid {
     opacity: 1 !important;
     transform: none !important;
   }
+  #lp-root .lp-stagger-features > .lp-reveal,
+  #lp-root .lp-stagger-soluciones > .lp-reveal {
+    transition-delay: 0ms !important;
+  }
+  #lp-root .lp-how-carousel {
+    scroll-behavior: auto;
+  }
   #lp-root .lp-sector-img {
     transform: none !important;
     transition: none !important;
   }
 
   #lp-root .lp-hero-bg,
-  #lp-root .lp-hero-grid,
-  #lp-root .lp-hero-right-glow,
-  #lp-root .lp-hero-panel-halo {
+  #lp-root .lp-hero-right-glow {
     animation: none !important;
     transform: none !important;
+  }
+
+  @media (max-width: 1023px) {
+    #lp-root .lp-hero-right-glow {
+      transform: translateX(50%) !important;
+    }
   }
 
   #lp-root .lp-cta-mesh,

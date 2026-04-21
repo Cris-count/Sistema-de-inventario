@@ -14,115 +14,135 @@ export interface NavItem {
    * (según `GET /empresa/mi`). Vacío / ausente = no filtrar por plan.
    */
   requiresAnyPlanModule?: string[];
+  /**
+   * Etiqueta de agrupación en el sidebar (solo presentación; no afecta rutas).
+   * Ítems consecutivos con el mismo texto se dibujan bajo un mismo encabezado de grupo.
+   */
+  navSection: string;
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { parts: ['dashboard'], label: 'Inicio', icon: '🏠', roles: [] },
-  { parts: ['mi-empresa'], label: 'Mi empresa', icon: '🏢', roles: ROLES_ADMIN },
+  { parts: ['dashboard'], label: 'Inicio', icon: '🏠', roles: [], navSection: 'General' },
+  { parts: ['mi-empresa'], label: 'Mi empresa', icon: '🏢', roles: ROLES_ADMIN, navSection: 'General' },
   {
     parts: ['productos'],
     label: 'Productos',
     icon: '📦',
     roles: ROLES_LECTURA_API,
-    requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico]
+    requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico],
+    navSection: 'Catálogo'
   },
   {
     parts: ['categorias'],
     label: 'Categorías',
     icon: '🗂️',
     roles: ROLES_ADMIN,
-    requiresAnyPlanModule: [PlanEntitlementCodes.categorias]
+    requiresAnyPlanModule: [PlanEntitlementCodes.categorias],
+    navSection: 'Catálogo'
   },
   {
     parts: ['bodegas'],
     label: 'Bodegas',
     icon: '🏭',
     roles: ROLES_LECTURA_API,
-    requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico]
+    requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico],
+    navSection: 'Catálogo'
   },
   {
     parts: ['proveedores'],
     label: 'Proveedores',
     icon: '🤝',
     roles: ROLES_PROVEEDOR_LECTURA,
-    requiresAnyPlanModule: [PlanEntitlementCodes.proveedores]
+    requiresAnyPlanModule: [PlanEntitlementCodes.proveedores],
+    navSection: 'Catálogo'
   },
   {
     parts: ['inventario'],
     label: 'Inventario',
     icon: '📊',
     roles: ROLES_LECTURA_API,
-    requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock]
+    requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock],
+    navSection: 'Inventario'
   },
   {
     parts: ['mensajes-pedido'],
     label: 'Mensajes pedido',
     icon: '✉️',
     roles: ROLES_ADMIN,
-    requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock]
+    requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock],
+    navSection: 'Inventario'
   },
   {
     parts: ['stock-inicial'],
     label: 'Stock inicial',
     icon: '📥',
     roles: ROLES_ADMIN,
-    requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico]
+    requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico],
+    navSection: 'Inventario'
   },
   {
     parts: ['movimientos'],
     label: 'Historial mov.',
     icon: '📜',
     roles: ROLES_LECTURA_API,
-    requiresAnyPlanModule: [PlanEntitlementCodes.historial_movimientos]
+    requiresAnyPlanModule: [PlanEntitlementCodes.historial_movimientos],
+    navSection: 'Movimientos'
   },
   {
     parts: ['movimientos', 'entrada'],
     label: 'Entrada',
     icon: '➕',
     roles: ROLES_ENTRADA,
-    requiresAnyPlanModule: [PlanEntitlementCodes.movimientos_basicos]
+    requiresAnyPlanModule: [PlanEntitlementCodes.movimientos_basicos],
+    navSection: 'Movimientos'
   },
   {
     parts: ['movimientos', 'salida'],
     label: 'Salida',
     icon: '➖',
     roles: ROLES_MOVIMIENTO_BODEGA,
-    requiresAnyPlanModule: [PlanEntitlementCodes.movimientos_basicos]
+    requiresAnyPlanModule: [PlanEntitlementCodes.movimientos_basicos],
+    navSection: 'Movimientos'
   },
   {
     parts: ['movimientos', 'transferencia'],
     label: 'Transferencia',
     icon: '🔀',
     roles: ROLES_MOVIMIENTO_BODEGA,
-    requiresAnyPlanModule: [PlanEntitlementCodes.transferencias]
+    requiresAnyPlanModule: [PlanEntitlementCodes.transferencias],
+    navSection: 'Movimientos'
   },
   {
     parts: ['movimientos', 'ajuste'],
     label: 'Ajuste',
     icon: '⚙️',
     roles: ROLES_MOVIMIENTO_BODEGA,
-    requiresAnyPlanModule: [PlanEntitlementCodes.ajustes_inventario]
+    requiresAnyPlanModule: [PlanEntitlementCodes.ajustes_inventario],
+    navSection: 'Movimientos'
   },
   {
     parts: ['reportes', 'kardex'],
     label: 'Kardex',
     icon: '📑',
     roles: ROLES_LECTURA_API,
-    requiresAnyPlanModule: [PlanEntitlementCodes.reportes_basicos, PlanEntitlementCodes.reportes_avanzados]
+    requiresAnyPlanModule: [PlanEntitlementCodes.reportes_basicos, PlanEntitlementCodes.reportes_avanzados],
+    navSection: 'Reportes'
   },
   {
     parts: ['reportes', 'export'],
     label: 'Exportar CSV',
     icon: '📤',
     roles: ROLES_LECTURA_API,
-    requiresAnyPlanModule: [PlanEntitlementCodes.reportes_basicos, PlanEntitlementCodes.reportes_avanzados]
+    requiresAnyPlanModule: [PlanEntitlementCodes.reportes_basicos, PlanEntitlementCodes.reportes_avanzados],
+    navSection: 'Reportes'
   },
   {
     parts: ['usuarios'],
     label: 'Usuarios',
     icon: '👥',
     roles: ROLES_ADMIN,
-    requiresAnyPlanModule: [PlanEntitlementCodes.usuarios]
+    requiresAnyPlanModule: [PlanEntitlementCodes.usuarios],
+    navSection: 'Administración'
   }
 ];
 

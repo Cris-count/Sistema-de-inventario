@@ -67,7 +67,7 @@ interface RegisterDraft {
             routerLink="/landing"
             class="text-sm font-semibold text-secondary no-underline hover:text-primary dark:text-slate-300 dark:hover:text-white"
           >
-            ← Inventario Pro
+            ← Cersik
           </a>
           <div class="flex items-center gap-2">
             <app-theme-toggle />

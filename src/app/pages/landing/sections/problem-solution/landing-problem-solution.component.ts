@@ -44,7 +44,7 @@ import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.c
             "
           >
             <h3 class="text-sm font-bold leading-snug text-accent dark:text-teal-300">
-              Lo que puedes hacer con Inventario Pro
+              Lo que puedes hacer con Cersik
             </h3>
             <ul class="mt-5 space-y-3 text-base leading-relaxed text-secondary dark:text-slate-400">
               <li>· Consultar existencias y movimientos en tiempo real.</li>

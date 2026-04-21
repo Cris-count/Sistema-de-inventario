@@ -6,6 +6,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { routeFadeAnimation, prepareRouteSnapshot } from '../../core/animations';
 import {
   matchNavItemByUrl,
+  type NavItem,
   NAV_ITEMS,
   navExactActive,
   navVisibleForPlan,
@@ -37,32 +38,31 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
         [attr.aria-label]="'Menú principal'"
       >
         <div class="brand">
-          @if (railMode()) {
-            <button
-              type="button"
-              class="brand-mark brand-mark--expand"
-              (click)="expandRail()"
-              [attr.aria-label]="'Expandir menú lateral · ' + activeSectionLabel()"
-              [title]="'Abrir panel · ' + activeSectionLabel()"
-            >
-              <span class="brand-emoji" aria-hidden="true">{{ activeNavIcon() }}</span>
-            </button>
-          } @else {
-            <div class="brand-mark" [attr.aria-label]="'Sección: ' + activeSectionLabel()" role="img">
-              <span class="brand-emoji" aria-hidden="true">{{ activeNavIcon() }}</span>
+          <div class="brand-main">
+            @if (railMode()) {
+              <button
+                type="button"
+                class="brand-mark brand-mark--expand"
+                (click)="expandRail()"
+                [attr.aria-label]="'Expandir menú lateral · ' + activeSectionLabel()"
+                [title]="'Abrir panel · ' + activeSectionLabel()"
+              >
+                <span class="brand-emoji" aria-hidden="true">{{ activeNavIcon() }}</span>
+              </button>
+            } @else {
+              <div class="brand-mark" [attr.aria-label]="'Sección: ' + activeSectionLabel()" role="img">
+                <span class="brand-emoji" aria-hidden="true">{{ activeNavIcon() }}</span>
+              </div>
+            }
+            <div class="brand-text">
+              <strong class="brand-title">Cersik Inventario</strong>
+              <span class="brand-tagline">Panel empresarial</span>
             </div>
-          }
-          <div class="brand-text">
-            <strong class="brand-title">Inventario</strong>
-            <span class="brand-tagline">Control multi-bodega</span>
           </div>
-        </div>
-        @if (!railMode()) {
-          <div class="nav-section-head">
-            <p class="nav-section-label"><span class="nav-section-text">Navegación</span></p>
+          @if (!railMode()) {
             <button
               type="button"
-              class="rail-toggle"
+              class="rail-toggle rail-toggle--brand"
               (click)="collapseRail(); $event.stopPropagation()"
               aria-expanded="true"
               aria-label="Contraer menú lateral"
@@ -81,24 +81,39 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
                 <line x1="9.5" y1="4.5" x2="9.5" y2="19.5" stroke="currentColor" stroke-width="1.5" />
               </svg>
             </button>
-          </div>
-        }
-        <nav>
-          @for (item of visibleNav(); track item.parts.join('/')) {
-            <a
-              class="nav-link"
-              [routerLink]="['/app', ...item.parts]"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: navExactActive(item) || item.parts[0] === 'dashboard' }"
-              [attr.title]="railMode() ? item.label : null"
-              [attr.aria-label]="item.label"
-              (click)="closeNav()"
-            >
-              <span class="nav-ico" aria-hidden="true">{{ item.icon }}</span>
-              <span class="nav-txt">{{ item.label }}</span>
-            </a>
           }
-        </nav>
+        </div>
+        <div class="sidebar-scroll">
+          <nav class="sidebar-nav" aria-label="Secciones del sistema">
+            @for (group of navGroups(); track group.section; let gi = $index) {
+              <div class="nav-group">
+                @if (!railMode()) {
+                  <p class="nav-group-label" [attr.id]="'shell-nav-grp-' + gi">{{ group.section }}</p>
+                }
+                <div
+                  class="nav-group-links"
+                  role="group"
+                  [attr.aria-labelledby]="!railMode() ? 'shell-nav-grp-' + gi : null"
+                >
+                  @for (item of group.items; track item.parts.join('/')) {
+                    <a
+                      class="nav-link"
+                      [routerLink]="['/app', ...item.parts]"
+                      routerLinkActive="active"
+                      [routerLinkActiveOptions]="{ exact: navExactActive(item) || item.parts[0] === 'dashboard' }"
+                      [attr.title]="railMode() ? item.label : null"
+                      [attr.aria-label]="item.label"
+                      (click)="closeNav()"
+                    >
+                      <span class="nav-ico" aria-hidden="true">{{ item.icon }}</span>
+                      <span class="nav-txt">{{ item.label }}</span>
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+          </nav>
+        </div>
         <div class="user-box">
           <div class="user-box-theme" [class.user-box-theme--compact]="themeToggleCompact()">
             <app-theme-toggle [compact]="themeToggleCompact()" />
@@ -135,12 +150,15 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
           >
             <span class="menu-icon" aria-hidden="true"></span>
           </button>
-          <span class="shell-title">Inventario · Panel</span>
+          <div class="shell-title-wrap">
+            <span class="shell-title-kicker">Cersik</span>
+            <span class="shell-title" aria-live="polite">{{ activeSectionLabel() }}</span>
+          </div>
           <div class="shell-header-theme">
             <app-theme-toggle />
           </div>
         </header>
-        <div class="main-inner" [@routeFadeAnimation]="prepareRoute(outlet)">
+        <div class="main-inner shell-main" [@routeFadeAnimation]="prepareRoute(outlet)">
           <router-outlet #outlet="outlet" />
         </div>
       </div>
@@ -160,57 +178,63 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       display: none;
     }
     .sidebar {
-      width: 268px;
+      --shell-sidebar-w: 280px;
+      width: var(--shell-sidebar-w);
       flex-shrink: 0;
-      background: var(--surface);
+      background: color-mix(in srgb, var(--surface) 88%, var(--bg-panel));
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      padding: 1.15rem 0 0;
+      padding: 0;
       transition: width 0.22s ease;
       min-height: 0;
-      align-self: stretch;
-      max-height: 100vh;
-      max-height: 100dvh;
-      overflow-x: hidden;
-      overflow-y: auto;
-      overscroll-behavior: contain;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
+      box-shadow: 1px 0 0 color-mix(in srgb, var(--border-subtle) 65%, transparent);
     }
-    .sidebar::-webkit-scrollbar {
-      width: 0;
-      height: 0;
-      display: none;
+    [data-theme='light'] .sidebar {
+      background: color-mix(in srgb, var(--surface) 94%, var(--bg-deep));
     }
     .sidebar--narrow {
       width: 72px;
     }
     .brand {
-      padding: 0 1rem 1.1rem;
+      padding: 1rem 0.9rem 0.95rem;
       margin: 0 0.65rem;
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: flex-start;
-      gap: 0.85rem;
+      justify-content: space-between;
+      gap: 0.5rem;
       transition: padding 0.2s ease;
       flex-shrink: 0;
     }
+    .brand-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      min-width: 0;
+      flex: 1;
+    }
     .sidebar--narrow .brand {
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
       padding-left: 0.35rem;
       padding-right: 0.35rem;
       margin-left: 0.35rem;
       margin-right: 0.35rem;
     }
+    .sidebar--narrow .brand-main {
+      flex-direction: column;
+      align-items: center;
+    }
     .sidebar--narrow .brand-text {
       display: none;
     }
     .brand-mark {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--accent-bright), var(--accent-dim));
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(145deg, var(--accent-bright), var(--accent-dim));
       color: #0c1420;
       font-weight: 800;
       font-size: 0.95rem;
@@ -218,7 +242,9 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: var(--shadow-sm);
+      box-shadow:
+        var(--shadow-sm),
+        0 0 0 1px color-mix(in srgb, var(--accent-bright) 22%, transparent);
     }
     .brand-emoji {
       font-size: 1.35rem;
@@ -245,68 +271,97 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
     .brand-text {
       display: flex;
       flex-direction: column;
-      gap: 0.15rem;
+      gap: 0.12rem;
       min-width: 0;
+      padding-top: 0.08rem;
     }
     .brand-title {
-      font-size: 1.05rem;
-      letter-spacing: -0.02em;
+      font-size: 1.02rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
     }
     .brand-tagline {
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       font-weight: 600;
     }
-    .nav-section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-      margin: 0.65rem 0.65rem 0.35rem;
-      flex-shrink: 0;
-    }
-    .nav-section-label {
-      margin: 0;
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      color: var(--muted);
-      min-height: 0.85rem;
+    .sidebar-scroll {
       flex: 1;
-      min-width: 0;
-    }
-    /*
-     * Lista vertical; el scroll ocurre en todo el aside (marca + nav + usuario), barra oculta pero usable.
-     */
-    nav {
-      flex: 0 0 auto;
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      padding: 0.2rem 0.65rem 0.5rem;
+      overflow: hidden;
+    }
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      padding: 0.5rem 0.6rem 0.65rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+    .nav-group {
+      display: flex;
+      flex-direction: column;
       gap: 0.2rem;
     }
+    .nav-group + .nav-group {
+      margin-top: 0.55rem;
+      padding-top: 0.55rem;
+      border-top: 1px solid color-mix(in srgb, var(--border-subtle) 88%, transparent);
+    }
+    .sidebar--narrow .nav-group + .nav-group {
+      border-top: none;
+      margin-top: 0.2rem;
+      padding-top: 0;
+    }
+    .nav-group-label {
+      margin: 0;
+      padding: 0.35rem 0.75rem 0.15rem;
+      font-size: 0.625rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+    .sidebar--narrow .nav-group-label {
+      display: none;
+    }
+    .nav-group-links {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
     .nav-link {
+      position: relative;
       display: flex;
       align-items: center;
       gap: 0.65rem;
-      padding: 0.55rem 0.85rem;
+      padding: 0.52rem 0.8rem;
       color: var(--text);
       text-decoration: none;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
       font-weight: 500;
       border-radius: var(--radius-sm);
       transition:
-        background 0.12s ease,
-        color 0.12s ease;
+        background 0.14s ease,
+        color 0.14s ease,
+        box-shadow 0.14s ease;
     }
     .nav-ico {
-      font-size: 1.15rem;
+      font-size: 1.12rem;
       line-height: 1;
-      width: 1.5rem;
-      text-align: center;
+      width: 1.55rem;
+      height: 1.55rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
     .nav-txt {
@@ -336,15 +391,32 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       color: var(--accent-bright);
     }
     .nav-link:hover {
-      background: var(--accent-soft);
+      background: color-mix(in srgb, var(--accent-soft) 85%, transparent);
       text-decoration: none;
       color: var(--text);
     }
+    .nav-link:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
     .nav-link.active {
-      background: var(--accent-soft);
+      background: color-mix(in srgb, var(--accent-soft) 100%, transparent);
       color: var(--accent-bright);
       font-weight: 600;
       box-shadow: inset 0 0 0 1px var(--accent-glow);
+    }
+    .nav-link.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.38rem;
+      bottom: 0.38rem;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: linear-gradient(180deg, var(--accent-bright), var(--accent-dim));
+    }
+    .sidebar--narrow .nav-link.active::before {
+      display: none;
     }
     .rail-toggle {
       display: inline-flex;
@@ -356,7 +428,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       padding: 0;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border);
-      background: var(--bg-panel);
+      background: color-mix(in srgb, var(--surface) 55%, var(--bg-panel));
       color: var(--muted);
       cursor: pointer;
       font-family: inherit;
@@ -364,6 +436,10 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
         border-color 0.15s ease,
         color 0.15s ease,
         background 0.15s ease;
+    }
+    .rail-toggle--brand {
+      align-self: flex-start;
+      margin-top: 0.12rem;
     }
     .rail-toggle:hover {
       border-color: var(--accent);
@@ -380,11 +456,12 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       display: block;
     }
     .user-box {
-      padding: 1rem 1rem 1.15rem;
+      padding: 1rem 0.9rem 1.1rem;
       margin-top: auto;
       border-top: 1px solid var(--border-subtle);
-      background: var(--bg-panel);
+      background: color-mix(in srgb, var(--bg-panel) 92%, var(--surface));
       flex-shrink: 0;
+      box-shadow: 0 -1px 0 color-mix(in srgb, var(--border-subtle) 55%, transparent);
     }
     .sidebar--narrow .user-box {
       display: flex;
@@ -476,15 +553,29 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       z-index: 90;
       box-shadow: var(--shadow-sm);
     }
-    .shell-title {
-      font-weight: 600;
-      font-size: 0.92rem;
-      letter-spacing: -0.02em;
+    .shell-title-wrap {
       flex: 1;
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.06rem;
+      line-height: 1.2;
+    }
+    .shell-title-kicker {
+      font-size: 0.58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+    .shell-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.02em;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: var(--text);
     }
     .menu-btn {
       padding: 0.4rem 0.55rem;
@@ -510,8 +601,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
     }
     .main-inner {
       flex: 1;
-      min-height: 0;
-      padding: var(--space-page, 1.5rem);
+      padding: var(--space-ds-5) var(--space-page, 1.5rem) var(--space-ds-6);
       padding-left: max(var(--space-page, 1.5rem), env(safe-area-inset-left, 0px));
       padding-right: max(var(--space-page, 1.5rem), env(safe-area-inset-right, 0px));
       overflow-x: auto;
@@ -519,6 +609,16 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
       background: var(--bg);
+    }
+    .main-inner.shell-main {
+      max-width: 100%;
+    }
+
+    @media (min-width: 769px) and (max-width: 1199px) {
+      .main-inner {
+        padding-left: max(1.15rem, env(safe-area-inset-left, 0px));
+        padding-right: max(1.15rem, env(safe-area-inset-right, 0px));
+      }
     }
 
     @media (max-width: 768px) {
@@ -543,7 +643,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
         height: 100vh;
         height: 100dvh;
         max-height: 100dvh;
-        width: min(280px, 88vw);
+        width: min(var(--shell-sidebar-w, 280px), 88vw);
         z-index: 200;
         transform: translateX(-100%);
         transition: transform 0.22s ease;
@@ -588,13 +688,8 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       .shell-header {
         display: flex;
       }
-      .nav-section-head .rail-toggle {
-        display: none;
-      }
       .main-inner {
-        flex: 1;
-        min-height: 0;
-        padding: 1rem;
+        padding: var(--space-ds-4) 1rem var(--space-ds-5);
         padding-left: max(1rem, env(safe-area-inset-left, 0px));
         padding-right: max(1rem, env(safe-area-inset-right, 0px));
         padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
@@ -717,9 +812,20 @@ export class AppShellComponent {
     return t.charAt(0).toUpperCase();
   }
 
-  readonly visibleNav = computed(() => {
+  /** Ítems visibles agrupados por `navSection` (orden estable del catálogo). */
+  readonly navGroups = computed(() => {
     const role = this.auth.role();
     const mods = this.planModules();
-    return NAV_ITEMS.filter((i) => navVisibleForRole(role, i) && navVisibleForPlan(i, mods));
+    const items = NAV_ITEMS.filter((i) => navVisibleForRole(role, i) && navVisibleForPlan(i, mods));
+    const groups: { section: string; items: NavItem[] }[] = [];
+    for (const item of items) {
+      const last = groups[groups.length - 1];
+      if (last && last.section === item.navSection) {
+        last.items.push(item);
+      } else {
+        groups.push({ section: item.navSection, items: [item] });
+      }
+    }
+    return groups;
   });
 }
