@@ -167,8 +167,12 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
   styles: `
     .shell {
       display: flex;
-      min-height: 100vh;
-      min-height: 100dvh;
+      /* Alto fijo al viewport: si solo hay min-height, el flex crece con el main y el sidebar se estira. */
+      height: 100vh;
+      height: 100dvh;
+      max-height: 100vh;
+      max-height: 100dvh;
+      overflow: hidden;
     }
     .nav-backdrop {
       display: none;
@@ -590,9 +594,10 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
     .main-col {
       flex: 1;
       min-width: 0;
+      min-height: 0;
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
+      overflow: hidden;
     }
     .main-inner {
       flex: 1;
@@ -600,6 +605,9 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       padding-left: max(var(--space-page, 1.5rem), env(safe-area-inset-left, 0px));
       padding-right: max(var(--space-page, 1.5rem), env(safe-area-inset-right, 0px));
       overflow-x: auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
       background: var(--bg);
     }
     .main-inner.shell-main {
@@ -616,6 +624,9 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
     @media (max-width: 768px) {
       .shell {
         flex-direction: column;
+        /* Cajón lateral en fixed: el único hijo en flujo suele ser main-col; mismo tope de viewport. */
+        min-height: 100dvh;
+        min-height: 100vh;
       }
       .nav-backdrop {
         display: block;
@@ -637,7 +648,10 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
         transform: translateX(-100%);
         transition: transform 0.22s ease;
         box-shadow: none;
-        overflow: hidden;
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
         padding-bottom: env(safe-area-inset-bottom, 0px);
       }
       /* En móvil el cajón siempre muestra texto + iconos; el modo rail no reduce ancho */
@@ -654,6 +668,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
         justify-content: flex-start;
         gap: 0.65rem;
         padding: 0.55rem 0.85rem;
+        font-size: 0.9rem;
       }
       .sidebar.sidebar--narrow .brand {
         justify-content: flex-start;
@@ -678,6 +693,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
         padding-left: max(1rem, env(safe-area-inset-left, 0px));
         padding-right: max(1rem, env(safe-area-inset-right, 0px));
         padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+        overflow-y: auto;
       }
     }
   `

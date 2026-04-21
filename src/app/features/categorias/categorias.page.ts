@@ -2,9 +2,15 @@ import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angula
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoriaService } from '../../core/api/categoria.service';
 import { Categoria } from '../../core/models/entities.model';
-import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import {
+  getApiApplicationErrorCode,
+  patchPlanErrorSignals,
+  type PlanBlockFollowup
+} from '../../core/util/api-error';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
+
+const CATEGORY_ALREADY_EXISTS = 'CATEGORY_ALREADY_EXISTS';
 
 @Component({
   selector: 'app-categorias',
@@ -241,6 +247,7 @@ export class CategoriasPage implements OnInit {
   private readonly api = inject(CategoriaService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly nombreInput = viewChild<ElementRef<HTMLInputElement>>('nombreInput');
 
   readonly loading = signal(false);
   readonly rows = signal<Categoria[]>([]);

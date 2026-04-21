@@ -73,27 +73,27 @@ public class OnboardingService {
         try {
             verificationSession = UUID.fromString(req.emailVerificationToken().trim());
         } catch (IllegalArgumentException e) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "Token de verificación de correo inválido");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Token de verificación inválido");
         }
 
         OnboardingEmailChallenge emailChallenge = onboardingEmailChallengeRepository
                 .findFirstBySessionTokenAndStatusAndConsumedAtIsNull(
                         verificationSession, OnboardingEmailChallenge.STATUS_VERIFIED)
-                .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Verificación de correo inválida o ya utilizada"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Verificación inválida o ya utilizada"));
 
         if (emailChallenge.getSessionExpiresAt() == null
                 || emailChallenge.getSessionExpiresAt().isBefore(Instant.now())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "La verificación de correo expiró; vuelve a verificar");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "La verificación expiró; volvé a completar el paso con Google Authenticator");
         }
 
         String emailAdmin = admin.email().trim().toLowerCase(Locale.ROOT);
         if (!emailChallenge.getEmail().equalsIgnoreCase(emailAdmin)) {
             throw new BusinessException(
                     HttpStatus.BAD_REQUEST,
-                    "El correo del super administrador debe ser el mismo que verificaste en el paso anterior");
+                    "El correo del super administrador debe ser el mismo que usaste en el paso con Google Authenticator");
         }
         if (!emailChallenge.getPlanCodigo().equalsIgnoreCase(req.planCodigo().trim())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "El plan no coincide con el usado al verificar el correo");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "El plan no coincide con el usado al verificar el registro");
         }
 
         String ident = normalizeIdentificacion(req.empresa().identificacion());

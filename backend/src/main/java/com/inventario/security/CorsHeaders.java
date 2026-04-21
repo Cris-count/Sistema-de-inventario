@@ -13,7 +13,7 @@ final class CorsHeaders {
         if (origin == null) {
             return;
         }
-        if ("http://localhost:4200".equals(origin) || "http://127.0.0.1:4200".equals(origin)) {
+        if (origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")) {
             response.setHeader("Access-Control-Allow-Origin", origin);
             response.setHeader("Access-Control-Allow-Credentials", "true");
         }
