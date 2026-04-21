@@ -4,6 +4,7 @@ import com.inventario.domain.entity.OnboardingEmailChallenge;
 import com.inventario.domain.entity.SaasPlan;
 import com.inventario.domain.repository.OnboardingEmailChallengeRepository;
 import com.inventario.domain.repository.SaasPlanRepository;
+import com.inventario.service.mfa.MfaTotpService;
 import com.inventario.web.dto.onboarding.OnboardingDtos.SendEmailVerificationResponse;
 import com.inventario.web.dto.onboarding.OnboardingDtos.VerifyEmailResponse;
 import com.inventario.web.error.BusinessException;
@@ -15,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
@@ -28,7 +28,8 @@ public class OnboardingEmailVerificationService {
 
     private final OnboardingEmailChallengeRepository challengeRepository;
     private final SaasPlanRepository saasPlanRepository;
-    private final OnboardingMailNotificationService mailNotificationService;
+    private final TotpOnboardingService totpOnboardingService;
+    private final MfaTotpService mfaTotpService;
 
     @Value("${app.onboarding.email-code-ttl-minutes:15}")
     private int codeTtlMinutes;
@@ -36,37 +37,54 @@ public class OnboardingEmailVerificationService {
     @Value("${app.onboarding.email-session-ttl-hours:24}")
     private int sessionTtlHours;
 
-    private final SecureRandom secureRandom = new SecureRandom();
-
+    /**
+     * Inicia o reutiliza un reto TOTP para el correo y plan: no envía correo.
+     * Si ya hay un reto pendiente y vigente con secreto, devuelve el mismo otpauth (sin rotar).
+     */
     @Transactional
     public SendEmailVerificationResponse sendVerificationCode(String emailRaw, String planCodigoRaw) {
         String email = emailRaw.trim().toLowerCase(Locale.ROOT);
         String planCodigo = planCodigoRaw.trim();
-        SaasPlan plan = saasPlanRepository
+        saasPlanRepository
                 .findByCodigoIgnoreCaseAndActivoIsTrue(planCodigo)
                 .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Plan no válido o inactivo"));
 
-        challengeRepository.cancelPendingForEmailAndPlan(email, planCodigo);
+        var existingOpt = challengeRepository.findTopByEmailIgnoreCaseAndPlanCodigoIgnoreCaseAndStatusOrderByCreatedAtDesc(
+                email, planCodigo, OnboardingEmailChallenge.STATUS_PENDING);
 
-        String code = String.format("%06d", secureRandom.nextInt(1_000_000));
-        String hash = sha256Hex(code);
+        if (existingOpt.isPresent()) {
+            OnboardingEmailChallenge ex = existingOpt.get();
+            if (ex.getExpiresAt().isAfter(Instant.now())) {
+                String secret = ex.getTotpSecret();
+                if (secret != null && !secret.isBlank()) {
+                    String uri = totpOnboardingService.buildOtpauthUri(secret, email);
+                    return new SendEmailVerificationResponse(
+                            "Escanea el código QR con Google Authenticator o añade la cuenta manualmente.",
+                            ex.getExpiresAt(),
+                            uri);
+                }
+            }
+            challengeRepository.cancelPendingForEmailAndPlan(email, planCodigo);
+        }
+
+        String secret = mfaTotpService.generateSecretBase32();
         Instant now = Instant.now();
         Instant expires = now.plus(codeTtlMinutes, ChronoUnit.MINUTES);
 
         OnboardingEmailChallenge row = OnboardingEmailChallenge.builder()
                 .email(email)
                 .planCodigo(planCodigo)
-                .codeHash(hash)
+                .codeHash(null)
+                .totpSecret(secret)
                 .expiresAt(expires)
                 .status(OnboardingEmailChallenge.STATUS_PENDING)
                 .createdAt(now)
                 .build();
         challengeRepository.save(row);
 
-        mailNotificationService.sendEmailVerificationCode(email, code, plan.getNombre());
-
+        String uri = totpOnboardingService.buildOtpauthUri(secret, email);
         return new SendEmailVerificationResponse(
-                "Si el correo es válido, recibirás un código de verificación.", expires);
+                "Escanea el código QR con Google Authenticator o añade la cuenta manualmente.", expires, uri);
     }
 
     @Transactional
@@ -81,16 +99,25 @@ public class OnboardingEmailVerificationService {
         OnboardingEmailChallenge row = challengeRepository
                 .findTopByEmailIgnoreCaseAndPlanCodigoIgnoreCaseAndStatusOrderByCreatedAtDesc(
                         email, planCodigo, OnboardingEmailChallenge.STATUS_PENDING)
-                .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "No hay un código pendiente para este correo y plan"));
+                .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "No hay una verificación pendiente para este correo y plan"));
 
         if (row.getExpiresAt().isBefore(Instant.now())) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "El código expiró; solicita uno nuevo");
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "La verificación expiró; genera el código QR de nuevo");
         }
 
-        String hash = sha256Hex(code);
-        byte[] expected = HexFormat.of().parseHex(row.getCodeHash());
-        byte[] actual = HexFormat.of().parseHex(hash);
-        if (!MessageDigest.isEqual(expected, actual)) {
+        boolean ok;
+        if (row.getTotpSecret() != null && !row.getTotpSecret().isBlank()) {
+            ok = mfaTotpService.verify(row.getTotpSecret(), code);
+        } else if (row.getCodeHash() != null && !row.getCodeHash().isBlank()) {
+            String hash = sha256Hex(code);
+            byte[] expected = HexFormat.of().parseHex(row.getCodeHash());
+            byte[] actual = HexFormat.of().parseHex(hash);
+            ok = MessageDigest.isEqual(expected, actual);
+        } else {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Configuración de verificación inválida");
+        }
+
+        if (!ok) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Código incorrecto");
         }
 
@@ -99,6 +126,7 @@ public class OnboardingEmailVerificationService {
         Instant sessionExpires = now.plus(sessionTtlHours, ChronoUnit.HOURS);
 
         row.setStatus(OnboardingEmailChallenge.STATUS_VERIFIED);
+        row.setTotpSecret(null);
         row.setSessionToken(sessionToken);
         row.setSessionExpiresAt(sessionExpires);
         challengeRepository.save(row);
@@ -106,7 +134,7 @@ public class OnboardingEmailVerificationService {
         return new VerifyEmailResponse(
                 sessionToken.toString(),
                 sessionExpires,
-                "Correo verificado. Puedes continuar con los datos de la empresa.");
+                "Verificación completada. Puedes continuar con los datos de la empresa.");
     }
 
     private static String sha256Hex(String input) {

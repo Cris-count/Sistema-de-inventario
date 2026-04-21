@@ -111,7 +111,8 @@ CREATE TABLE IF NOT EXISTS onboarding_email_challenge (
     id                 BIGSERIAL PRIMARY KEY,
     email              VARCHAR(255) NOT NULL,
     plan_codigo        VARCHAR(40)  NOT NULL,
-    code_hash          VARCHAR(64)  NOT NULL,
+    code_hash          VARCHAR(64),
+    totp_secret        VARCHAR(64),
     expires_at         TIMESTAMPTZ  NOT NULL,
     status             VARCHAR(16)  NOT NULL DEFAULT 'PENDING'
         CHECK (status IN ('PENDING', 'VERIFIED', 'CANCELLED')),

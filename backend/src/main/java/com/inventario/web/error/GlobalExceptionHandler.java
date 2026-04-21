@@ -1,5 +1,6 @@
 package com.inventario.web.error;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -30,6 +31,10 @@ public class GlobalExceptionHandler {
         if (ex.getBlockModule() != null && !ex.getBlockModule().isBlank()) {
             pd.setProperty("blockModule", ex.getBlockModule());
         }
+        if (ex.getErrorCode() != null && !ex.getErrorCode().isBlank()) {
+            pd.setProperty("code", ex.getErrorCode());
+            pd.setProperty("message", ex.getMessage());
+        }
         ResponseEntity.BodyBuilder b = ResponseEntity.status(ex.getStatus());
         if (ex.getRetryAfterSeconds() != null && ex.getRetryAfterSeconds() > 0) {
             b.header(HttpHeaders.RETRY_AFTER, ex.getRetryAfterSeconds().toString());
@@ -59,5 +64,26 @@ public class GlobalExceptionHandler {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.FORBIDDEN, ApiErrorMessages.FORBIDDEN_DETAIL);
         pd.setTitle("Autorización");
         return pd;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrity(DataIntegrityViolationException ex) {
+        if (isCategoriaNombreUniqueViolation(ex)) {
+            ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                    HttpStatus.CONFLICT, ApiErrorMessages.CATEGORY_ALREADY_EXISTS_DETAIL);
+            pd.setTitle("Conflicto");
+            pd.setProperty("code", ApiErrorMessages.CATEGORY_ALREADY_EXISTS_CODE);
+            pd.setProperty("message", ApiErrorMessages.CATEGORY_ALREADY_EXISTS_DETAIL);
+            return pd;
+        }
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(
+                HttpStatus.INTERNAL_SERVER_ERROR, "No se pudo guardar el recurso (restricción de datos).");
+        pd.setTitle("Error");
+        return pd;
+    }
+
+    private static boolean isCategoriaNombreUniqueViolation(DataIntegrityViolationException ex) {
+        String msg = ex.getMostSpecificCause().getMessage();
+        return msg != null && msg.contains("uk_categoria_empresa_nombre");
     }
 }

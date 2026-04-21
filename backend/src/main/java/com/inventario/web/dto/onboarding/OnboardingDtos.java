@@ -18,7 +18,11 @@ public final class OnboardingDtos {
     public record SendEmailVerificationRequest(
             @NotBlank @Email @Size(max = 255) String email, @NotBlank @Size(max = 40) String planCodigo) {}
 
-    public record SendEmailVerificationResponse(String message, Instant codeExpiresAt) {}
+    public record SendEmailVerificationResponse(
+            String message,
+            Instant codeExpiresAt,
+            /** URI otpauth para QR / Google Authenticator; nulo en respuestas antiguas o sin TOTP. */
+            String otpauthUri) {}
 
     public record VerifyEmailRequest(
             @NotBlank @Email @Size(max = 255) String email,

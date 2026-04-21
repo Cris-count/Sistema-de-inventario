@@ -22,6 +22,8 @@ export interface SuperAdminForm {
 export interface SendEmailVerificationResponseDto {
   message: string;
   codeExpiresAt: string;
+  /** URI otpauth para el QR (Google Authenticator). */
+  otpauthUri?: string | null;
 }
 
 export interface VerifyEmailResponseDto {

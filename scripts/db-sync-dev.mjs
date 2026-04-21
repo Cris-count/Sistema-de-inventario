@@ -29,7 +29,8 @@ const MIGRATIONS = [
   'database/migrations/008_mfa_cluster_backup_codes.sql',
   'database/migrations/009_refresh_token.sql',
   'database/migrations/010_refresh_token_family_expires.sql',
-  'database/migrations/011_pedido_proveedor_mensaje.sql'
+  'database/migrations/011_pedido_proveedor_mensaje.sql',
+  'database/migrations/012_onboarding_email_challenge_totp.sql'
 ];
 
 const PSQL_ENV = {

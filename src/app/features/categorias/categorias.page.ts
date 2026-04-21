@@ -1,10 +1,17 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { CategoriaService } from '../../core/api/categoria.service';
 import { Categoria } from '../../core/models/entities.model';
-import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import {
+  getApiApplicationErrorCode,
+  patchPlanErrorSignals,
+  type PlanBlockFollowup
+} from '../../core/util/api-error';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
+
+const CATEGORY_ALREADY_EXISTS = 'CATEGORY_ALREADY_EXISTS';
 
 @Component({
   selector: 'app-categorias',
@@ -28,7 +35,7 @@ import { flashSuccess } from '../../core/util/page-flash';
         <form [formGroup]="form" (ngSubmit)="save()" class="row">
           <div class="field field-flex-1">
             <label>Nombre</label>
-            <input formControlName="nombre" />
+            <input #nombreInput formControlName="nombre" id="categoria-nombre" />
           </div>
           <div class="field field-flex-2">
             <label>Descripción</label>
@@ -67,6 +74,7 @@ export class CategoriasPage implements OnInit {
   private readonly api = inject(CategoriaService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly nombreInput = viewChild<ElementRef<HTMLInputElement>>('nombreInput');
 
   readonly rows = signal<Categoria[]>([]);
   readonly editingId = signal<number | null>(null);
@@ -116,20 +124,24 @@ export class CategoriasPage implements OnInit {
     const v = this.form.getRawValue();
     const id = this.editingId();
     const req = id ? this.api.update(id, v) : this.api.create(v);
-    req.subscribe({
-      next: () => {
-        this.error.set(null);
-        this.planFollowup.set(null);
-        this.message.set('Guardado.');
-        flashSuccess(this.destroyRef, () => this.message.set(null));
-        this.cancel();
-        this.reload();
-      },
-      error: (e) => {
-        this.message.set(null);
-        patchPlanErrorSignals(e, this.error, this.planFollowup);
-      },
-      complete: () => this.saving.set(false)
-    });
+    req
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.error.set(null);
+          this.planFollowup.set(null);
+          this.message.set('Guardado.');
+          flashSuccess(this.destroyRef, () => this.message.set(null));
+          this.cancel();
+          this.reload();
+        },
+        error: (e) => {
+          this.message.set(null);
+          patchPlanErrorSignals(e, this.error, this.planFollowup);
+          if (getApiApplicationErrorCode(e) === CATEGORY_ALREADY_EXISTS) {
+            queueMicrotask(() => this.nombreInput()?.nativeElement?.focus());
+          }
+        }
+      });
   }
 }

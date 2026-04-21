@@ -15,5 +15,10 @@ public final class ApiErrorMessages {
     public static final String UNAUTHORIZED_ANONYMOUS_DETAIL =
             "No autenticado. Inicie sesión y envíe el token en el encabezado Authorization: Bearer.";
 
+    public static final String CATEGORY_ALREADY_EXISTS_DETAIL = "La categoría ya existe";
+
+    /** Propiedad {@code code} en Problem Details para el cliente. */
+    public static final String CATEGORY_ALREADY_EXISTS_CODE = "CATEGORY_ALREADY_EXISTS";
+
     private ApiErrorMessages() {}
 }

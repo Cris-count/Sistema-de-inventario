@@ -34,6 +34,8 @@ interface RegisterDraft {
   emailVerificationToken: string | null;
   verifyEmail: string;
   verifyCode: string;
+  /** URI devuelta por la API para pintar el QR TOTP; se invalida si cambia el correo. */
+  otpauthUri: string | null;
   empresa: EmpresaForm;
   admin: SuperAdminForm;
 }
@@ -118,6 +120,7 @@ interface RegisterDraft {
             [plan]="selectedPlan()"
             [email]="draft().verifyEmail"
             [code]="draft().verifyCode"
+            [otpauthUri]="draft().otpauthUri"
             [hint]="stepHint()"
             [sending]="emailVerifySending()"
             [verifying]="emailVerifyVerifying()"
@@ -180,6 +183,7 @@ export class RegisterPageComponent implements OnInit {
     emailVerificationToken: null,
     verifyEmail: '',
     verifyCode: '',
+    otpauthUri: null,
     empresa: emptyEmpresaForm(),
     admin: emptySuperAdminForm()
   });
@@ -232,9 +236,14 @@ export class RegisterPageComponent implements OnInit {
   }
 
   onVerifyEmailInput(v: string): void {
-    this.draft.update((d) => ({ ...d, verifyEmail: v }));
+    this.draft.update((d) => ({
+      ...d,
+      verifyEmail: v,
+      emailVerificationToken: null,
+      otpauthUri: null
+    }));
     this.emailVerificationDone.set(false);
-    this.draft.update((d) => ({ ...d, emailVerificationToken: null }));
+    this.emailCodeSent.set(false);
   }
 
   onVerifyCodeInput(v: string): void {
@@ -275,9 +284,10 @@ export class RegisterPageComponent implements OnInit {
     }
     this.emailVerifySending.set(true);
     this.api.sendEmailVerification(email, plan).subscribe({
-      next: () => {
+      next: (res) => {
         this.emailVerifySending.set(false);
         this.emailCodeSent.set(true);
+        this.draft.update((d) => ({ ...d, otpauthUri: res.otpauthUri ?? null }));
         this.stepHint.set(null);
       },
       error: (err: unknown) => {
@@ -303,6 +313,10 @@ export class RegisterPageComponent implements OnInit {
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       this.stepHint.set('Ingresa un correo electrónico válido.');
+      return;
+    }
+    if (!this.emailCodeSent()) {
+      this.stepHint.set('Primero genera el código QR para vincular Google Authenticator.');
       return;
     }
     if (!/^\d{6}$/.test(code)) {
@@ -336,7 +350,8 @@ export class RegisterPageComponent implements OnInit {
     this.draft.update((d) => ({
       ...d,
       emailVerificationToken: null,
-      verifyCode: ''
+      verifyCode: '',
+      otpauthUri: null
     }));
     this.goStep(1);
   }
@@ -366,7 +381,7 @@ export class RegisterPageComponent implements OnInit {
     if (a.apellido.trim().length < 1) errs.push('apellido');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a.email.trim())) errs.push('correo');
     if (a.email.trim().toLowerCase() !== verifiedEmail) {
-      errs.push('el correo del administrador debe ser el verificado');
+      errs.push('el correo del administrador debe coincidir con el del paso 2');
     }
     if (a.password.length < 8) errs.push('contraseña (mín. 8 caracteres)');
     if (a.password !== a.confirmPassword) errs.push('confirmación de contraseña');
@@ -390,7 +405,7 @@ export class RegisterPageComponent implements OnInit {
       return;
     }
     if (!d.emailVerificationToken) {
-      this.stepHint.set('Debes verificar el correo antes de registrar.');
+      this.stepHint.set('Debes completar la verificación con Google Authenticator antes de registrar.');
       return;
     }
     this.submitting.set(true);

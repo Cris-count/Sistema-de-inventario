@@ -34,6 +34,8 @@ function detailFromProblemBody(body: unknown): string | null {
   const o = body as Record<string, unknown>;
   const d = o['detail'];
   if (typeof d === 'string' && d.trim().length > 0) return d;
+  const m = o['message'];
+  if (typeof m === 'string' && m.trim().length > 0) return m;
   return null;
 }
 
@@ -60,6 +62,18 @@ export function getApiBlockModule(err: unknown): string | null {
   if (!body || typeof body !== 'object') return null;
   const bm = (body as Record<string, unknown>)['blockModule'];
   if (typeof bm === 'string' && bm.trim().length > 0) return bm.trim();
+  return null;
+}
+
+/**
+ * Código de aplicación en Problem Details (propiedad {@code code}), distinto de {@code blockCode} (planes/MFA).
+ */
+export function getApiApplicationErrorCode(err: unknown): string | null {
+  if (!(err instanceof HttpErrorResponse)) return null;
+  const body = err.error;
+  if (!body || typeof body !== 'object') return null;
+  const c = (body as Record<string, unknown>)['code'];
+  if (typeof c === 'string' && c.trim().length > 0) return c.trim();
   return null;
 }
 
@@ -119,6 +133,9 @@ export function getApiErrorMessage(err: unknown): string {
     }
     if (err.status === 400) {
       return 'Solicitud no v?lida. Revise los datos enviados.';
+    }
+    if (err.status === 409) {
+      return 'El recurso ya existe o está en conflicto con datos existentes.';
     }
     return err.message || `Error HTTP ${err.status}`;
   }

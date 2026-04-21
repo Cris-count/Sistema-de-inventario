@@ -29,8 +29,13 @@ public class OnboardingEmailChallenge {
     @Column(name = "plan_codigo", nullable = false, length = 40)
     private String planCodigo;
 
-    @Column(name = "code_hash", nullable = false, length = 64)
+    /** Hash del código por correo (flujo legado); nulo cuando el reto usa solo {@link #totpSecret}. */
+    @Column(name = "code_hash", length = 64)
     private String codeHash;
+
+    /** Secreto Base32 para TOTP pendiente de verificación; nulo en flujo solo correo. */
+    @Column(name = "totp_secret", length = 64)
+    private String totpSecret;
 
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;

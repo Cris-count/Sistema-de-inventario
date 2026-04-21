@@ -32,7 +32,9 @@ public class OnboardingController {
 
     @PostMapping("/send-email-verification")
     @SecurityRequirements
-    @Operation(summary = "Enviar código de verificación al correo", description = "Paso previo al registro: valida que el correo exista enviando un código de 6 dígitos (en desarrollo se registra en log).")
+    @Operation(
+            summary = "Preparar Google Authenticator (TOTP)",
+            description = "Paso previo al registro: crea o reutiliza un secreto TOTP para el correo y plan, y devuelve otpauthUri para mostrar el QR. No envía correo.")
     public ResponseEntity<SendEmailVerificationResponse> sendEmailVerification(
             @Valid @RequestBody SendEmailVerificationRequest body) {
         return ResponseEntity.ok(emailVerificationService.sendVerificationCode(body.email(), body.planCodigo()));
@@ -40,7 +42,9 @@ public class OnboardingController {
 
     @PostMapping("/verify-email")
     @SecurityRequirements
-    @Operation(summary = "Confirmar código de correo", description = "Devuelve un token de sesión que debes enviar en POST /register-company como emailVerificationToken.")
+    @Operation(
+            summary = "Confirmar código TOTP (Google Authenticator)",
+            description = "Valida el código de 6 dígitos y devuelve un token de sesión para POST /register-company como emailVerificationToken.")
     public ResponseEntity<VerifyEmailResponse> verifyEmail(@Valid @RequestBody VerifyEmailRequest body) {
         return ResponseEntity.ok(
                 emailVerificationService.verifyCode(body.email(), body.planCodigo(), body.code()));

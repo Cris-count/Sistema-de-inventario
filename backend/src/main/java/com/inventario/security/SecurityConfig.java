@@ -64,7 +64,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOrigins(List.of("http://localhost:4200", "http://127.0.0.1:4200"));
+        // `ng serve` puede usar 4201, 4202… si 4200 está ocupado; sin esto el navegador recibe 403 en POST con credenciales.
+        c.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
         c.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         c.setAllowedHeaders(List.of("*"));
         c.setAllowCredentials(true);
