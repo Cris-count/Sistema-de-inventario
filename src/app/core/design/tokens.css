@@ -141,6 +141,33 @@
   --space-page: clamp(1rem, 3vw, 1.75rem);
   --space-section: 5rem;
   --space-section-sm: 3.5rem;
+
+  /**
+   * Escala de espaciado del dashboard (Fase 1) — ritmo vertical/horizontal
+   * sin depender de valores mágicos en cada pantalla.
+   */
+  --space-ds-1: 0.25rem; /* 4px */
+  --space-ds-2: 0.5rem; /* 8px */
+  --space-ds-3: 0.75rem; /* 12px */
+  --space-ds-4: 1rem; /* 16px */
+  --space-ds-5: 1.5rem; /* 24px */
+  --space-ds-6: 2rem; /* 32px */
+  --space-ds-section: 1.25rem; /* entre bloques dentro de una vista */
+  --stack-gap-ds: var(--space-ds-5);
+
+  /** Roles tipográficos de vista (dashboard). */
+  --text-page-title: var(--text-h2);
+  --text-page-title-lh: var(--text-h2-lh);
+  --text-page-subtitle: var(--text-body);
+  --text-section-title: var(--text-h3);
+  --text-value: var(--text-body);
+  --text-helper: var(--text-body-sm);
+
+  /** Controles de formulario (dashboard) — altura y radio unificados. */
+  --control-height: 2.5rem;
+  --control-height-textarea-min: 5rem;
+  --control-padding-x: 0.8rem;
+  --control-radius: var(--radius-sm);
 }
 
 /* ============================================================================

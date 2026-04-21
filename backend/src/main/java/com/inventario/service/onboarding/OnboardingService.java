@@ -292,6 +292,10 @@ public class OnboardingService {
     }
 
     private String inferPlanType(SaasPlan p) {
+        String codigo = p.getCodigo() == null ? "" : p.getCodigo().trim().toUpperCase(Locale.ROOT);
+        if ("EMPRESA".equals(codigo)) {
+            return "EMPRESARIAL";
+        }
         int maxBodegas = p.getMaxBodegas() != null ? p.getMaxBodegas() : 0;
         int maxUsuarios = p.getMaxUsuarios() != null ? p.getMaxUsuarios() : 0;
         if (maxBodegas >= 100 || maxUsuarios >= 100) {

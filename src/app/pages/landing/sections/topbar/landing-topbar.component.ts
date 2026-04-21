@@ -1,36 +1,33 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../config/landing-contact';
+import {
+  LANDING_COMMERCIAL_TAGLINE,
+  LANDING_CONTACT,
+  buildMailtoLink,
+  buildWhatsAppLink
+} from '../../config/landing-contact';
 
 /**
- * Franja superior comercial (tipo "top bar" de sitios SaaS B2B).
- *
- * Desktop: muestra WhatsApp, correo y teléfono + accesos rápidos a área de
- * clientes y CTA «Empieza ahora» (/registro). En móvil sólo se muestra un resumen
- * compacto para no competir con el navbar.
- *
- * Honesto: sin formularios inventados, todo son enlaces `mailto:`, `tel:` y
- * `wa.me` configurables desde `landing-contact.ts`.
+ * Franja superior: contacto fijo (WhatsApp + correo) y cinta tipo ticker con el mensaje comercial.
+ * Sin CTAs duplicados del navbar. Respeta `prefers-reduced-motion` (ticker estático).
  */
 @Component({
   selector: 'app-landing-topbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
   template: `
     <div
-      class="hidden border-b border-white/10 bg-slate-950 text-slate-200 md:block dark:border-slate-800"
-      aria-label="Contacto comercial"
+      class="hidden border-b border-white/10 bg-slate-950 text-slate-300 md:block dark:border-slate-800"
+      aria-label="Contacto y mensaje comercial"
     >
-      <div
-        class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-1.5 text-xs sm:px-6 lg:px-8"
-      >
-        <div class="flex items-center gap-5">
+      <div class="mx-auto flex max-w-6xl items-stretch gap-0 px-4 text-xs sm:px-6 lg:px-8">
+        <div
+          class="flex shrink-0 items-center gap-4 border-r border-white/10 py-2 pr-4 sm:gap-5 sm:pr-5"
+        >
           <a
             [href]="whatsappLink"
             target="_blank"
             rel="noopener"
-            class="flex items-center gap-1.5 no-underline text-slate-200 transition hover:text-white"
-            aria-label="WhatsApp comercial"
+            class="flex items-center gap-1.5 font-medium text-slate-200 no-underline transition hover:text-white focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
+            aria-label="Abrir WhatsApp comercial"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path
@@ -39,60 +36,119 @@ import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../confi
             </svg>
             <span>{{ contact.phoneDisplay }}</span>
           </a>
-
           <a
             [href]="mailto"
-            class="flex items-center gap-1.5 no-underline text-slate-200 transition hover:text-white"
-            aria-label="Correo comercial"
+            class="flex max-w-[200px] items-center gap-1.5 truncate font-medium text-slate-200 no-underline transition hover:text-white focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400 lg:max-w-none"
+            aria-label="Enviar correo comercial"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
               <path d="M3 6h18v12H3z" />
               <path d="m3 7 9 6 9-6" />
             </svg>
-            <span>{{ contact.email }}</span>
+            <span class="truncate">{{ contact.email }}</span>
           </a>
         </div>
 
-        <div class="flex items-center gap-4">
-          <a
-            routerLink="/login"
-            class="no-underline text-slate-200 transition hover:text-white"
-          >
-            Área de clientes
-          </a>
-          <span class="h-3 w-px bg-slate-700" aria-hidden="true"></span>
-          <a
-            routerLink="/registro"
-            class="inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 font-medium text-white no-underline shadow-sm transition hover:brightness-110"
-          >
-            Empieza ahora
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </a>
+        <div
+          class="lp-topbar-ticker relative min-h-[2.25rem] min-w-0 flex-1 overflow-hidden py-2"
+          aria-hidden="true"
+        >
+          <div class="lp-topbar-ticker__track">
+            <span
+              class="inline-flex shrink-0 items-center gap-3 whitespace-nowrap px-6 text-[11px] font-medium tracking-wide text-slate-400 sm:text-xs"
+            >
+              <span class="text-slate-500">·</span>
+              <span>{{ tagline }}</span>
+              <span class="text-slate-500">·</span>
+              <span class="text-teal-400/80">Cersik</span>
+              <span class="text-slate-500">·</span>
+              <span>Pymes en Colombia</span>
+              <span class="text-slate-500">·</span>
+              <span>{{ tagline }}</span>
+            </span>
+            <span
+              class="inline-flex shrink-0 items-center gap-3 whitespace-nowrap px-6 text-[11px] font-medium tracking-wide text-slate-400 sm:text-xs"
+              aria-hidden="true"
+            >
+              <span class="text-slate-500">·</span>
+              <span>{{ tagline }}</span>
+              <span class="text-slate-500">·</span>
+              <span class="text-teal-400/80">Cersik</span>
+              <span class="text-slate-500">·</span>
+              <span>Pymes en Colombia</span>
+              <span class="text-slate-500">·</span>
+              <span>{{ tagline }}</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>
 
     <div
-      class="border-b border-slate-200/80 bg-slate-50 text-[11px] text-secondary md:hidden dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"
-      aria-label="Contacto comercial móvil"
+      class="border-b border-slate-200/80 bg-slate-50 py-2 text-[11px] text-secondary md:hidden dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400"
+      aria-label="Contacto comercial"
     >
-      <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1.5">
-        <a [href]="whatsappLink" target="_blank" rel="noopener" class="no-underline hover:text-primary dark:hover:text-white">
-          WhatsApp
-        </a>
-        <a [href]="mailto" class="no-underline hover:text-primary dark:hover:text-white">
-          {{ contact.email }}
-        </a>
-        <a routerLink="/login" class="no-underline hover:text-primary dark:hover:text-white">Área de clientes</a>
+      <div class="mx-auto flex max-w-6xl flex-col gap-2 px-4">
+        <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <a
+            [href]="whatsappLink"
+            target="_blank"
+            rel="noopener"
+            class="font-medium text-primary no-underline hover:underline dark:text-slate-200"
+            >WhatsApp</a
+          >
+          <a
+            [href]="mailto"
+            class="max-w-[55%] truncate font-medium text-primary no-underline hover:underline dark:text-slate-200"
+            >{{ contact.email }}</a
+          >
+        </div>
+        <p class="m-0 text-center leading-snug text-slate-500 dark:text-slate-500">
+          {{ tagline }}
+        </p>
       </div>
     </div>
+  `,
+  styles: `
+    @keyframes lp-topbar-marquee {
+      0% {
+        transform: translateX(0);
+      }
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+    .lp-topbar-ticker__track {
+      display: flex;
+      width: max-content;
+      animation: lp-topbar-marquee 55s linear infinite;
+      will-change: transform;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lp-topbar-ticker__track {
+        animation: none;
+        margin-inline: auto;
+        width: auto;
+        flex-wrap: wrap;
+        justify-content: center;
+        row-gap: 0.25rem;
+      }
+    }
   `
 })
 export class LandingTopbarComponent {
   protected readonly contact = LANDING_CONTACT;
+  protected readonly tagline = LANDING_COMMERCIAL_TAGLINE;
   protected readonly whatsappLink = buildWhatsAppLink();
   protected readonly mailto = buildMailtoLink();
 }

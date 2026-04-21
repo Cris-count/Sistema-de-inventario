@@ -27,10 +27,10 @@ const LANDING = '/landing';
             class="flex min-w-0 shrink-0 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
           >
             <span
-              class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-linear-to-br from-accent via-teal-500 to-teal-700 text-sm font-bold text-white shadow-lg shadow-teal-900/20"
-              >IV</span
+              class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-accent via-teal-500 to-teal-700 text-sm font-bold text-white shadow-lg shadow-teal-900/20"
+              >C</span
             >
-            <span class="truncate text-base font-semibold tracking-tight">Inventario Pro</span>
+            <span class="truncate text-base font-semibold tracking-tight">Cersik</span>
           </a>
 
           <nav class="flex items-center gap-7 text-sm font-medium text-secondary dark:text-slate-300">
@@ -88,10 +88,10 @@ const LANDING = '/landing';
               class="flex min-w-0 flex-1 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
             >
               <span
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-accent to-teal-600 text-sm font-bold text-white shadow-soft"
-                >IV</span
+                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-teal-600 text-sm font-bold text-white shadow-soft"
+                >C</span
               >
-              <span class="truncate text-base font-semibold tracking-tight">Inventario Pro</span>
+              <span class="truncate text-base font-semibold tracking-tight">Cersik</span>
             </a>
             <div class="shrink-0">
               <app-theme-toggle />

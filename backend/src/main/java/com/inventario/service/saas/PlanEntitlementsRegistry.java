@@ -10,14 +10,17 @@ import static com.inventario.service.saas.PlanEntitlementCodes.*;
 /**
  * Matriz funcional oficial plan → módulos + límites.
  * Códigos de plan en BD: STARTER, PROFESIONAL, EMPRESA (mapeados a STARTER / PRO / EMPRESARIAL).
+ * <p>
+ * {@code maxProductos} es el tope de <strong>productos en catálogo (por empresa)</strong>, alineado a la
+ * política comercial “hasta N referencias por bodega”: total = bodegas × tope por bodega.
  */
 public final class PlanEntitlementsRegistry {
 
     private static final PlanEntitlements STARTER = new PlanEntitlements(
             Set.of(INVENTARIO_BASICO, CATEGORIAS, MOVIMIENTOS_BASICOS, CONSULTA_STOCK),
-            1,
-            1,
-            100);
+            3,
+            2,
+            2 * 1000);
 
     private static final PlanEntitlements PRO = new PlanEntitlements(
             union(
@@ -32,7 +35,7 @@ public final class PlanEntitlementsRegistry {
                     HISTORIAL_MOVIMIENTOS),
             10,
             5,
-            null);
+            5 * 2500);
 
     private static final PlanEntitlements EMPRESARIAL = new PlanEntitlements(
             union(
@@ -43,9 +46,9 @@ public final class PlanEntitlementsRegistry {
                     MULTI_SEDE,
                     INTEGRACIONES,
                     SOPORTE_PRIORITARIO),
-            null,
-            null,
-            null);
+            25,
+            10,
+            10 * 3000);
 
     private static final Map<String, PlanEntitlements> BY_PLAN_CODIGO = Map.of(
             "STARTER", STARTER,

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { fadeUp, staggerList } from '../../../../core/animations';
 import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.component';
+import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 
 const SOL_IMG = 'assets/images/soluciones';
 
@@ -17,34 +17,49 @@ interface SolutionCard {
 /**
  * Soluciones por tipo de negocio (#soluciones).
  * Cada tarjeta enlaza a #planes (mismo producto para todos los verticales).
+ *
+ * Motion: mismo lenguaje que Funcionalidades ([appReveal], lp-stagger-soluciones, lp-sector-reveal).
  */
 @Component({
   selector: 'app-landing-sectors',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiCardComponent],
-  animations: [fadeUp, staggerList],
+  imports: [UiCardComponent, RevealOnScrollDirective],
   template: `
-    <section id="soluciones" class="bg-background py-section dark:bg-slate-950">
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div @fadeUp class="mx-auto max-w-2xl text-center">
-          <p class="text-xs font-semibold uppercase tracking-wider text-accent">Soluciones</p>
-          <h2 class="mt-2 text-3xl font-semibold tracking-tight text-primary sm:text-4xl dark:text-slate-100">
+    <section id="soluciones" class="lp-soluciones-section bg-background py-section dark:bg-slate-950">
+      <div class="relative z-[1] mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+          <p
+            appReveal
+            [revealDelay]="0"
+            class="text-xs font-semibold uppercase tracking-wider text-accent"
+          >
+            Soluciones
+          </p>
+          <h2
+            appReveal
+            [revealDelay]="70"
+            class="mt-2 text-3xl font-semibold tracking-tight text-primary sm:text-4xl dark:text-slate-100"
+          >
             Un mismo inventario, adaptado a cómo vendes y operas
           </h2>
-          <p class="mt-4 text-lg text-secondary dark:text-slate-400">
+          <p
+            appReveal
+            [revealDelay]="140"
+            class="mt-4 text-lg text-secondary dark:text-slate-400"
+          >
             Control de stock, bodegas y movimientos con una API y panel listos para producción. Estas
             son formas típicas en las que los equipos lo usan día a día.
           </p>
         </div>
 
         <div
-          [@staggerList]="solutions.length"
-          class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+          class="lp-stagger lp-stagger-soluciones mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
         >
           @for (card of solutions; track card.id) {
             <a
+              appReveal
               href="#planes"
-              class="group flex h-full no-underline outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-slate-950"
+              class="lp-sector-reveal group flex h-full no-underline outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background dark:focus-visible:ring-offset-slate-950"
             >
               <app-ui-card
                 [padded]="false"
@@ -103,7 +118,10 @@ interface SolutionCard {
           }
         </div>
 
-        <p @fadeUp class="mx-auto mt-10 max-w-2xl text-center text-sm text-secondary dark:text-slate-500">
+        <p
+          appReveal
+          class="mx-auto mt-10 max-w-2xl text-center text-sm text-secondary dark:text-slate-500"
+        >
           ¿Tu negocio no aparece en la lista? Si manejas productos y bodegas, el flujo es el mismo:
           carga, ajusta permisos y empieza a registrar movimientos.
         </p>

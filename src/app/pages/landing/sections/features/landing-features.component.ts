@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { fadeUp, staggerList } from '../../../../core/animations';
 import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.component';
+import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
 
 type FeatureIcon =
   | 'box'
@@ -23,39 +23,52 @@ interface FeatureCard {
 /**
  * Funcionalidades del producto (#funcionalidades). Copy alineado a capacidades
  * reales del backend (productos, bodegas, movimientos, reportes, roles, API REST).
+ *
+ * Motion: reveal al viewport con [appReveal] + lp-stagger (coherente con Soluciones);
+ * sin animaciones de entrada al montar el componente.
  */
 @Component({
   selector: 'app-landing-features',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiCardComponent],
-  animations: [fadeUp, staggerList],
+  imports: [UiCardComponent, RevealOnScrollDirective],
   template: `
     <section
       id="funcionalidades"
-      class="bg-surface py-section dark:bg-slate-900"
+      class="lp-features-section bg-surface py-section dark:bg-slate-900"
       aria-labelledby="funcionalidades-heading"
     >
-      <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div @fadeUp class="mx-auto max-w-2xl text-center">
-          <p class="text-xs font-semibold uppercase tracking-wider text-accent">Funcionalidades</p>
+      <div class="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-2xl text-center">
+          <p
+            appReveal
+            [revealDelay]="0"
+            class="text-xs font-semibold uppercase tracking-wider text-accent"
+          >
+            Funcionalidades
+          </p>
           <h2
+            appReveal
+            [revealDelay]="70"
             id="funcionalidades-heading"
             class="mt-2 text-3xl font-semibold tracking-tight text-primary sm:text-4xl dark:text-slate-100"
           >
             Todo lo que necesitas para inventario serio, en un solo lugar
           </h2>
-          <p class="mt-4 text-lg text-secondary dark:text-slate-400">
+          <p
+            appReveal
+            [revealDelay]="140"
+            class="mt-4 text-lg text-secondary dark:text-slate-400"
+          >
             Desde el catálogo hasta los movimientos y los permisos: un flujo coherente para que tu
             equipo trabaje con datos confiables y menos retrabajo.
           </p>
         </div>
 
         <div
-          [@staggerList]="features.length"
-          class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+          class="lp-stagger lp-stagger-features mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
         >
           @for (f of features; track f.id) {
-            <article class="flex h-full flex-col">
+            <article appReveal class="lp-feature-reveal flex h-full flex-col">
               <app-ui-card class="lp-card-hover lp-feature-card flex h-full flex-col">
                 <div
                   class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/20 dark:bg-accent/15 dark:ring-accent/30"
@@ -214,7 +227,7 @@ interface FeatureCard {
         </div>
 
         <p
-          @fadeUp
+          appReveal
           class="mx-auto mt-10 max-w-2xl text-center text-sm leading-relaxed text-secondary dark:text-slate-500"
         >
           Incluye además reportes como kardex y exportación de movimientos para cerrar periodos sin

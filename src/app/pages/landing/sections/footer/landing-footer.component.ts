@@ -24,7 +24,7 @@ import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../confi
                 >IV</span
               >
               <div>
-                <p class="text-sm font-semibold text-primary dark:text-slate-100">Inventario Pro</p>
+                <p class="text-sm font-semibold text-primary dark:text-slate-100">Cersik</p>
                 <p class="text-xs text-secondary dark:text-slate-400">Control simple para tu inventario.</p>
               </div>
             </div>
@@ -118,7 +118,7 @@ import { LANDING_CONTACT, buildMailtoLink, buildWhatsAppLink } from '../../confi
         <div
           class="mt-10 flex flex-col gap-3 border-t border-slate-200/80 pt-6 text-xs text-secondary dark:border-slate-800 dark:text-slate-500 sm:flex-row sm:items-center sm:justify-between"
         >
-          <p>© {{ year }} Inventario Pro. Todos los derechos reservados.</p>
+          <p>© {{ year }} Cersik. Todos los derechos reservados.</p>
           <p>Hecho para pymes en Colombia.</p>
         </div>
       </div>

@@ -94,7 +94,7 @@ const QUICK_NAV_PARTS: string[][] = [
       </section>
 
       <div class="dash-operational">
-        <section class="card dash-panel" aria-labelledby="dash-quick-title">
+        <section class="card card--info dash-panel" aria-labelledby="dash-quick-title">
           <div class="dash-panel-head">
             <h2 id="dash-quick-title">Accesos rápidos</h2>
             <p class="dash-panel-sub muted">Atajos a tareas frecuentes según su plan y rol.</p>
@@ -119,7 +119,7 @@ const QUICK_NAV_PARTS: string[][] = [
           }
         </section>
 
-        <section class="card dash-panel" aria-labelledby="dash-flow-title">
+        <section class="card card--info dash-panel" aria-labelledby="dash-flow-title">
           <div class="dash-panel-head">
             <h2 id="dash-flow-title">Flujo de trabajo recomendado</h2>
             <p class="dash-panel-sub muted">Orden sugerido para dejar el inventario consistente.</p>

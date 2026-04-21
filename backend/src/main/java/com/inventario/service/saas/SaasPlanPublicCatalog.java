@@ -34,7 +34,7 @@ public final class SaasPlanPublicCatalog {
                     new BigDecimal("19900"),
                     "COP",
                     2,
-                    5,
+                    3,
                     "Productos y categorías|Movimientos de entrada y salida|Consulta de existencias y alertas|Soporte por correo",
                     1),
             new Row(
@@ -43,8 +43,8 @@ public final class SaasPlanPublicCatalog {
                     "Diseñado para crecer con tu empresa: más bodegas, equipo ampliado y reportes.",
                     new BigDecimal("69900"),
                     "COP",
+                    5,
                     10,
-                    25,
                     "Más bodegas y usuarios|Transferencias y ajustes|Proveedores y roles ampliados|Reportes kardex y exportación CSV",
                     2),
             new Row(
@@ -53,8 +53,8 @@ public final class SaasPlanPublicCatalog {
                     "Escala sin límites para operaciones que exigen el máximo control.",
                     new BigDecimal("149900"),
                     "COP",
-                    999,
-                    999,
+                    10,
+                    25,
                     "Límites ampliados en bodegas y usuarios|Módulos avanzados del plan|Prioridad en soporte|Hoja de ruta multi-sede e integraciones",
                     3));
 
