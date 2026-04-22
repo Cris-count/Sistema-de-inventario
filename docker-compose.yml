@@ -40,6 +40,8 @@ services:
     ports:
       - "8080:8080"
     environment:
+      # Sin SMTP en Docker dev el MailHealthIndicator deja el agregado en DOWN y `npm run up` nunca pasa del healthcheck.
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/inventario
       SPRING_DATASOURCE_USERNAME: inventario
       SPRING_DATASOURCE_PASSWORD: inventario

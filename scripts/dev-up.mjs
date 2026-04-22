@@ -37,6 +37,11 @@ function runOrFail(command, args, description, useShell = false) {
   }
 }
 
+/**
+ * Espera a que algo escuche en TCP en el host (puerto publicado).
+ * El puerto puede abrirse antes del init completo dentro del contenedor;
+ * db-sync-dev.mjs aplica migraciones vía psql cuando hace falta.
+ */
 async function waitForPort(port, host = '127.0.0.1', timeoutMs = 120_000, intervalMs = 1000) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
@@ -87,7 +92,7 @@ async function main() {
   const { applyDevMigrations } = await import('./db-sync-dev.mjs');
   await applyDevMigrations();
 
-  console.log('[dev-up] 3/5  Reiniciando servicio api (arranque limpio tras migraciones) …');
+  console.log('[dev-up]     Reiniciando servicio api (arranque limpio tras migraciones) …');
   runOrFail('docker', ['compose', 'restart', 'api'], '');
 
   console.log(`[dev-up] 4/5  Esperando API saludable en ${API_HEALTH_URL} (hasta ${API_HEALTH_TIMEOUT_MS / 1000}s) …`);
