@@ -247,7 +247,6 @@ export class CategoriasPage implements OnInit {
   private readonly api = inject(CategoriaService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly nombreInput = viewChild<ElementRef<HTMLInputElement>>('nombreInput');
 
   readonly loading = signal(false);
   readonly rows = signal<Categoria[]>([]);
