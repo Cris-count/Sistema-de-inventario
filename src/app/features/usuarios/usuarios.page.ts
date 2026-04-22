@@ -9,7 +9,8 @@ import { flashSuccess } from '../../core/util/page-flash';
 const ROLES = [
   { codigo: 'ADMIN', label: 'Administrador' },
   { codigo: 'AUX_BODEGA', label: 'Auxiliar bodega' },
-  { codigo: 'COMPRAS', label: 'Compras' },
+  { codigo: 'COMPRAS', label: 'Responsable de abastecimiento' },
+  { codigo: 'VENTAS', label: 'RESPONSABLE DE VENTAS' },
   { codigo: 'GERENCIA', label: 'Gerencia' }
 ];
 

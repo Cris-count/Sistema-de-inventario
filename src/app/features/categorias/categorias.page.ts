@@ -1,4 +1,13 @@
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  OnInit,
+  signal,
+  viewChild
+} from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CategoriaService } from '../../core/api/categoria.service';
 import { Categoria } from '../../core/models/entities.model';

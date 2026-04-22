@@ -24,7 +24,7 @@ public class BodegaController {
     public record BodegaRequest(@NotBlank String codigo, @NotBlank String nombre, String direccion) {}
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA','VENTAS')")
     @Operation(summary = "Listar bodegas")
     public List<Bodega> listar() {
         return bodegaCatalogService.listar();

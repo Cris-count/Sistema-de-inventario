@@ -40,7 +40,7 @@ public class PedidoProveedorMensajeService {
     private final InventarioRepository inventarioRepository;
     private final ProductoRepository productoRepository;
     private final ProveedorRepository proveedorRepository;
-    private final MovimientoRepository movimientoRepository;
+    private final ProveedorSugeridoResolver proveedorSugeridoResolver;
     private final UsuarioRepository usuarioRepository;
     private final PedidoProveedorMailComposer mailComposer;
     private final ObjectProvider<JavaMailSender> mailSender;
@@ -402,17 +402,9 @@ public class PedidoProveedorMensajeService {
     }
 
     private Proveedor resolverProveedor(long empresaId, long productoId) {
-        Long preferidoId = productoRepository.findProveedorPreferidoIdByIdAndEmpresa(productoId, empresaId);
-        if (preferidoId != null) {
-            return proveedorRepository
-                    .findByIdAndEmpresaId(preferidoId, empresaId)
-                    .filter(Proveedor::getActivo)
-                    .orElse(null);
-        }
-        return movimientoRepository
-                .findLatestProveedorIdEntradaProducto(empresaId, productoId)
-                .flatMap(pid -> proveedorRepository.findByIdAndEmpresaId(pid, empresaId))
-                .filter(Proveedor::getActivo)
+        return proveedorSugeridoResolver
+                .resolverConFuente(empresaId, productoId)
+                .map(ProveedorSugeridoResolver.Sugerencia::proveedor)
                 .orElse(null);
     }
 

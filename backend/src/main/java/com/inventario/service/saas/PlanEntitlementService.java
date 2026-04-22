@@ -30,6 +30,11 @@ public class PlanEntitlementService {
     }
 
     @Transactional(readOnly = true)
+    public boolean tieneModulo(Long empresaId, String moduloCodigo) {
+        return resolveForEmpresa(empresaId).tieneModulo(moduloCodigo);
+    }
+
+    @Transactional(readOnly = true)
     public void requireModulo(Long empresaId, String moduloCodigo) {
         PlanEntitlements e = resolveForEmpresa(empresaId);
         if (!e.tieneModulo(moduloCodigo)) {

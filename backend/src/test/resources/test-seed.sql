@@ -12,7 +12,10 @@ INSERT INTO rol (codigo, nombre, descripcion, created_at)
 VALUES ('AUX_BODEGA', 'Auxiliar de bodega', 'Test', CURRENT_TIMESTAMP);
 
 INSERT INTO rol (codigo, nombre, descripcion, created_at)
-VALUES ('COMPRAS', 'Compras', 'Test', CURRENT_TIMESTAMP);
+VALUES ('COMPRAS', 'Responsable de abastecimiento', 'Test', CURRENT_TIMESTAMP);
 
 INSERT INTO rol (codigo, nombre, descripcion, created_at)
 VALUES ('GERENCIA', 'Gerencia', 'Test', CURRENT_TIMESTAMP);
+
+INSERT INTO rol (codigo, nombre, descripcion, created_at)
+VALUES ('VENTAS', 'RESPONSABLE DE VENTAS', 'Test', CURRENT_TIMESTAMP);

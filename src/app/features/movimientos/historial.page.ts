@@ -33,6 +33,7 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
             <option [ngValue]="null">Todos</option>
             <option [ngValue]="'ENTRADA'">Entrada</option>
             <option [ngValue]="'SALIDA'">Salida</option>
+            <option [ngValue]="'SALIDA_POR_VENTA'">Salida por venta</option>
             <option [ngValue]="'TRANSFERENCIA'">Transferencia</option>
             <option [ngValue]="'AJUSTE'">Ajuste</option>
           </select>

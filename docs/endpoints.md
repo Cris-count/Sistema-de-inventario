@@ -116,6 +116,7 @@ Convenciones HTTP habituales: `400` validación, `401` no autenticado, `403` pro
 |--------|------|-------|
 | GET | `/inventario` | ADMIN, AUX_BODEGA, COMPRAS, GERENCIA |
 | GET | `/inventario/alertas` | Idem |
+| GET | `/inventario/panel-abastecimiento` | Idem | Panel «productos por reponer»: mismas líneas que alertas + proveedor sugerido, última entrada por bodega, KPIs y flag `puedeRegistrarEntrada` (plan `movimientos_basicos` + rol con entrada). Query opcional: `bodegaId`. |
 | POST | `/inventario/stock-inicial` | **ADMIN** |
 
 **GET `/inventario`** — query opcionales: `productoId`, `bodegaId`, `page`, `size`.  

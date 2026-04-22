@@ -2,71 +2,115 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { fadeUp, staggerList } from '../../core/animations';
 import { AuthService } from '../../core/auth/auth.service';
 import { getApiErrorMessage } from '../../core/util/api-error';
+import { UiBadgeComponent } from '../../shared/components/ui/badge/ui-badge.component';
+import { UiCardComponent } from '../../shared/components/ui/card/ui-card.component';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink, ThemeToggleComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    ThemeToggleComponent,
+    UiBadgeComponent,
+    UiCardComponent
+  ],
+  animations: [fadeUp, staggerList],
   template: `
     <div class="login-page">
       <div class="login-layout">
         <aside class="login-hero" aria-label="Presentación del producto">
-          <div class="login-hero-inner login-hero-split">
-            <div class="login-hero-col login-hero-col--visual">
-              <div class="login-hero-prelude">
-                <div class="login-brand">
-                  <div class="login-hero-mark" aria-hidden="true">C</div>
-                  <div class="login-brand-text">
-                    <span class="login-brand-name">Cersik</span>
-                    <span class="login-brand-tag">INVENTARIO CORPORATIVO</span>
+          <div class="login-hero-bg" aria-hidden="true">
+            <img
+              src="assets/images/login/imagen%20de%20fondo.png"
+              width="1200"
+              height="900"
+              alt=""
+              decoding="async"
+              fetchpriority="low"
+              class="login-hero-bg-img"
+            />
+            <div class="login-hero-bg-overlay"></div>
+          </div>
+
+          <div class="login-hero-content">
+            <div @fadeUp class="login-hero-intro">
+              <app-ui-badge class="login-hero-badge" tone="on-dark">ACCESO CORPORATIVO</app-ui-badge>
+              <h2 class="login-hero-title">
+                Control total de tu inventario,<br class="login-hero-title-br" aria-hidden="true" />
+                en un solo panel
+              </h2>
+              <p class="login-hero-lead">
+                Gestiona productos, stock, bodegas y movimientos con una plataforma clara, segura y fácil de usar.
+              </p>
+            </div>
+
+            <div class="login-hero-cards" @staggerList>
+              <app-ui-card [padded]="false" class="login-hero-feature-card">
+                <div class="login-hero-feature">
+                  <span class="login-hero-feature-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                  </span>
+                  <div class="login-hero-feature-copy">
+                    <h3 class="login-hero-feature-title">Inventario en tiempo real</h3>
+                    <p class="login-hero-feature-text">
+                      Consulta tu operación con claridad y sin retrasos.
+                    </p>
                   </div>
                 </div>
-              </div>
-              <figure class="login-hero-visual">
-                <div class="login-hero-visual-frame">
-                  <img
-                    src="assets/images/login/fabrica.png"
-                    width="960"
-                    height="720"
-                    alt=""
-                    decoding="async"
-                    class="login-hero-visual-img"
-                  />
+              </app-ui-card>
+              <app-ui-card [padded]="false" class="login-hero-feature-card">
+                <div class="login-hero-feature">
+                  <span class="login-hero-feature-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <line x1="18" y1="20" x2="18" y2="10" />
+                      <line x1="12" y1="20" x2="12" y2="4" />
+                      <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                  </span>
+                  <div class="login-hero-feature-copy">
+                    <h3 class="login-hero-feature-title">Reportes claros</h3>
+                    <p class="login-hero-feature-text">Visualiza datos clave para decidir mejor.</p>
+                  </div>
                 </div>
-              </figure>
-            </div>
-            <div class="login-hero-col login-hero-col--copy">
-              <div class="login-hero-copy">
-                <p class="login-hero-eyebrow">ACCESO CORPORATIVO</p>
-                <h2 class="login-hero-title">Tu operación centralizada en un solo panel</h2>
-                <p class="login-hero-lead">
-                  Gestiona productos, bodegas y movimientos con acceso seguro para equipos de administración, compras y
-                  operación.
-                </p>
-                <ul class="login-hero-benefits">
-                  <li class="login-benefit">
-                    <span class="login-benefit-icon" aria-hidden="true">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                        <circle cx="9" cy="7" r="4" />
-                        <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                      </svg>
-                    </span>
-                    <span class="login-benefit-text">Roles y permisos por equipo</span>
-                  </li>
-                  <li class="login-benefit">
-                    <span class="login-benefit-icon" aria-hidden="true">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                        <polyline points="9 22 9 12 15 12 15 22" />
-                      </svg>
-                    </span>
-                    <span class="login-benefit-text">Multibodega con trazabilidad unificada</span>
-                  </li>
-                </ul>
-              </div>
+              </app-ui-card>
+              <app-ui-card [padded]="false" class="login-hero-feature-card">
+                <div class="login-hero-feature">
+                  <span class="login-hero-feature-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                      <line x1="12" y1="9" x2="12" y2="13" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </span>
+                  <div class="login-hero-feature-copy">
+                    <h3 class="login-hero-feature-title">Alertas de stock</h3>
+                    <p class="login-hero-feature-text">
+                      Detecta faltantes antes de que afecten tu operación.
+                    </p>
+                  </div>
+                </div>
+              </app-ui-card>
+              <app-ui-card [padded]="false" class="login-hero-feature-card">
+                <div class="login-hero-feature">
+                  <span class="login-hero-feature-icon" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </span>
+                  <div class="login-hero-feature-copy">
+                    <h3 class="login-hero-feature-title">Información segura</h3>
+                    <p class="login-hero-feature-text">
+                      Acceso confiable para equipos y procesos críticos.
+                    </p>
+                  </div>
+                </div>
+              </app-ui-card>
             </div>
           </div>
         </aside>
@@ -178,6 +222,11 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme
                         <td>GERENCIA</td>
                         <td><code>gerencia&#64;inventario.local</code></td>
                         <td><code>Gerencia123!</code></td>
+                      </tr>
+                      <tr>
+                        <td>VENTAS</td>
+                        <td><code>ventas&#64;inventario.local</code></td>
+                        <td><code>Ventas123!</code></td>
                       </tr>
                     </tbody>
                   </table>

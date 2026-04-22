@@ -15,6 +15,8 @@ public final class SecurityRoles {
     public static final String ADMIN = "ADMIN";
     public static final String AUX_BODEGA = "AUX_BODEGA";
     public static final String COMPRAS = "COMPRAS";
+    /** Responsable de ventas (nombre visible en BD: «RESPONSABLE DE VENTAS»). */
+    public static final String VENTAS = "VENTAS";
     public static final String GERENCIA = "GERENCIA";
 
     private SecurityRoles() {}

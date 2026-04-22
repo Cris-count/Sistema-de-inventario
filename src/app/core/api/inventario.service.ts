@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { InventarioRow, MovimientoResponse } from '../models/entities.model';
+import { AbastecimientoPanelResponse, InventarioRow, MovimientoResponse } from '../models/entities.model';
 import { Page } from '../models/page.model';
 
 export interface LineaStockInicial {
@@ -32,6 +32,13 @@ export class InventarioService {
     let params = new HttpParams();
     if (bodegaId != null) params = params.set('bodegaId', bodegaId);
     return this.http.get<InventarioRow[]>(`${this.base}/alertas`, { params });
+  }
+
+  /** Panel de reposición (misma base que alertas, + proveedor sugerido y última entrada). */
+  panelAbastecimiento(bodegaId?: number | null): Observable<AbastecimientoPanelResponse> {
+    let params = new HttpParams();
+    if (bodegaId != null) params = params.set('bodegaId', bodegaId);
+    return this.http.get<AbastecimientoPanelResponse>(`${this.base}/panel-abastecimiento`, { params });
   }
 
   /**
