@@ -27,6 +27,8 @@ public class StripeCheckoutService {
 
     public record StripeSessionResult(String sessionId, String checkoutUrl) {}
 
+    private static final String FLOW_ONBOARDING_PREPAY = "ONBOARDING_PREPAY";
+
     public boolean isEnabled() {
         return stripeSecretKey != null && !stripeSecretKey.isBlank();
     }
@@ -76,6 +78,42 @@ public class StripeCheckoutService {
         }
     }
 
+    /**
+     * Checkout de pago único antes del registro (sin empresa aún). Success/cancel vuelven a {@code /registro}.
+     */
+    public StripeSessionResult createOnboardingPrepaySession(
+            String targetPlanCode, BigDecimal monto, String moneda) {
+        ensureConfigured();
+        try {
+            Stripe.apiKey = stripeSecretKey;
+            SessionCreateParams params = SessionCreateParams.builder()
+                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setSuccessUrl(frontendBaseUrl + "/registro?stripePrepay=1&session_id={CHECKOUT_SESSION_ID}")
+                    .setCancelUrl(frontendBaseUrl + "/registro?stripePrepay=0")
+                    .addLineItem(SessionCreateParams.LineItem.builder()
+                            .setQuantity(1L)
+                            .setPriceData(
+                                    SessionCreateParams.LineItem.PriceData.builder()
+                                            .setCurrency(normalizeCurrency(moneda))
+                                            .setUnitAmount(toStripeAmount(monto))
+                                            .setProductData(
+                                                    SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                            .setName("Plan " + targetPlanCode + " — alta Cersik")
+                                                            .build())
+                                            .build())
+                            .build())
+                    .putMetadata("targetPlan", targetPlanCode)
+                    .putMetadata("flowType", FLOW_ONBOARDING_PREPAY)
+                    .build();
+            Session session = Session.create(params);
+            return new StripeSessionResult(session.getId(), session.getUrl());
+        } catch (StripeException ex) {
+            throw new BusinessException(
+                    HttpStatus.BAD_GATEWAY,
+                    "No se pudo crear la sesión de pago en Stripe. Intenta de nuevo.");
+        }
+    }
+
     public boolean isCheckoutPaid(String sessionId, Long expectedPagoId, String expectedTargetPlan) {
         ensureConfigured();
         try {
@@ -89,6 +127,33 @@ public class StripeCheckoutService {
                 return false;
             }
             if (expectedTargetPlan != null && !expectedTargetPlan.equalsIgnoreCase(md.get("targetPlan"))) {
+                return false;
+            }
+            String paymentStatus = session.getPaymentStatus();
+            String status = session.getStatus();
+            return "paid".equalsIgnoreCase(paymentStatus) && "complete".equalsIgnoreCase(status);
+        } catch (StripeException ex) {
+            throw new BusinessException(
+                    HttpStatus.BAD_GATEWAY,
+                    "No se pudo verificar el pago con Stripe.");
+        }
+    }
+
+    /** Verifica sesión de prepago onboarding (sin pagoId en metadata). */
+    public boolean verifyOnboardingPrepayPaid(String sessionId, String expectedTargetPlan) {
+        ensureConfigured();
+        try {
+            Stripe.apiKey = stripeSecretKey;
+            Session session = Session.retrieve(sessionId);
+            if (session == null) {
+                return false;
+            }
+            Map<String, String> md = session.getMetadata() != null ? session.getMetadata() : new HashMap<>();
+            if (!FLOW_ONBOARDING_PREPAY.equals(md.get("flowType"))) {
+                return false;
+            }
+            if (expectedTargetPlan != null
+                    && !expectedTargetPlan.equalsIgnoreCase(md.get("targetPlan"))) {
                 return false;
             }
             String paymentStatus = session.getPaymentStatus();

@@ -35,7 +35,17 @@ public final class OnboardingDtos {
             @NotBlank @Size(max = 40) String planCodigo,
             @NotBlank @Size(max = 48) String emailVerificationToken,
             @Valid @NotNull EmpresaOnboardingDto empresa,
-            @Valid @NotNull SuperAdminOnboardingDto superAdmin) {}
+            @Valid @NotNull SuperAdminOnboardingDto superAdmin,
+            /** Sesión de Stripe Checkout (prepago) cuando el plan tiene precio y el prepago está activo. */
+            @Size(max = 255) String stripeCheckoutSessionId) {}
+
+    public record PrepayCheckoutRequest(@NotBlank @Size(max = 40) String planCodigo) {}
+
+    public record ConfirmPrepayRequest(
+            @NotBlank @Size(max = 255) String sessionId, @NotBlank @Size(max = 40) String planCodigo) {}
+
+    public record CreatePrepayCheckoutResponse(
+            String checkoutUrl, String sessionId, boolean requiresRedirect, String message) {}
 
     public record EmpresaOnboardingDto(
             @NotBlank @Size(max = 200) String nombre,

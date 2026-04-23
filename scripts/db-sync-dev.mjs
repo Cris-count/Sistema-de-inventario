@@ -38,7 +38,8 @@ const MIGRATIONS = [
   'database/migrations/012_onboarding_email_challenge_totp.sql',
   'database/migrations/013_rol_compras_abastecimiento_display.sql',
   'database/migrations/014_ventas.sql',
-  'database/migrations/015_ventas_fase2.sql'
+  'database/migrations/015_ventas_fase2.sql',
+  'database/migrations/016_onboarding_prepaid_checkout.sql'
 ];
 
 const PSQL_ENV = {

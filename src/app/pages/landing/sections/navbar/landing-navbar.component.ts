@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { BRANDING_ASSETS } from '../../../../core/branding.paths';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
 import { ThemeToggleComponent } from '../../../../shared/components/theme-toggle/theme-toggle.component';
 
@@ -27,7 +28,7 @@ const LANDING = '/landing';
             class="flex shrink-0 items-center text-primary no-underline transition hover:opacity-90 dark:text-slate-100"
           >
             <img
-              src="/branding/cersik-logo-full.png"
+              [src]="brand.logoFull"
               alt="Cersik"
               class="block h-auto w-auto max-h-16 max-w-[min(44rem,calc(100vw-9rem))] object-contain object-left sm:max-h-[4.5rem] sm:max-w-[min(44rem,calc(100vw-20.5rem))] md:max-h-20 md:max-w-[min(44rem,calc(100vw-20rem))] lg:max-h-[5.25rem] xl:max-h-24"
               width="440"
@@ -91,7 +92,7 @@ const LANDING = '/landing';
               class="flex min-w-0 flex-1 items-center text-primary no-underline transition hover:opacity-90 dark:text-slate-100"
             >
               <img
-                src="/branding/cersik-logo-full.png"
+                [src]="brand.logoFull"
                 alt="Cersik"
                 class="block h-auto w-auto max-h-[4.5rem] max-w-[min(44rem,92vw)] shrink-0 object-contain object-left sm:max-h-20"
                 width="440"
@@ -158,4 +159,5 @@ const LANDING = '/landing';
 })
 export class LandingNavbarComponent {
   protected readonly LANDING = LANDING;
+  protected readonly brand = BRANDING_ASSETS;
 }

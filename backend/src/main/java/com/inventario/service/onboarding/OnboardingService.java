@@ -42,6 +42,7 @@ public class OnboardingService {
     private final SaasPagoRepository saasPagoRepository;
     private final PasswordEncoder passwordEncoder;
     private final TotpOnboardingService totpOnboardingService;
+    private final OnboardingPrepayService onboardingPrepayService;
 
     @Value("${app.onboarding.activation-default:TRIAL}")
     private String activationDefault;
@@ -63,7 +64,6 @@ public class OnboardingService {
 
     @Transactional(rollbackFor = Exception.class)
     public OnboardingRegisterResponse register(OnboardingRegisterRequest req) {
-        OnboardingActivationPolicy policy = parsePolicy(activationDefault);
         SuperAdminOnboardingDto admin = req.superAdmin();
         if (!admin.password().equals(admin.confirmPassword())) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "Las contraseñas no coinciden");
@@ -109,10 +109,14 @@ public class OnboardingService {
                 .findByCodigoIgnoreCaseAndActivoIsTrue(req.planCodigo().trim())
                 .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Plan no válido o inactivo"));
 
+        OnboardingPrepaidCheckout prepaidRow =
+                onboardingPrepayService.assertReadyForRegister(req.stripeCheckoutSessionId(), plan);
+
         Rol superRol = rolRepository
                 .findByCodigo(SecurityRoles.SUPER_ADMIN)
                 .orElseThrow(() -> new IllegalStateException("Rol SUPER_ADMIN no existe en catálogo"));
 
+        OnboardingActivationPolicy policy = resolveActivationPolicy(prepaidRow);
         Empresa empresa = buildEmpresa(req.empresa(), ident, policy);
         empresa = empresaRepository.save(empresa);
 
@@ -215,6 +219,8 @@ public class OnboardingService {
         emailChallenge.setConsumedAt(now);
         onboardingEmailChallengeRepository.save(emailChallenge);
 
+        onboardingPrepayService.markConsumed(prepaidRow);
+
         String message = switch (policy) {
             case TRIAL -> "Cuenta creada en periodo de prueba. Ya puedes iniciar sesión.";
             case ACTIVE -> "Cuenta activa. Ya puedes iniciar sesión.";
@@ -238,6 +244,13 @@ public class OnboardingService {
                 pagoId,
                 totpOtpauthUri,
                 totpSecretBase32);
+    }
+
+    private OnboardingActivationPolicy resolveActivationPolicy(OnboardingPrepaidCheckout prepaidRow) {
+        if (prepaidRow != null) {
+            return OnboardingActivationPolicy.ACTIVE;
+        }
+        return parsePolicy(activationDefault);
     }
 
     private static OnboardingActivationPolicy parsePolicy(String raw) {

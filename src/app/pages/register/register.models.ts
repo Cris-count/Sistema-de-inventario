@@ -32,6 +32,13 @@ export interface VerifyEmailResponseDto {
   message: string;
 }
 
+export interface CreatePrepayCheckoutResponseDto {
+  checkoutUrl: string | null;
+  sessionId: string | null;
+  requiresRedirect: boolean;
+  message: string;
+}
+
 export interface OnboardingRegisterRequestDto {
   planCodigo: string;
   emailVerificationToken: string;
@@ -51,6 +58,7 @@ export interface OnboardingRegisterRequestDto {
     password: string;
     confirmPassword: string;
   };
+  stripeCheckoutSessionId?: string | null;
 }
 
 export interface OnboardingRegisterResponseDto {

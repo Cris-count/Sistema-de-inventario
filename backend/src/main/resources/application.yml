@@ -64,6 +64,8 @@ app:
       # URL base del frontend para success_url / cancel_url de Checkout.
       frontend-base-url: ${APP_BILLING_FRONTEND_BASE_URL:http://localhost:4200}
   onboarding:
+    # Si es true y Stripe está configurado y el plan tiene precio > 0: obliga a pagar en Stripe antes del paso 2 del registro.
+    require-stripe-prepay: ${APP_ONBOARDING_REQUIRE_STRIPE_PREPAY:true}
     # TRIAL | PENDING_PAYMENT | ACTIVE — define el estado comercial inicial tras POST /onboarding/register-company
     activation-default: ${APP_ONBOARDING_ACTIVATION:TRIAL}
     trial-days: ${APP_ONBOARDING_TRIAL_DAYS:14}

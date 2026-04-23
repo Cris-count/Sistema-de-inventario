@@ -12,6 +12,7 @@ import {
   navVisibleForPlan,
   navVisibleForRole
 } from '../../core/navigation';
+import { BRANDING_ASSETS } from '../../core/branding.paths';
 import { EmpresaActualService } from '../../core/services/empresa-actual.service';
 import { ThemeToggleComponent } from '../components/theme-toggle/theme-toggle.component';
 
@@ -49,7 +50,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
                 [title]="'Abrir panel · ' + activeSectionLabel()"
               >
                 <img
-                  src="/branding/cersik-mark.png"
+                  [src]="brand.mark"
                   alt=""
                   class="brand-logo-img brand-logo-img--rail"
                   width="36"
@@ -64,7 +65,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
                 role="img"
               >
                 <img
-                  src="/branding/cersik-logo-full.png"
+                  [src]="brand.logoFull"
                   alt=""
                   class="brand-logo-img"
                   width="200"
@@ -170,7 +171,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
           </button>
           <div class="shell-title-wrap">
             <img
-              src="/branding/cersik-mark.png"
+              [src]="brand.mark"
               alt=""
               class="shell-header-mark"
               width="32"
@@ -780,6 +781,7 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
   `
 })
 export class AppShellComponent {
+  protected readonly brand = BRANDING_ASSETS;
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly empresaApi = inject(EmpresaActualService);

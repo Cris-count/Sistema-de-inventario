@@ -6,7 +6,7 @@ import {
   OnInit,
   signal
 } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { RegisterApiService } from './register-api.service';
 import {
   emptyEmpresaForm,
@@ -31,6 +31,8 @@ import { PlanesService } from '../../core/services/planes.service';
 
 interface RegisterDraft {
   planCodigo: string | null;
+  /** Sesión Stripe prepago verificada antes de pasos 2–5 (planes de pago). */
+  stripeCheckoutSessionId: string | null;
   emailVerificationToken: string | null;
   verifyEmail: string;
   verifyCode: string;
@@ -112,6 +114,8 @@ interface RegisterDraft {
             [plans]="plans()"
             [selectedCodigo]="draft().planCodigo"
             [hint]="stepHint()"
+            [prepayBusy]="planPayBusy()"
+            [confirmingPrepay]="confirmingPrepay()"
             (pick)="onPickPlan($event)"
             (advance)="advanceFromPlan()"
           />
@@ -172,6 +176,7 @@ export class RegisterPageComponent implements OnInit {
   private readonly api = inject(RegisterApiService);
   private readonly planesApi = inject(PlanesService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   /** Expuesto en plantilla si falla la carga de planes. */
   readonly apiBaseUrl = environment.apiUrl;
@@ -180,6 +185,7 @@ export class RegisterPageComponent implements OnInit {
   readonly plans = signal<PublicPlanDto[]>([]);
   readonly draft = signal<RegisterDraft>({
     planCodigo: null,
+    stripeCheckoutSessionId: null,
     emailVerificationToken: null,
     verifyEmail: '',
     verifyCode: '',
@@ -195,6 +201,8 @@ export class RegisterPageComponent implements OnInit {
   readonly emailVerifyVerifying = signal(false);
   readonly emailCodeSent = signal(false);
   readonly emailVerificationDone = signal(false);
+  readonly planPayBusy = signal(false);
+  readonly confirmingPrepay = signal(false);
 
   readonly selectedPlan = computed(() => {
     const c = this.draft().planCodigo;
@@ -224,15 +232,61 @@ export class RegisterPageComponent implements OnInit {
             this.draft.update((d) => ({ ...d, planCodigo: match.codigo }));
           }
         }
+        this.handleStripeReturnQuery();
       },
       error: () =>
         this.loadError.set('No se pudieron cargar los planes. La API no respondió o la URL no es la correcta.')
     });
   }
 
+  /** Tras volver de Stripe Checkout: confirma prepago y pasa al paso 2. */
+  private handleStripeReturnQuery(): void {
+    const qp = this.route.snapshot.queryParamMap;
+    const prepay = qp.get('stripePrepay');
+    const sid = qp.get('session_id');
+    if (prepay === '1' && sid) {
+      const storedPlan = globalThis.sessionStorage?.getItem('registro_stripe_plan') ?? null;
+      const planCodigo = this.draft().planCodigo ?? storedPlan;
+      if (!planCodigo) {
+        this.stepHint.set('No encontramos el plan asociado al pago. Elegí de nuevo el plan y reintentá.');
+        void this.router.navigate(['/registro'], { replaceUrl: true, queryParams: {} });
+        return;
+      }
+      if (storedPlan && !this.draft().planCodigo) {
+        this.draft.update((d) => ({ ...d, planCodigo: storedPlan }));
+      }
+      this.confirmingPrepay.set(true);
+      this.api.confirmPrepaidCheckout(sid, planCodigo).subscribe({
+        next: () => {
+          this.confirmingPrepay.set(false);
+          globalThis.sessionStorage?.removeItem('registro_stripe_plan');
+          this.draft.update((d) => ({ ...d, stripeCheckoutSessionId: sid, planCodigo }));
+          this.stepHint.set(null);
+          void this.router.navigate(['/registro'], { replaceUrl: true, queryParams: {} });
+          this.goStep(2);
+        },
+        error: (err: unknown) => {
+          this.confirmingPrepay.set(false);
+          this.stepHint.set(readProblemDetail(err));
+          void this.router.navigate(['/registro'], { replaceUrl: true, queryParams: {} });
+        }
+      });
+      return;
+    }
+    if (prepay === '0') {
+      this.stepHint.set('Pago cancelado. Podés reintentar cuando quieras.');
+      void this.router.navigate(['/registro'], { replaceUrl: true, queryParams: {} });
+    }
+  }
+
   onPickPlan(codigo: string): void {
     this.stepHint.set(null);
-    this.draft.update((d) => ({ ...d, planCodigo: codigo }));
+    this.draft.update((d) => ({
+      ...d,
+      planCodigo: codigo,
+      stripeCheckoutSessionId:
+        d.planCodigo !== null && d.planCodigo !== codigo ? null : d.stripeCheckoutSessionId
+    }));
   }
 
   onVerifyEmailInput(v: string): void {
@@ -262,11 +316,35 @@ export class RegisterPageComponent implements OnInit {
 
   advanceFromPlan(): void {
     this.stepHint.set(null);
-    if (!this.draft().planCodigo) {
+    const planCodigo = this.draft().planCodigo;
+    if (!planCodigo) {
       this.stepHint.set('Selecciona un plan para continuar.');
       return;
     }
-    this.goStep(2);
+    if (this.draft().stripeCheckoutSessionId) {
+      this.goStep(2);
+      return;
+    }
+    this.planPayBusy.set(true);
+    this.api.createPrepaidCheckout(planCodigo).subscribe({
+      next: (r) => {
+        this.planPayBusy.set(false);
+        if (r.requiresRedirect && r.checkoutUrl) {
+          try {
+            globalThis.sessionStorage?.setItem('registro_stripe_plan', planCodigo);
+          } catch {
+            /* ignore */
+          }
+          globalThis.location.href = r.checkoutUrl;
+          return;
+        }
+        this.goStep(2);
+      },
+      error: (err: unknown) => {
+        this.planPayBusy.set(false);
+        this.stepHint.set(readProblemDetail(err));
+      }
+    });
   }
 
   sendVerificationEmail(): void {
@@ -413,6 +491,7 @@ export class RegisterPageComponent implements OnInit {
       .registerCompany({
         planCodigo: d.planCodigo,
         emailVerificationToken: d.emailVerificationToken,
+        stripeCheckoutSessionId: d.stripeCheckoutSessionId,
         empresa: {
           nombre: d.empresa.nombre.trim(),
           identificacion: d.empresa.identificacion.trim(),

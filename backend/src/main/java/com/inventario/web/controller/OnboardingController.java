@@ -2,9 +2,13 @@ package com.inventario.web.controller;
 
 import com.inventario.ratelimit.ApplicationRateLimitService;
 import com.inventario.service.onboarding.OnboardingEmailVerificationService;
+import com.inventario.service.onboarding.OnboardingPrepayService;
 import com.inventario.service.onboarding.OnboardingService;
+import com.inventario.web.dto.onboarding.OnboardingDtos.ConfirmPrepayRequest;
+import com.inventario.web.dto.onboarding.OnboardingDtos.CreatePrepayCheckoutResponse;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterRequest;
 import com.inventario.web.dto.onboarding.OnboardingDtos.OnboardingRegisterResponse;
+import com.inventario.web.dto.onboarding.OnboardingDtos.PrepayCheckoutRequest;
 import com.inventario.web.dto.onboarding.OnboardingDtos.SendEmailVerificationRequest;
 import com.inventario.web.dto.onboarding.OnboardingDtos.SendEmailVerificationResponse;
 import com.inventario.web.dto.onboarding.OnboardingDtos.VerifyEmailRequest;
@@ -28,7 +32,27 @@ public class OnboardingController {
 
     private final OnboardingService onboardingService;
     private final OnboardingEmailVerificationService emailVerificationService;
+    private final OnboardingPrepayService onboardingPrepayService;
     private final ApplicationRateLimitService applicationRateLimitService;
+
+    @PostMapping("/prepaid-checkout")
+    @SecurityRequirements
+    @Operation(
+            summary = "Crear sesión Stripe (pago antes del registro)",
+            description = "Tras elegir plan con precio > 0: devuelve checkoutUrl para redirigir al usuario. Requiere STRIPE_SECRET_KEY.")
+    public ResponseEntity<CreatePrepayCheckoutResponse> prepaidCheckout(@Valid @RequestBody PrepayCheckoutRequest body) {
+        return ResponseEntity.ok(onboardingPrepayService.createPrepayCheckout(body.planCodigo()));
+    }
+
+    @PostMapping("/confirm-prepaid-checkout")
+    @SecurityRequirements
+    @Operation(
+            summary = "Confirmar pago prepago (vuelta desde Stripe)",
+            description = "Verifica con Stripe y registra la sesión para exigirla en POST /register-company. Idempotente.")
+    public ResponseEntity<Void> confirmPrepaidCheckout(@Valid @RequestBody ConfirmPrepayRequest body) {
+        onboardingPrepayService.confirmPrepayCheckout(body.sessionId(), body.planCodigo());
+        return ResponseEntity.ok().build();
+    }
 
     @PostMapping("/send-email-verification")
     @SecurityRequirements

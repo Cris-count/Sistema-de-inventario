@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { BRANDING_ASSETS } from '../../../../core/branding.paths';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
 
 @Component({
@@ -25,7 +26,7 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
         <div class="max-w-2xl lg:max-w-3xl">
           <div class="mb-3 sm:mb-4">
             <img
-              src="/branding/cersik-logo-full.png"
+              [src]="brand.logoFull"
               alt="Cersik"
               class="block h-auto w-auto max-h-20 max-w-[min(100%,28rem)] object-contain object-left drop-shadow-[0_2px_16px_rgba(0,0,0,0.45)] sm:max-h-24 sm:max-w-[32rem] lg:max-h-28 lg:max-w-xl xl:max-h-[7.5rem] xl:max-w-2xl"
               width="480"
@@ -184,6 +185,7 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
   `
 })
 export class LandingHeroComponent {
+  protected readonly brand = BRANDING_ASSETS;
   /** Ruta servida por Angular CLI en runtime. */
   readonly heroBackgroundImage = "url('assets/images/landing/portada.jpeg')";
 }

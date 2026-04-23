@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, input, output } from '@angular/core';
 import type { PublicPlanDto } from '../register.models';
 import { UiButtonComponent } from '../../../shared/components/ui/button/ui-button.component';
 import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/format-plan-price';
@@ -11,9 +11,16 @@ import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/
     <div class="space-y-2">
       <h2 class="text-xl font-semibold tracking-tight text-primary dark:text-slate-100">1. Elige tu plan</h2>
       <p class="text-sm text-secondary dark:text-slate-400">
-        Mismos precios que en la página principal. Podrás escalar sin límites según política comercial cuando lo necesites.
+        Mismos precios que en la página principal. Si el plan tiene costo mensual, completarás el pago con tarjeta (Stripe)
+        antes de verificar tu correo y los demás datos.
       </p>
     </div>
+
+    @if (confirmingPrepay) {
+      <p class="mt-4 text-sm font-medium text-secondary dark:text-slate-300" role="status">
+        Confirmando tu pago con el servidor…
+      </p>
+    }
 
     <div class="mt-6 grid gap-4 sm:grid-cols-1">
       @for (p of plans(); track p.codigo) {
@@ -57,10 +64,10 @@ import { formatPlanPrecioMensual, planMensualCadence } from '../../../core/util/
       <app-ui-button
         variant="gradient"
         class="order-1 w-full sm:order-2 sm:min-w-[14rem]"
-        [disabled]="!selectedCodigo()"
+        [disabled]="!selectedCodigo() || prepayBusy || confirmingPrepay"
         (click)="advance.emit()"
       >
-        Siguiente: verificar correo
+        {{ advanceCta() }}
       </app-ui-button>
     </div>
   `
@@ -69,8 +76,22 @@ export class RegisterStepPlanComponent {
   readonly plans = input.required<PublicPlanDto[]>();
   readonly selectedCodigo = input<string | null>(null);
   readonly hint = input<string | null>(null);
+  @Input() prepayBusy = false;
+  @Input() confirmingPrepay = false;
   readonly pick = output<string>();
   readonly advance = output<void>();
+
+  advanceCta(): string {
+    if (this.prepayBusy) {
+      return 'Abriendo pago…';
+    }
+    const code = this.selectedCodigo();
+    const p = code ? this.plans().find((x) => x.codigo === code) : undefined;
+    if (p && p.precioMensual > 0) {
+      return 'Continuar al pago';
+    }
+    return 'Siguiente: verificar correo';
+  }
 
   etiquetaPrecio(p: PublicPlanDto): string {
     const base = formatPlanPrecioMensual(p);
