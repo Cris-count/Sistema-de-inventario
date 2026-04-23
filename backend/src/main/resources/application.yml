@@ -142,6 +142,8 @@ app:
     compras-password: ${APP_SEED_COMPRAS_PASSWORD:Compras123!}
     gerencia-email: ${APP_SEED_GERENCIA_EMAIL:gerencia@inventario.local}
     gerencia-password: ${APP_SEED_GERENCIA_PASSWORD:Gerencia123!}
+    ventas-email: ${APP_SEED_VENTAS_EMAIL:ventas@inventario.local}
+    ventas-password: ${APP_SEED_VENTAS_PASSWORD:Ventas123!}
   inventory:
     stock-alerts:
       # true: intenta envío SMTP cuando exista bean JavaMailSender (requiere spring.mail.host + credenciales).

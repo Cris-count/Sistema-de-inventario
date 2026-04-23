@@ -3,8 +3,10 @@ import {
   ROLES_ADMIN,
   ROLES_ENTRADA,
   ROLES_LECTURA_API,
+  ROLES_PANEL_ABASTECIMIENTO,
   ROLES_MOVIMIENTO_BODEGA,
-  ROLES_PROVEEDOR_LECTURA
+  ROLES_PROVEEDOR_LECTURA,
+  ROLES_VENTAS_PANEL
 } from './core/auth/app-roles';
 import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
@@ -75,6 +77,26 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ROLES_LECTURA_API },
         loadComponent: () => import('./features/inventario/inventario.page').then((m) => m.InventarioPage)
+      },
+      {
+        path: 'abastecimiento',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_PANEL_ABASTECIMIENTO },
+        loadComponent: () =>
+          import('./features/abastecimiento/abastecimiento.page').then((m) => m.AbastecimientoPage)
+      },
+      {
+        path: 'ventas',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_VENTAS_PANEL },
+        loadComponent: () => import('./features/ventas/ventas.page').then((m) => m.VentasPage)
+      },
+      {
+        path: 'ventas/detalle/:id',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_VENTAS_PANEL },
+        loadComponent: () =>
+          import('./features/ventas/venta-detalle.page').then((m) => m.VentaDetallePage)
       },
       {
         path: 'mensajes-pedido',

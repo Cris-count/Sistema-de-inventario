@@ -92,6 +92,35 @@ public class MovimientoService {
         return toResponse(m);
     }
 
+    /**
+     * Descuenta stock como {@link #registrarSalida(SalidaRequest)} pero con tipo {@link TipoMovimiento#SALIDA_POR_VENTA}
+     * y motivo de negocio {@code VENTA}. Pensado para ser llamado desde el flujo transaccional de ventas.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public Movimiento registrarMovimientoSalidaPorVenta(
+            Long bodegaId, List<LineaSalida> lineas, String observacion, String referenciaDocumento) {
+        Usuario usuario = currentUserService.requireUsuario();
+        Long empresaId = usuario.getEmpresa().getId();
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.MOVIMIENTOS_BASICOS);
+        Movimiento m = baseCabecera(
+                TipoMovimiento.SALIDA_POR_VENTA, "VENTA", usuario, null, referenciaDocumento, observacion);
+
+        Set<String> stockEvalKeys = new HashSet<>();
+        for (LineaSalida linea : lineas) {
+            if (!linea.bodegaOrigenId().equals(bodegaId)) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "Toda la venta debe corresponder a una sola bodega");
+            }
+            Producto p = tenantEntityLoader.requireProductoActivo(linea.productoId(), empresaId);
+            Bodega b = tenantEntityLoader.requireBodegaActiva(linea.bodegaOrigenId(), empresaId);
+            agregarDetalle(m, p, linea.cantidad(), b, null);
+            restarStock(p.getId(), b.getId(), linea.cantidad());
+            agregarClaveStockEval(stockEvalKeys, p.getId(), b.getId());
+        }
+        movimientoRepository.save(m);
+        publicarEvaluacionesStock(empresaId, stockEvalKeys);
+        return m;
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public MovimientoResponse registrarTransferencia(TransferenciaRequest req) {
         Usuario usuario = currentUserService.requireUsuario();
@@ -195,6 +224,35 @@ public class MovimientoService {
         movimientoRepository.save(m);
         publicarEvaluacionesStock(empresaId, stockEvalKeys);
         return toResponse(m);
+    }
+
+    /**
+     * Revierte el descuento de stock de una {@link TipoMovimiento#SALIDA_POR_VENTA} completada y marca el movimiento
+     * como {@link EstadoMovimiento#ANULADO}. Debe ejecutarse dentro de la misma transacción que la anulación de venta.
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void anularMovimientoSalidaPorVenta(Long movimientoId, Long empresaId) {
+        planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.MOVIMIENTOS_BASICOS);
+        Movimiento m = movimientoRepository
+                .findByIdAndEmpresaId(movimientoId, empresaId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Movimiento no encontrado"));
+        if (m.getTipoMovimiento() != TipoMovimiento.SALIDA_POR_VENTA) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "Solo aplica a movimientos de salida por venta");
+        }
+        if (m.getEstado() != EstadoMovimiento.COMPLETADO) {
+            throw new BusinessException(HttpStatus.CONFLICT, "El movimiento no está en estado completado");
+        }
+        Set<String> stockEvalKeys = new HashSet<>();
+        for (MovimientoDetalle d : m.getDetalles()) {
+            if (d.getBodegaOrigen() == null) {
+                throw new BusinessException(HttpStatus.CONFLICT, "Línea de movimiento sin bodega origen");
+            }
+            sumarStock(d.getProducto().getId(), d.getBodegaOrigen().getId(), d.getCantidad());
+            agregarClaveStockEval(stockEvalKeys, d.getProducto().getId(), d.getBodegaOrigen().getId());
+        }
+        m.setEstado(EstadoMovimiento.ANULADO);
+        movimientoRepository.save(m);
+        publicarEvaluacionesStock(empresaId, stockEvalKeys);
     }
 
     private Movimiento baseCabecera(TipoMovimiento tipo, String motivo, Usuario usuario, Proveedor proveedor,

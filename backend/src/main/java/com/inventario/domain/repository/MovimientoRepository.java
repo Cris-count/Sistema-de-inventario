@@ -62,4 +62,28 @@ public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
     Optional<Long> findLatestProveedorIdEntradaProducto(
             @Param("empresaId") long empresaId,
             @Param("productoId") long productoId);
+
+    @Query("""
+            SELECT MAX(m.fechaMovimiento) FROM Movimiento m JOIN m.detalles d
+            WHERE m.empresa.id = :empresaId
+              AND m.tipoMovimiento = :entrada
+              AND d.producto.id = :productoId
+              AND d.bodegaDestino.id = :bodegaId
+            """)
+    Optional<Instant> findUltimaFechaEntradaProductoBodega(
+            @Param("empresaId") long empresaId,
+            @Param("productoId") long productoId,
+            @Param("bodegaId") long bodegaId,
+            @Param("entrada") TipoMovimiento entrada);
+
+    @Query("""
+            SELECT COUNT(m) FROM Movimiento m
+            WHERE m.empresa.id = :empresaId
+              AND m.tipoMovimiento = :entrada
+              AND m.fechaMovimiento >= :desde
+            """)
+    long countEntradasDesde(
+            @Param("empresaId") long empresaId,
+            @Param("entrada") TipoMovimiento entrada,
+            @Param("desde") Instant desde);
 }

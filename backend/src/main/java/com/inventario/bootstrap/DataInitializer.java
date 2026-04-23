@@ -38,6 +38,8 @@ public class DataInitializer implements CommandLineRunner {
     private static final String DEF_COMPRAS_PASSWORD = "Compras123!";
     private static final String DEF_GERENCIA_EMAIL = "gerencia@inventario.local";
     private static final String DEF_GERENCIA_PASSWORD = "Gerencia123!";
+    private static final String DEF_VENTAS_EMAIL = "ventas@inventario.local";
+    private static final String DEF_VENTAS_PASSWORD = "Ventas123!";
 
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
@@ -69,6 +71,12 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${app.seed.gerencia-password:}")
     private String gerenciaPassword;
 
+    @Value("${app.seed.ventas-email:}")
+    private String ventasEmail;
+
+    @Value("${app.seed.ventas-password:}")
+    private String ventasPassword;
+
     @Value("${app.seed.empresa-identificacion:DEV-DEFAULT-001}")
     private String empresaIdentificacion;
 
@@ -84,8 +92,21 @@ public class DataInitializer implements CommandLineRunner {
         Empresa empresa = ensureEmpresaSemilla();
         ensureUser(adminEmail, adminPassword, "Administrador", "Sistema", "ADMIN", empresa);
         ensureUser(orDefaultEmail(auxEmail, DEF_AUX_EMAIL), orDefaultPassword(auxPassword, DEF_AUX_PASSWORD), "Auxiliar", "Bodega", "AUX_BODEGA", empresa);
-        ensureUser(orDefaultEmail(comprasEmail, DEF_COMPRAS_EMAIL), orDefaultPassword(comprasPassword, DEF_COMPRAS_PASSWORD), "Compras", "Demo", "COMPRAS", empresa);
+        ensureUser(
+                orDefaultEmail(comprasEmail, DEF_COMPRAS_EMAIL),
+                orDefaultPassword(comprasPassword, DEF_COMPRAS_PASSWORD),
+                "Resp. abastecimiento",
+                "Demo",
+                "COMPRAS",
+                empresa);
         ensureUser(orDefaultEmail(gerenciaEmail, DEF_GERENCIA_EMAIL), orDefaultPassword(gerenciaPassword, DEF_GERENCIA_PASSWORD), "Gerencia", "Demo", "GERENCIA", empresa);
+        ensureUser(
+                orDefaultEmail(ventasEmail, DEF_VENTAS_EMAIL),
+                orDefaultPassword(ventasPassword, DEF_VENTAS_PASSWORD),
+                "Resp. ventas",
+                "Demo",
+                "VENTAS",
+                empresa);
         ensureSuperAdmin(empresa);
     }
 

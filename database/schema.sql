@@ -286,7 +286,7 @@ CREATE TABLE IF NOT EXISTS movimiento (
     id                    BIGSERIAL PRIMARY KEY,
     empresa_id            BIGINT      NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
     tipo_movimiento       VARCHAR(30) NOT NULL
-        CHECK (tipo_movimiento IN ('ENTRADA', 'SALIDA', 'TRANSFERENCIA', 'AJUSTE')),
+        CHECK (tipo_movimiento IN ('ENTRADA', 'SALIDA', 'TRANSFERENCIA', 'AJUSTE', 'SALIDA_POR_VENTA')),
     motivo                VARCHAR(80),
     fecha_movimiento      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     usuario_id            BIGINT      NOT NULL REFERENCES usuario (id) ON DELETE RESTRICT,
@@ -328,6 +328,58 @@ COMMENT ON TABLE movimiento IS 'Cabecera de documento de inventario; trazabilida
 COMMENT ON TABLE movimiento_detalle IS 'Líneas: validar origen/destino según movimiento.tipo_movimiento en aplicación.';
 COMMENT ON TABLE inventario IS 'Saldo actual por producto y bodega; actualizar en servicio transaccional junto al detalle.';
 
+CREATE TABLE IF NOT EXISTS cliente (
+    id          BIGSERIAL PRIMARY KEY,
+    empresa_id  BIGINT       NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
+    nombre      VARCHAR(200) NOT NULL,
+    documento   VARCHAR(32),
+    telefono    VARCHAR(40),
+    email       VARCHAR(255),
+    activo      BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cliente_empresa ON cliente (empresa_id);
+CREATE INDEX IF NOT EXISTS idx_cliente_empresa_nombre ON cliente (empresa_id, nombre);
+
+CREATE TABLE IF NOT EXISTS venta_consecutivo (
+    empresa_id BIGINT PRIMARY KEY REFERENCES empresa (id) ON DELETE RESTRICT,
+    ultimo     BIGINT NOT NULL DEFAULT 0 CHECK (ultimo >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS venta (
+    id               BIGSERIAL PRIMARY KEY,
+    empresa_id       BIGINT        NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
+    bodega_id        BIGINT        NOT NULL REFERENCES bodega (id) ON DELETE RESTRICT,
+    usuario_id       BIGINT        NOT NULL REFERENCES usuario (id) ON DELETE RESTRICT,
+    cliente_id       BIGINT        REFERENCES cliente (id) ON DELETE RESTRICT,
+    movimiento_id    BIGINT        NOT NULL UNIQUE REFERENCES movimiento (id) ON DELETE RESTRICT,
+    codigo_publico   VARCHAR(32)   NOT NULL,
+    fecha_venta      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    total            NUMERIC(14, 2) NOT NULL CHECK (total >= 0),
+    estado           VARCHAR(24)   NOT NULL DEFAULT 'CONFIRMADA'
+        CHECK (estado IN ('CONFIRMADA', 'ANULADA')),
+    observacion      TEXT,
+    created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    CONSTRAINT uk_venta_empresa_codigo_publico UNIQUE (empresa_id, codigo_publico)
+);
+
+CREATE INDEX IF NOT EXISTS idx_venta_empresa_fecha ON venta (empresa_id, fecha_venta DESC);
+CREATE INDEX IF NOT EXISTS idx_venta_usuario ON venta (usuario_id);
+CREATE INDEX IF NOT EXISTS idx_venta_cliente ON venta (cliente_id) WHERE cliente_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS venta_detalle (
+    id                BIGSERIAL PRIMARY KEY,
+    venta_id          BIGINT         NOT NULL REFERENCES venta (id) ON DELETE RESTRICT,
+    producto_id       BIGINT         NOT NULL REFERENCES producto (id) ON DELETE RESTRICT,
+    cantidad          NUMERIC(14, 4) NOT NULL CHECK (cantidad > 0),
+    precio_unitario   NUMERIC(14, 2) NOT NULL CHECK (precio_unitario >= 0),
+    subtotal          NUMERIC(14, 2) NOT NULL CHECK (subtotal >= 0)
+);
+
+CREATE INDEX IF NOT EXISTS idx_venta_detalle_venta ON venta_detalle (venta_id);
+CREATE INDEX IF NOT EXISTS idx_venta_detalle_producto ON venta_detalle (producto_id);
+
 -- Empresa semilla (opcional en BD vacía; DataInitializer puede crear otra vía API en el futuro)
 INSERT INTO empresa (nombre, identificacion, email_contacto, estado, created_at)
 SELECT v.nombre, v.identificacion, v.email_contacto, v.estado, NOW()
@@ -345,7 +397,8 @@ FROM (
         ('SUPER_ADMIN', 'Super administrador', 'Administrador principal de la empresa (multi-tenant)'),
         ('ADMIN',       'Administrador',      'Acceso total a la información y configuración'),
         ('AUX_BODEGA',  'Auxiliar de bodega', 'Operaciones de inventario y consultas operativas'),
-        ('COMPRAS',     'Compras',            'Consulta de stock y registro de abastecimiento'),
+        ('COMPRAS',     'Responsable de abastecimiento', 'Consulta de stock, panel de reposición y registro de entradas de abastecimiento'),
+        ('VENTAS',      'RESPONSABLE DE VENTAS', 'Registro de ventas, consulta de stock y salidas por venta'),
         ('GERENCIA',    'Gerencia',           'Consulta de reportes e inventario')
 ) AS v(codigo, nombre, descripcion)
 WHERE NOT EXISTS (SELECT 1 FROM rol r WHERE r.codigo = v.codigo);

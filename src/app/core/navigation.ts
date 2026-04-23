@@ -1,4 +1,12 @@
-import { ROLES_ADMIN, ROLES_ENTRADA, ROLES_LECTURA_API, ROLES_MOVIMIENTO_BODEGA, ROLES_PROVEEDOR_LECTURA } from './auth/app-roles';
+import {
+  ROLES_ADMIN,
+  ROLES_ENTRADA,
+  ROLES_LECTURA_API,
+  ROLES_PANEL_ABASTECIMIENTO,
+  ROLES_MOVIMIENTO_BODEGA,
+  ROLES_PROVEEDOR_LECTURA,
+  ROLES_VENTAS_PANEL
+} from './auth/app-roles';
 import { PlanEntitlementCodes } from './plan-entitlement-codes';
 
 /** Enlaces de navegación; `roles` vacío = todos los autenticados. */
@@ -63,6 +71,22 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ROLES_LECTURA_API,
     requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock],
     navSection: 'Inventario'
+  },
+  {
+    parts: ['abastecimiento'],
+    label: 'Abastecimiento',
+    icon: '📋',
+    roles: ROLES_PANEL_ABASTECIMIENTO,
+    requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock],
+    navSection: 'Inventario'
+  },
+  {
+    parts: ['ventas'],
+    label: 'Ventas',
+    icon: '🛒',
+    roles: ROLES_VENTAS_PANEL,
+    requiresAnyPlanModule: [PlanEntitlementCodes.consulta_stock],
+    navSection: 'Ventas'
   },
   {
     parts: ['mensajes-pedido'],

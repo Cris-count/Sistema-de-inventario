@@ -20,6 +20,7 @@ public class TenantEntityLoader {
     private final CategoriaRepository categoriaRepository;
     private final ProveedorRepository proveedorRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
 
     public Producto requireProductoInTenant(Long id, Long empresaId) {
         return productoRepository.findByIdAndEmpresaId(id, empresaId)
@@ -68,5 +69,15 @@ public class TenantEntityLoader {
     public Usuario requireUsuarioInTenant(Long id, Long empresaId) {
         return usuarioRepository.findByIdAndEmpresaId(id, empresaId)
                 .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+    }
+
+    public Cliente requireClienteActivo(Long id, Long empresaId) {
+        Cliente c = clienteRepository
+                .findByIdAndEmpresa_Id(id, empresaId)
+                .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Cliente no encontrado"));
+        if (!Boolean.TRUE.equals(c.getActivo())) {
+            throw new BusinessException(HttpStatus.CONFLICT, "Cliente inactivo");
+        }
+        return c;
     }
 }

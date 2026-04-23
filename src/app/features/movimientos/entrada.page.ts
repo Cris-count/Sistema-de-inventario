@@ -1,6 +1,6 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BodegaService } from '../../core/api/bodega.service';
 import { MovimientoApiService } from '../../core/api/movimiento.service';
 import { ProductoService } from '../../core/api/producto.service';
@@ -335,6 +335,7 @@ export class MovEntradaPage implements OnInit {
   private readonly api = inject(MovimientoApiService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
   private readonly productoApi = inject(ProductoService);
   private readonly bodegaApi = inject(BodegaService);
   private readonly proveedorApi = inject(ProveedorService);
@@ -391,6 +392,7 @@ export class MovEntradaPage implements OnInit {
       this.catalogLoadsPending--;
       if (this.catalogLoadsPending <= 0) {
         this.catalogLoading.set(false);
+        this.applyQueryPrefillFromAbastecimiento();
       }
     };
 
@@ -431,6 +433,34 @@ export class MovEntradaPage implements OnInit {
     }
 
     this.addLine();
+  }
+
+  /**
+   * Desde el panel de abastecimiento: ?productoId=&bodegaId=&proveedorId= precarga la primera línea y el proveedor.
+   */
+  private applyQueryPrefillFromAbastecimiento(): void {
+    const q = this.route.snapshot.queryParamMap;
+    const pidRaw = q.get('productoId');
+    const bidRaw = q.get('bodegaId');
+    const provRaw = q.get('proveedorId');
+    const pid = pidRaw != null && pidRaw !== '' ? Number(pidRaw) : NaN;
+    const bid = bidRaw != null && bidRaw !== '' ? Number(bidRaw) : NaN;
+    if (!Number.isFinite(pid) || pid <= 0 || !Number.isFinite(bid) || bid <= 0) {
+      return;
+    }
+    const matchP = this.productos().some((p) => p.id === pid);
+    const matchB = this.bodegas().some((b) => b.id === bid);
+    if (!matchP || !matchB) {
+      return;
+    }
+    const first = this.lineGroupAt(0);
+    first.patchValue({ productoId: pid, bodegaDestinoId: bid });
+    if (this.canPickProveedor() && provRaw != null && provRaw !== '') {
+      const provId = Number(provRaw);
+      if (Number.isFinite(provId) && provId > 0 && this.proveedores().some((p) => p.id === provId)) {
+        this.form.patchValue({ proveedorId: provId });
+      }
+    }
   }
 
   lineGroupAt(i: number): FormGroup {

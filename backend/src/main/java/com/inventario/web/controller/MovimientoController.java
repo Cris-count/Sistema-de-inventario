@@ -5,6 +5,7 @@ import com.inventario.domain.entity.TipoMovimiento;
 import com.inventario.service.CurrentUserService;
 import com.inventario.service.MovimientoService;
 import com.inventario.service.catalog.MovimientoConsultaService;
+import com.inventario.time.ZonaNegocio;
 import com.inventario.web.dto.MovimientoDtos.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -16,7 +17,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 
 @RestController
 @RequestMapping("/api/v1/movimientos")
@@ -57,7 +57,7 @@ public class MovimientoController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA','VENTAS')")
     @Operation(summary = "Detalle de movimiento")
     public MovimientoResponse get(@PathVariable Long id) {
         Long empresaId = currentUserService.requireEmpresaId();
@@ -65,15 +65,15 @@ public class MovimientoController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA','VENTAS')")
     @Operation(summary = "Historial de movimientos")
     public Page<Movimiento> listar(
             @RequestParam(required = false) TipoMovimiento tipo,
             @RequestParam LocalDate desde,
             @RequestParam LocalDate hasta,
             Pageable pageable) {
-        var iDesde = desde.atStartOfDay().toInstant(ZoneOffset.UTC);
-        var iHasta = hasta.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
+        var iDesde = ZonaNegocio.inicioDiaInclusive(desde);
+        var iHasta = ZonaNegocio.finRangoExclusivo(hasta);
         return movimientoConsultaService.listar(tipo, iDesde, iHasta, pageable);
     }
 }

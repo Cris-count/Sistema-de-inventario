@@ -42,14 +42,14 @@ public class ProductoController {
     ) {}
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA','VENTAS')")
     @Operation(summary = "Listar productos")
     public Page<Producto> listar(Pageable pageable) {
         return productoCatalogService.listar(pageable);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA','VENTAS')")
     @Operation(summary = "Detalle producto")
     public Producto get(@PathVariable Long id) {
         return productoCatalogService.obtener(id);
