@@ -6,9 +6,11 @@ import com.inventario.domain.repository.SuscripcionRepository;
 import com.inventario.service.catalog.EmpresaProfileService;
 import com.inventario.service.saas.PlanEntitlementService;
 import com.inventario.service.saas.PlanEntitlements;
+import com.inventario.service.saas.SubscriptionCheckoutService;
 import com.inventario.service.saas.SubscriptionPlanChangeService;
 import com.inventario.web.dto.EmpresaMiDtos.EmpresaMiUpdateRequest;
 import com.inventario.web.dto.empresa.CambioPlanDtos;
+import com.inventario.web.dto.empresa.PlanCheckoutDtos;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -32,6 +34,7 @@ public class EmpresaController {
     private final SuscripcionRepository suscripcionRepository;
     private final PlanEntitlementService planEntitlementService;
     private final SubscriptionPlanChangeService subscriptionPlanChangeService;
+    private final SubscriptionCheckoutService subscriptionCheckoutService;
 
     public record EmpresaActualResponse(
             Long id,
@@ -93,6 +96,25 @@ public class EmpresaController {
     public CambioPlanDtos.CambioPlanCancelacionResponse cancelarCambioPlanPendiente() {
         Empresa e = empresaProfileService.miEmpresa();
         return subscriptionPlanChangeService.cancelarCambioPendiente(e.getId());
+    }
+
+    @PostMapping("/checkout/session")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Crear sesión de Stripe Checkout (test o live) para compra inicial o upgrade")
+    public PlanCheckoutDtos.CreateCheckoutSessionResponse createCheckoutSession(
+            @Valid @RequestBody PlanCheckoutDtos.CreateCheckoutSessionRequest req) {
+        Empresa e = empresaProfileService.miEmpresa();
+        return subscriptionCheckoutService.createCheckoutSession(e.getId(), req.planCodigo());
+    }
+
+    @PostMapping("/checkout/session/{pagoId}/resolve")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
+    @Operation(summary = "Resolver checkout Stripe (SUCCESS con session_id, FAILURE, CANCELLED)")
+    public PlanCheckoutDtos.ResolveCheckoutSessionResponse resolveCheckoutSession(
+            @PathVariable Long pagoId,
+            @Valid @RequestBody PlanCheckoutDtos.ResolveCheckoutSessionRequest req) {
+        Empresa e = empresaProfileService.miEmpresa();
+        return subscriptionCheckoutService.resolveCheckoutSession(e.getId(), pagoId, req.result(), req.sessionId());
     }
 
     private static EmpresaActualResponse toResponse(

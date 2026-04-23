@@ -163,12 +163,15 @@ public class SubscriptionPlanChangeService {
     }
 
     private PendingPlanStatus normalizePendingPlanChange(Long empresaId, Instant now) {
-        Optional<SaasCompra> compraOpt = saasCompraRepository
-                .findFirstByEmpresa_IdAndTipoAndEstadoOrderByIdDesc(empresaId, SaasCompraTipo.CAMBIO_PLAN, EstadoCompra.PENDIENTE_PAGO);
+        Optional<SaasCompra> compraOpt =
+                saasCompraRepository.findFirstByEmpresa_IdAndEstadoOrderByIdDesc(empresaId, EstadoCompra.PENDIENTE_PAGO);
         if (compraOpt.isEmpty()) {
             return new PendingPlanStatus(null, null);
         }
         SaasCompra compra = compraOpt.get();
+        if (compra.getTipo() != SaasCompraTipo.CAMBIO_PLAN && compra.getTipo() != SaasCompraTipo.ONBOARDING) {
+            return new PendingPlanStatus(null, null);
+        }
         Instant createdAt = compra.getCreatedAt() != null ? compra.getCreatedAt() : now;
         Instant expiresAt = createdAt.plusSeconds(safeTtlHours() * 3600);
         if (!now.isBefore(expiresAt)) {

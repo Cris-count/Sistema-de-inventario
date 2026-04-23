@@ -15,4 +15,7 @@ public interface SaasCompraRepository extends JpaRepository<SaasCompra, Long> {
 
     Optional<SaasCompra> findFirstByEmpresa_IdAndTipoAndEstadoOrderByIdDesc(
             Long empresaId, SaasCompraTipo tipo, EstadoCompra estado);
+
+    Optional<SaasCompra> findFirstByEmpresa_IdAndEstadoOrderByIdDesc(
+            Long empresaId, EstadoCompra estado);
 }

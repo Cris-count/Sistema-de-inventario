@@ -19,21 +19,24 @@ const LANDING = '/landing';
     <header
       class="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-white/70 dark:border-slate-700/60 dark:bg-slate-950/80 dark:shadow-none"
     >
-      <div class="mx-auto max-w-6xl px-5 py-3 sm:px-6 lg:px-8 lp-nav-pad">
+      <div class="mx-auto max-w-6xl px-5 py-2 sm:px-6 sm:py-2.5 lg:px-8 lg:py-2.5 lp-nav-pad">
         <!-- Escritorio / tablet: una sola fila -->
-        <div class="hidden items-center justify-between gap-6 md:flex">
+        <div class="hidden items-center justify-between gap-3 md:gap-4 lg:gap-5 md:flex">
           <a
             [routerLink]="LANDING"
-            class="flex min-w-0 shrink-0 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
+            class="flex shrink-0 items-center text-primary no-underline transition hover:opacity-90 dark:text-slate-100"
           >
-            <span
-              class="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-gradient-to-br from-accent via-teal-500 to-teal-700 text-sm font-bold text-white shadow-lg shadow-teal-900/20"
-              >C</span
-            >
-            <span class="truncate text-base font-semibold tracking-tight">Cersik</span>
+            <img
+              src="/branding/cersik-logo-full.png"
+              alt="Cersik"
+              class="block h-auto w-auto max-h-16 max-w-[min(44rem,calc(100vw-9rem))] object-contain object-left sm:max-h-[4.5rem] sm:max-w-[min(44rem,calc(100vw-20.5rem))] md:max-h-20 md:max-w-[min(44rem,calc(100vw-20rem))] lg:max-h-[5.25rem] xl:max-h-24"
+              width="440"
+              height="96"
+              loading="eager"
+            />
           </a>
 
-          <nav class="flex items-center gap-7 text-sm font-medium text-secondary dark:text-slate-300">
+          <nav class="flex min-w-0 shrink items-center gap-3 text-sm font-medium text-secondary md:gap-3.5 lg:gap-4 dark:text-slate-300">
             <a
               [routerLink]="LANDING"
               fragment="soluciones"
@@ -66,7 +69,7 @@ const LANDING = '/landing';
             >
           </nav>
 
-          <div class="flex shrink-0 items-center gap-2.5 sm:gap-3">
+          <div class="flex shrink-0 items-center gap-2 sm:gap-2.5">
             <app-theme-toggle />
             <app-ui-button
               variant="landing-secondary"
@@ -81,17 +84,20 @@ const LANDING = '/landing';
         </div>
 
         <!-- Móvil: marca + tema; CTAs a ancho completo; anclas con área táctil -->
-        <div class="flex flex-col gap-3.5 md:hidden">
-          <div class="flex items-center justify-between gap-3">
+        <div class="flex flex-col gap-3 md:hidden">
+          <div class="flex items-center justify-between gap-2">
             <a
               [routerLink]="LANDING"
-              class="flex min-w-0 flex-1 items-center gap-2.5 text-primary no-underline hover:opacity-90 dark:text-slate-100"
+              class="flex min-w-0 flex-1 items-center text-primary no-underline transition hover:opacity-90 dark:text-slate-100"
             >
-              <span
-                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-teal-600 text-sm font-bold text-white shadow-soft"
-                >C</span
-              >
-              <span class="truncate text-base font-semibold tracking-tight">Cersik</span>
+              <img
+                src="/branding/cersik-logo-full.png"
+                alt="Cersik"
+                class="block h-auto w-auto max-h-[4.5rem] max-w-[min(44rem,92vw)] shrink-0 object-contain object-left sm:max-h-20"
+                width="440"
+                height="96"
+                loading="eager"
+              />
             </a>
             <div class="shrink-0">
               <app-theme-toggle />

@@ -55,6 +55,14 @@ app:
     # Por defecto 72 h (3 días), alineado con plan-change-pending-ttl-hours: acota cobros dudosos y deja casos límite a soporte.
     # En producción ajustar con BILLING_PLAN_CHANGE_LATE_CONFIRM_MAX_HOURS según acuerdos con la pasarela y riesgo operativo.
     plan-change-late-confirm-max-hours: ${BILLING_PLAN_CHANGE_LATE_CONFIRM_MAX_HOURS:72}
+    stripe:
+      # Claves solo por entorno (.env / docker-compose / secret manager). No poner sk_/pk_ reales en el repo (push protection).
+      secret-key: ${STRIPE_SECRET_KEY:${APP_BILLING_STRIPE_SECRET_KEY:}}
+      publishable-key: ${STRIPE_PUBLIC_KEY:}
+      # Opcional: firma de webhooks (modo test o live).
+      webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+      # URL base del frontend para success_url / cancel_url de Checkout.
+      frontend-base-url: ${APP_BILLING_FRONTEND_BASE_URL:http://localhost:4200}
   onboarding:
     # TRIAL | PENDING_PAYMENT | ACTIVE — define el estado comercial inicial tras POST /onboarding/register-company
     activation-default: ${APP_ONBOARDING_ACTIVATION:TRIAL}

@@ -1,6 +1,10 @@
 import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import type { EmpresaActualDto } from '../../core/models/empresa-actual.model';
+import type {
+  CheckoutFlowMode,
+  CreateCheckoutSessionResponseDto,
+  EmpresaActualDto
+} from '../../core/models/empresa-actual.model';
 import type { EmpresaCapacidadSnapshot } from '../../core/models/empresa-capacidad.model';
 import type { PublicPlanDto } from '../../core/models/public-plan.model';
 import { EmpresaCapacidadService } from '../../core/services/empresa-capacidad.service';
@@ -273,8 +277,14 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
               } @else if (!e.planCodigo && !e.planNombre) {
                 <button type="button" class="btn btn-primary" (click)="scrollToPlanSection()">Elegir un plan</button>
               } @else {
-                <button type="button" class="btn btn-primary" (click)="scrollToPlanSection()">Gestionar plan</button>
-                <button type="button" class="btn btn-text" (click)="scrollToCambioPlanCards()">Ver comparativa de planes</button>
+                <button type="button" class="btn btn-primary" (click)="scrollToPlanSection()">
+                  {{ canUpgrade() ? 'Gestionar plan' : 'Ver beneficios de mi plan' }}
+                </button>
+                @if (canUpgrade()) {
+                  <button type="button" class="btn btn-text" (click)="scrollToCambioPlanCards()">
+                    Ver comparativa de planes
+                  </button>
+                }
               }
             </div>
           </section>
@@ -292,6 +302,12 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
           }
           @if (cambioPlanErr()) {
             <div class="alert alert-error" role="alert">{{ cambioPlanErr() }}</div>
+          }
+          @if (stripeAwaitingConfirmation()) {
+            <div class="alert alert-info" role="status">
+              Estamos confirmando tu pago con Stripe. El plan se actualizará en cuanto el servidor reciba la confirmación
+              oficial (normalmente unos segundos). No hace falta repetir el pago.
+            </div>
           }
           @if (e.cambioPlanPendientePagoId) {
             <div
@@ -401,99 +417,121 @@ import { fadeIn, fadeUp, slideDown, staggerList } from '../../core/animations';
           } @else if (publicPlanesErr()) {
             <div class="alert alert-warning" role="status">{{ publicPlanesErr() }}</div>
           } @else {
-            @if (contextualRecommendation(); as rec) {
-              <div @fadeUp class="me-rec-card">
-                <div class="row-between-top">
-                  <div>
-                    <p class="me-rec-card__kicker">
-                      {{ rec.reason === 'fallback' ? 'Plan recomendado' : 'Recomendación para tu caso' }}
-                    </p>
-                    <h3 class="me-rec-card__title">{{ rec.title }}</h3>
-                    <p class="me-rec-card__sub">{{ rec.plan.nombre }} · {{ etiquetaPrecioPublico(rec.plan) }}</p>
+            @if (canUpgrade()) {
+              @if (primaryRecommendation(); as rec) {
+                <div @fadeUp class="me-rec-card">
+                  <div class="row-between-top">
+                    <div>
+                      <p class="me-rec-card__kicker">Siguiente paso recomendado</p>
+                      <h3 class="me-rec-card__title">{{ rec.title }}</h3>
+                      <p class="me-rec-card__sub">{{ rec.plan.nombre }} · {{ etiquetaPrecioPublico(rec.plan) }}</p>
+                    </div>
+                    <span class="badge badge-recommended">Recomendado</span>
                   </div>
-                  <span class="badge badge-recommended">
-                    {{ rec.reason === 'fallback' ? 'Popular' : 'Según uso' }}
-                  </span>
-                </div>
-                <p class="page-lead" style="margin: var(--space-ds-3) 0 0">{{ rec.body }}</p>
-                @if (rec.benefits.length) {
-                  <ul class="me-rec-card__list">
-                    @for (b of rec.benefits; track b) {
-                      <li>{{ b }}</li>
-                    }
-                  </ul>
-                }
-                <div class="me-rec-actions">
-                  <button
-                    type="button"
-                    class="btn btn-primary"
-                    [class.is-loading]="planChangeBusy()"
-                    [disabled]="planChangeBusy() || cancelPlanBusy()"
-                    (click)="iniciarCambioPlan(rec.plan.codigo)"
-                  >
-                    @if (planChangeBusy()) {
-                      <span class="spinner" aria-hidden="true"></span> Procesando…
-                    } @else {
-                      {{ rec.primaryCtaLabel }}
-                    }
-                  </button>
-                  <button type="button" class="btn btn-secondary" (click)="scrollToCambioPlanCards()">
-                    Ver todos los planes
-                  </button>
-                </div>
-              </div>
-            }
-
-            <div id="planes-disponibles" class="me-plan-grid" [@staggerList]="publicPlanes().length">
-              @for (p of publicPlanes(); track p.codigo) {
-                <div
-                  class="me-plan-card"
-                  [class.me-plan-card--highlight]="isHighlightedPlan(p, e.planCodigo)"
-                >
-                  @if (isHighlightedPlan(p, e.planCodigo)) {
-                    <span class="badge badge-recommended me-plan-card__badge">Recomendado</span>
+                  <p class="page-lead" style="margin: var(--space-ds-3) 0 0">{{ rec.body }}</p>
+                  @if (rec.benefits.length) {
+                    <ul class="me-rec-card__list">
+                      @for (b of rec.benefits; track b) {
+                        <li>{{ b }}</li>
+                      }
+                    </ul>
                   }
-                  <p class="me-plan-card__name">{{ p.nombre }}</p>
-                  @if (p.codigo === e.planCodigo) {
-                    <p class="muted mt-sub"><span class="badge badge-info">Tu plan actual</span></p>
-                  } @else {
+                  <div class="me-rec-actions">
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      [class.is-loading]="planChangeBusy()"
+                      [disabled]="planChangeBusy() || cancelPlanBusy() || checkoutResolving()"
+                      (click)="createCheckoutSession(rec.plan.codigo, getPlanFlowMode(rec.plan.codigo))"
+                    >
+                      @if (planChangeBusy()) {
+                        <span class="spinner" aria-hidden="true"></span> Procesando…
+                      } @else {
+                        {{ getPlanFlowMode(rec.plan.codigo) === 'PURCHASE' ? 'Comprar plan' : 'Mejorar a este plan' }}
+                      }
+                    </button>
+                    @if (visibleUpgradePlans().length > 1) {
+                      <button type="button" class="btn btn-secondary" (click)="scrollToCambioPlanCards()">
+                        Ver otra opción
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
+              <div id="planes-disponibles" class="me-plan-grid" [@staggerList]="visibleUpgradePlans().length">
+                @for (p of visibleUpgradePlans(); track p.codigo) {
+                  <div
+                    class="me-plan-card"
+                    [class.me-plan-card--highlight]="isHighlightedPlan(p, e.planCodigo)"
+                  >
+                    @if (isHighlightedPlan(p, e.planCodigo)) {
+                      <span class="badge badge-recommended me-plan-card__badge">Recomendado</span>
+                    }
+                    <p class="me-plan-card__name">{{ p.nombre }}</p>
                     <p class="muted mt-sub">{{ etiquetaPrecioPublico(p) }}</p>
                     <button
                       type="button"
                       class="btn btn-primary mt-sub"
                       [class.is-loading]="planChangeBusy()"
-                      [disabled]="planChangeBusy() || cancelPlanBusy() || !!e.cambioPlanPendientePagoId"
-                      (click)="iniciarCambioPlan(p.codigo)"
+                      [disabled]="planChangeBusy() || cancelPlanBusy() || !!e.cambioPlanPendientePagoId || checkoutResolving()"
+                      (click)="createCheckoutSession(p.codigo, getPlanFlowMode(p.codigo))"
                     >
                       @if (planChangeBusy()) {
                         <span class="spinner" aria-hidden="true"></span>
                       } @else {
-                        Cambiar a este plan
+                        {{
+                          getPlanFlowMode(p.codigo) === 'PURCHASE'
+                            ? 'Comprar plan'
+                            : (isHighlightedPlan(p, e.planCodigo) ? 'Mejorar al plan recomendado' : 'Mejorar a este plan')
+                        }}
                       }
                     </button>
-                  }
+                  </div>
+                }
+              </div>
+
+              <div @fadeUp class="stack stack--tight" style="margin-top: var(--space-ds-4)">
+                <h3 class="ds-section-title">Por qué cambiar de plan</h3>
+                <ul class="muted-list-spaced" style="margin-top: 0.35rem">
+                  <li>Más bodegas y usuarios a medida que crece tu operación, sin cambiar de sistema.</li>
+                  <li>Mismos datos y misma forma de trabajar: solo se amplían los límites y módulos incluidos.</li>
+                  <li>Puedes iniciar el cambio cuando quieras; tu plan actual sigue activo hasta que se confirme el pago.</li>
+                </ul>
+              </div>
+
+              @if (!e.cambioPlanPendientePagoId) {
+                <div @fadeUp class="card card--info row-between" style="margin-top: var(--space-ds-4); align-items: center">
+                  <div style="flex: 1; min-width: 220px">
+                    <p style="margin: 0; font-weight: var(--font-weight-semibold)">¿Listo para escalar tu operación?</p>
+                    <p class="muted" style="margin: 0.25rem 0 0">
+                      Elige el plan que mejor acompañe tu crecimiento y actívalo cuando quieras.
+                    </p>
+                  </div>
+                  <button type="button" class="btn btn-primary" (click)="scrollToCambioPlanCards()">Elegir plan</button>
                 </div>
               }
-            </div>
-
-            <div @fadeUp class="stack stack--tight" style="margin-top: var(--space-ds-4)">
-              <h3 class="ds-section-title">Por qué cambiar de plan</h3>
-              <ul class="muted-list-spaced" style="margin-top: 0.35rem">
-                <li>Más bodegas y usuarios a medida que crece tu operación, sin cambiar de sistema.</li>
-                <li>Mismos datos y misma forma de trabajar: solo se amplían los límites y módulos incluidos.</li>
-                <li>Puedes iniciar el cambio cuando quieras; tu plan actual sigue activo hasta que se confirme el pago.</li>
-              </ul>
-            </div>
-
-            @if (!e.cambioPlanPendientePagoId) {
-              <div @fadeUp class="card card--info row-between" style="margin-top: var(--space-ds-4); align-items: center">
-                <div style="flex: 1; min-width: 220px">
-                  <p style="margin: 0; font-weight: var(--font-weight-semibold)">¿Listo para escalar tu operación?</p>
-                  <p class="muted" style="margin: 0.25rem 0 0">
-                    Elige el plan que mejor acompañe tu crecimiento y actívalo cuando quieras.
-                  </p>
+            } @else {
+              <div id="plan-actual-info" @fadeUp class="me-rec-card">
+                <div class="row-between-top">
+                  <div>
+                    <p class="me-rec-card__kicker">Tu plan actual</p>
+                    <h3 class="me-rec-card__title">{{ e.planNombre || 'Empresarial' }}</h3>
+                    @if (currentPlanPublic(); as cp) {
+                      <p class="me-rec-card__sub">{{ etiquetaPrecioPublico(cp) }}</p>
+                    }
+                  </div>
+                  <span class="badge badge-info">Tu plan actual</span>
                 </div>
-                <button type="button" class="btn btn-primary" (click)="scrollToCambioPlanCards()">Elegir plan</button>
+                <p class="page-lead" style="margin: var(--space-ds-3) 0 0">
+                  Tu plan ya está en el nivel más alto disponible para esta suscripción. Esta sección ahora te resume el valor incluido.
+                </p>
+                <h4 class="ds-section-title" style="margin-top: var(--space-ds-4)">Tu plan actual incluye</h4>
+                <ul class="me-rec-card__list">
+                  @for (b of currentPlanValueBullets(); track b) {
+                    <li>{{ b }}</li>
+                  }
+                </ul>
               </div>
             }
           }
@@ -685,6 +723,7 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
   /** Actualiza cada minuto mientras hay cambio pendiente con expiración (texto de urgencia). */
   private readonly clockTick = signal(Date.now());
   private pendingClockId: ReturnType<typeof setInterval> | undefined;
+  private stripeConfirmationPollId: ReturnType<typeof setInterval> | undefined;
   private copyFlashTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly loading = signal(true);
@@ -711,6 +750,9 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
   readonly cancelPlanBusy = signal(false);
   readonly cambioPlanMsg = signal<string | null>(null);
   readonly cambioPlanErr = signal<string | null>(null);
+  readonly checkoutResolving = signal(false);
+  /** Tras volver de Stripe: esperando webhook / estado real en GET /empresa/mi (sin forzar resolve SUCCESS). */
+  readonly stripeAwaitingConfirmation = signal(false);
   readonly referenciaCopiadaFlashing = signal(false);
   readonly alertasGuardando = signal(false);
   readonly alertasMsg = signal<string | null>(null);
@@ -724,9 +766,27 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
     pedidoProveedorCantidadMaxima: ['']
   });
 
-  readonly statusInfo = computed(() => mapEmpresaStatus(this.empresa()?.estado));
+  readonly statusInfo = computed(() => {
+    const e = this.empresa();
+    const base = mapEmpresaStatus(e?.estado);
+    if (e?.estado === 'ACTIVA' && (e.planNombre || e.planCodigo)) {
+      const planLabel = e.planNombre || e.planCodigo || '';
+      return {
+        title: 'Cuenta activa',
+        description: `Plan contratado: ${planLabel}. Tu empresa está operativa con acceso habilitado.`,
+        kind: 'ok' as const
+      };
+    }
+    return base;
+  });
   readonly accessInfo = computed(() => (this.statusInfo().kind === 'ok' ? 'Habilitado para ingresar' : 'Pendiente o restringido'));
-  readonly subscriptionLabel = computed(() => mapSuscripcionStatus(this.empresa()?.suscripcionEstado));
+  readonly subscriptionLabel = computed(() => {
+    const e = this.empresa();
+    if (e?.suscripcionEstado === 'ACTIVA' && (e.planNombre || e.planCodigo)) {
+      return `Suscripción activa · ${e.planNombre || e.planCodigo}`;
+    }
+    return mapSuscripcionStatus(e?.suscripcionEstado);
+  });
 
   /** Tono de badge para estado comercial de la empresa (sin usar error para “no disponible”). */
   readonly statusBadgeKind = computed((): 'active' | 'pending' | 'inactive' | 'warning' => {
@@ -785,6 +845,99 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
     return this.publicPlanes().find((p) => p.codigo.toUpperCase() === u) ?? null;
   });
 
+  /** Plan actual usando fuente principal de backend (`empresa.planCodigo`) y catálogo público para metadatos UI. */
+  readonly currentPlanPublic = computed((): PublicPlanDto | null => {
+    const e = this.empresa();
+    const code = e?.planCodigo?.trim();
+    if (!code) return null;
+    const u = code.toUpperCase();
+    return this.publicPlanes().find((p) => p.codigo.toUpperCase() === u) ?? null;
+  });
+
+  readonly currentPlanCode = computed(() => this.getCurrentPlan());
+
+  /** Planes renderizables para cambio según jerarquía de negocio (nunca downgrade). */
+  readonly visibleUpgradePlans = computed((): PublicPlanDto[] => {
+    const e = this.empresa();
+    if (!e) return [];
+    return this.getVisiblePlans(e.planCodigo, this.publicPlanes());
+  });
+
+  /** Recomendación principal para la sección de planes, siempre consistente con upgrades permitidos. */
+  readonly recommendedUpgradePlan = computed((): PublicPlanDto | null => {
+    const e = this.empresa();
+    if (!e) return null;
+    return this.getRecommendedPlan(e.planCodigo, this.visibleUpgradePlans());
+  });
+
+  /** Si no hay upgrade posible (ej. Empresarial), la sección pasa de venta a valor del plan vigente. */
+  readonly canUpgrade = computed(() => this.visibleUpgradePlans().length > 0);
+
+  /** Beneficios resumidos para cuando no aplica vender upgrade. */
+  readonly currentPlanValueBullets = computed((): string[] => {
+    const plan = this.currentPlanPublic();
+    const cap = this.capacity();
+    const values: string[] = [];
+    if (plan?.features?.length) {
+      for (const f of plan.features.slice(0, 4)) {
+        const t = (f ?? '').trim();
+        if (t && !values.includes(t)) values.push(t);
+      }
+    }
+    if (cap?.resources?.length) {
+      for (const r of cap.resources) {
+        if (values.length >= 6) break;
+        if (r.limit == null) {
+          values.push(`${r.label}: capacidad ilimitada en tu plan`);
+          continue;
+        }
+        values.push(`${r.label}: hasta ${r.limit}`);
+      }
+    }
+    return values.slice(0, 6);
+  });
+
+  /** Recomendación principal de UX del bloque (una sola acción principal clara). */
+  readonly primaryRecommendation = computed((): ContextualRecommendation | null => {
+    const e = this.empresa();
+    if (!e || e.cambioPlanPendientePagoId || !this.canUpgrade()) return null;
+    const plan = this.recommendedUpgradePlan();
+    if (!plan) return null;
+    const contextual = this.contextualRecommendation();
+    if (contextual && contextual.plan.codigo === plan.codigo) {
+      return contextual;
+    }
+    const currentTier = canonicalPlanTier(e.planCodigo);
+    if (currentTier === 'UNKNOWN') {
+      return {
+        reason: 'fallback',
+        plan,
+        title: `Activa ${plan.nombre} como primer plan`,
+        body: `${plan.nombre} es una base clara para iniciar la suscripción. Si tu operación ya nace más grande, puedes comprar directamente un plan superior.`,
+        benefits: deriveBenefits(plan, this.currentPlanPublic(), 'generic'),
+        primaryCtaLabel: `Comprar ${plan.nombre}`
+      };
+    }
+    if (currentTier === 'STARTER') {
+      return {
+        reason: 'fallback',
+        plan,
+        title: `Sube a ${plan.nombre} como siguiente paso natural`,
+        body: `${plan.nombre} es el siguiente nivel recomendado para crecer sin saltos bruscos. También puedes ir directo a Empresarial si ya proyectas una operación mayor.`,
+        benefits: deriveBenefits(plan, this.currentPlanPublic(), 'generic'),
+        primaryCtaLabel: `Elegir ${plan.nombre}`
+      };
+    }
+    return {
+      reason: 'fallback',
+      plan,
+      title: `Pasa a ${plan.nombre} para escalar al máximo nivel`,
+      body: `${plan.nombre} es el siguiente nivel disponible para tu suscripción actual y concentra la capacidad más alta del producto.`,
+      benefits: deriveBenefits(plan, this.currentPlanPublic(), 'generic'),
+      primaryCtaLabel: `Elegir ${plan.nombre}`
+    };
+  });
+
   /**
    * Recomendación contextual para /app/mi-empresa.
    *
@@ -813,11 +966,11 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
     if (!e) return null;
     if (e.cambioPlanPendientePagoId) return null;
 
-    const planes = this.publicPlanes();
+    const planes = this.visibleUpgradePlans();
     if (!planes.length) return null;
 
     const currentCode = e.planCodigo?.toUpperCase() ?? '';
-    const currentPlan = planes.find((p) => p.codigo.toUpperCase() === currentCode) ?? null;
+    const currentPlan = this.currentPlanPublic();
     const currentModulos = new Set<string>(
       e.modulosHabilitados ?? (currentPlan?.modulos ?? [])
     );
@@ -1023,11 +1176,13 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
     const trigger = planUpgradeContext.consume();
     this.lastBlockCode.set(trigger?.blockCode ?? null);
     this.lastBlockModule.set(trigger?.blockModule ?? null);
+    this.consumeStripeReturnFromUrl();
     this.refreshEmpresa();
   }
 
   ngOnDestroy(): void {
     this.clearPendingClock();
+    this.clearStripeConfirmationPoll();
     if (this.copyFlashTimer) {
       clearTimeout(this.copyFlashTimer);
     }
@@ -1040,21 +1195,27 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
     return d.toLocaleString();
   }
 
+  private applyMiEmpresaPayload(res: EmpresaActualDto, opts?: { lite?: boolean }): void {
+    this.empresa.set(res);
+    this.alertasForm.patchValue({
+      emailNotificacionesInventario: res.emailNotificacionesInventario ?? '',
+      alertasPedidoProveedorActivas: res.alertasPedidoProveedorActivas !== false,
+      pedidoProveedorCantidadMaxima:
+        res.pedidoProveedorCantidadMaxima != null ? String(res.pedidoProveedorCantidadMaxima) : ''
+    });
+    this.syncPendingClock(res);
+    if (!opts?.lite) {
+      this.loadCapacity(res);
+      this.loadPublicPlanes();
+    }
+  }
+
   private refreshEmpresa(): void {
     this.empresaApi.getMiEmpresa().subscribe({
       next: (res) => {
         this.loading.set(false);
         this.error.set(null);
-        this.empresa.set(res);
-        this.alertasForm.patchValue({
-          emailNotificacionesInventario: res.emailNotificacionesInventario ?? '',
-          alertasPedidoProveedorActivas: res.alertasPedidoProveedorActivas !== false,
-          pedidoProveedorCantidadMaxima:
-            res.pedidoProveedorCantidadMaxima != null ? String(res.pedidoProveedorCantidadMaxima) : ''
-        });
-        this.syncPendingClock(res);
-        this.loadCapacity(res);
-        this.loadPublicPlanes();
+        this.applyMiEmpresaPayload(res);
       },
       error: (e) => {
         this.loading.set(false);
@@ -1119,6 +1280,39 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
     return suf ? `${base}${suf}` : base;
   }
 
+  getVisiblePlans(currentPlanCode: string | null | undefined, plans: PublicPlanDto[]): PublicPlanDto[] {
+    return getVisiblePlans(currentPlanCode, plans);
+  }
+
+  getCurrentPlan(): string | null {
+    const code = this.empresa()?.planCodigo?.trim();
+    return code ? code.toUpperCase() : null;
+  }
+
+  getAvailablePlans(currentPlanCode: string | null | undefined): PublicPlanDto[] {
+    return this.getVisiblePlans(currentPlanCode, this.publicPlanes());
+  }
+
+  getRecommendedPlan(currentPlanCode: string | null | undefined, plans: PublicPlanDto[]): PublicPlanDto | null {
+    return getRecommendedPlan(currentPlanCode, plans);
+  }
+
+  isUpgrade(currentPlanCode: string | null | undefined, targetPlanCode: string | null | undefined): boolean {
+    return isUpgradePlan(currentPlanCode, targetPlanCode);
+  }
+
+  isUpgradeAllowed(currentPlanCode: string | null | undefined, targetPlanCode: string | null | undefined): boolean {
+    return isUpgradeAllowed(currentPlanCode, targetPlanCode);
+  }
+
+  canPurchasePlan(currentPlanCode: string | null | undefined, targetPlanCode: string | null | undefined): boolean {
+    return canPurchasePlan(currentPlanCode, targetPlanCode);
+  }
+
+  getPlanFlowMode(targetPlanCode: string): CheckoutFlowMode {
+    return getCheckoutFlowMode(this.getCurrentPlan(), targetPlanCode);
+  }
+
   /**
    * Plan a destacar visualmente en el grid. Si la recomendación contextual
    * apunta a un plan concreto, se prioriza ese; si no, se usa el flag
@@ -1126,26 +1320,58 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
    */
   isHighlightedPlan(p: PublicPlanDto, currentCode: string | null | undefined): boolean {
     if (!currentCode || p.codigo === currentCode) return false;
+    if (!this.isUpgradeAllowed(currentCode, p.codigo)) return false;
+    const promoted = this.recommendedUpgradePlan();
+    if (promoted) return promoted.codigo === p.codigo;
     const rec = this.contextualRecommendation();
     if (rec) return rec.plan.codigo === p.codigo;
     return p.recomendado;
   }
 
-  iniciarCambioPlan(planCodigo: string): void {
+  createCheckoutSession(planCodigo: string, _mode: CheckoutFlowMode): void {
     this.cambioPlanMsg.set(null);
     this.cambioPlanErr.set(null);
     this.planChangeBusy.set(true);
-    this.empresaApi.solicitarCambioPlan(planCodigo).subscribe({
-      next: (r) => {
+    this.empresaApi.createCheckoutSession(planCodigo).subscribe({
+      next: (r: CreateCheckoutSessionResponseDto) => {
         this.planChangeBusy.set(false);
-        this.cambioPlanMsg.set(r.mensaje);
-        this.refreshEmpresa();
+        if (r.requiresRedirect && r.checkoutUrl) {
+          try {
+            globalThis.sessionStorage?.setItem(
+              STRIPE_CHECKOUT_CTX_KEY,
+              JSON.stringify({
+                pagoId: r.pagoId,
+                targetPlanCodigo: r.targetPlanCodigo,
+                checkoutSessionId: r.sessionId
+              })
+            );
+          } catch {
+            /* ignore */
+          }
+          this.cambioPlanMsg.set(r.message);
+          globalThis.location.href = r.checkoutUrl;
+          return;
+        }
+        this.cambioPlanErr.set(
+          'No se recibió URL de Stripe Checkout. Revisa STRIPE_SECRET_KEY y los logs del servidor.'
+        );
       },
       error: (err) => {
         this.planChangeBusy.set(false);
         this.cambioPlanErr.set(resolvePlanBlockUx(err, false).message);
       }
     });
+  }
+
+  handlePaymentSuccess(message: string): void {
+    this.cambioPlanMsg.set(message);
+    this.cambioPlanErr.set(null);
+    this.refreshEmpresa();
+  }
+
+  handlePaymentFailure(message: string): void {
+    this.cambioPlanErr.set(message);
+    this.refreshEmpresa();
   }
 
   copiarReferenciaPago(id: number): void {
@@ -1167,8 +1393,237 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
     );
   }
 
+  private consumeStripeReturnFromUrl(): void {
+    const raw = globalThis.location?.search;
+    if (!raw) return;
+    const params = new URLSearchParams(raw);
+    const state = params.get('stripeCheckout');
+    const pagoRaw = params.get('pagoId');
+    if (!state || !pagoRaw) return;
+    const pagoId = Number(pagoRaw);
+    if (Number.isNaN(pagoId) || pagoId <= 0) {
+      this.cambioPlanErr.set('No se pudo validar el retorno de Stripe.');
+      this.clearCheckoutQueryParams();
+      return;
+    }
+    if (state === 'success') {
+      const sessionIdFromUrl = params.get('session_id')?.trim() || null;
+      this.clearCheckoutQueryParams();
+
+      let stripeSessionId = sessionIdFromUrl;
+      if (!stripeSessionId) {
+        try {
+          const raw = globalThis.sessionStorage?.getItem(STRIPE_CHECKOUT_CTX_KEY);
+          if (raw) {
+            const ctx = JSON.parse(raw) as { pagoId?: number; checkoutSessionId?: string };
+            if (ctx.pagoId === pagoId && ctx.checkoutSessionId?.trim()) {
+              stripeSessionId = ctx.checkoutSessionId.trim();
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+
+      if (!stripeSessionId) {
+        this.cambioPlanErr.set(
+          'Falta el identificador de sesión de Stripe; no podemos verificar el pago. Vuelve a intentar el checkout o contacta soporte.'
+        );
+        this.beginStripeReturnConfirmation(pagoId, null);
+        return;
+      }
+
+      this.stripeAwaitingConfirmation.set(true);
+      this.checkoutResolving.set(true);
+      this.cambioPlanErr.set(null);
+      this.cambioPlanMsg.set('Verificando el pago con Stripe en el servidor…');
+
+      this.empresaApi.resolveCheckoutSession(pagoId, 'SUCCESS', stripeSessionId).subscribe({
+        next: (res) => {
+          if (res.success) {
+            this.checkoutResolving.set(false);
+            this.stripeAwaitingConfirmation.set(false);
+            try {
+              globalThis.sessionStorage?.removeItem(STRIPE_CHECKOUT_CTX_KEY);
+            } catch {
+              /* ignore */
+            }
+            this.handlePaymentSuccess(res.message);
+            return;
+          }
+          this.cambioPlanMsg.set('Esperando confirmación del pago en el sistema…');
+          this.beginStripeReturnConfirmation(pagoId, stripeSessionId);
+        },
+        error: (err) => {
+          this.cambioPlanMsg.set('Reintentando confirmación…');
+          this.beginStripeReturnConfirmation(pagoId, stripeSessionId);
+        }
+      });
+      return;
+    }
+    if (state === 'cancel') {
+      try {
+        globalThis.sessionStorage?.removeItem(STRIPE_CHECKOUT_CTX_KEY);
+      } catch {
+        /* ignore */
+      }
+      this.checkoutResolving.set(true);
+      this.empresaApi.resolveCheckoutSession(pagoId, 'CANCELLED').subscribe({
+        next: (res) => {
+          this.checkoutResolving.set(false);
+          this.clearCheckoutQueryParams();
+          this.cambioPlanMsg.set(res.message || 'Pago cancelado. Tu plan no cambió.');
+          this.refreshEmpresa();
+        },
+        error: (err) => {
+          this.checkoutResolving.set(false);
+          this.clearCheckoutQueryParams();
+          this.handlePaymentFailure(resolvePlanBlockUx(err, false).message);
+        }
+      });
+    }
+  }
+
+  private clearCheckoutQueryParams(): void {
+    const u = new URL(globalThis.location.href);
+    u.searchParams.delete('stripeCheckout');
+    u.searchParams.delete('pagoId');
+    u.searchParams.delete('session_id');
+    globalThis.history.replaceState({}, '', u.toString());
+  }
+
+  private clearStripeConfirmationPoll(): void {
+    if (this.stripeConfirmationPollId) {
+      globalThis.clearInterval(this.stripeConfirmationPollId);
+      this.stripeConfirmationPollId = undefined;
+    }
+  }
+
+  /**
+   * Respaldo: consulta GET /empresa/mi y, si hay sessionId, reintenta resolve periódicamente (útil si Stripe tarda o sin webhook).
+   */
+  private beginStripeReturnConfirmation(pagoId: number, stripeSessionId: string | null): void {
+    this.clearStripeConfirmationPoll();
+    let expectedTarget = '';
+    try {
+      const raw = globalThis.sessionStorage?.getItem(STRIPE_CHECKOUT_CTX_KEY);
+      if (raw) {
+        const ctx = JSON.parse(raw) as { pagoId?: number; targetPlanCodigo?: string };
+        if (ctx.pagoId === pagoId && ctx.targetPlanCodigo) {
+          expectedTarget = ctx.targetPlanCodigo.trim().toUpperCase();
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    this.stripeAwaitingConfirmation.set(true);
+    this.checkoutResolving.set(true);
+    this.cambioPlanErr.set(null);
+    this.cambioPlanMsg.set('Esperando confirmación del pago en el servidor…');
+
+    let attempts = 0;
+    const maxAttempts = 40;
+
+    const finishOk = (res: EmpresaActualDto): void => {
+      this.clearStripeConfirmationPoll();
+      this.checkoutResolving.set(false);
+      this.stripeAwaitingConfirmation.set(false);
+      try {
+        globalThis.sessionStorage?.removeItem(STRIPE_CHECKOUT_CTX_KEY);
+      } catch {
+        /* ignore */
+      }
+      this.cambioPlanErr.set(null);
+      this.cambioPlanMsg.set(
+        `Pago confirmado. Tu plan activo es ${res.planNombre || res.planCodigo || expectedTarget}.`
+      );
+    };
+
+    const finishTimeout = (): void => {
+      this.clearStripeConfirmationPoll();
+      this.checkoutResolving.set(false);
+      this.stripeAwaitingConfirmation.set(false);
+      this.cambioPlanMsg.set(null);
+      this.cambioPlanErr.set(
+        'Aún no vemos el pago confirmado en el sistema. Si ya pagaste, espera unos segundos y recarga la página. ' +
+          'En desarrollo hace falta que el webhook de Stripe llegue al API (p. ej. con Stripe CLI).'
+      );
+    };
+
+    const checkResponse = (res: EmpresaActualDto): void => {
+      this.applyMiEmpresaPayload(res, { lite: true });
+      const code = res.planCodigo?.trim().toUpperCase() ?? '';
+      if (expectedTarget !== '' && code === expectedTarget) {
+        finishOk(res);
+        this.loadCapacity(res);
+        this.loadPublicPlanes();
+        return;
+      }
+      if (expectedTarget === '' && code !== '' && res.cambioPlanPendientePagoId !== pagoId) {
+        finishOk(res);
+        this.loadCapacity(res);
+        this.loadPublicPlanes();
+        return;
+      }
+      if (attempts >= maxAttempts) {
+        finishTimeout();
+      }
+    };
+
+    const tick = (): void => {
+      attempts++;
+      if (stripeSessionId && (attempts === 1 || attempts % 5 === 0)) {
+        this.empresaApi.resolveCheckoutSession(pagoId, 'SUCCESS', stripeSessionId).subscribe({
+          next: (r) => {
+            if (r.success) {
+              this.clearStripeConfirmationPoll();
+              this.checkoutResolving.set(false);
+              this.stripeAwaitingConfirmation.set(false);
+              try {
+                globalThis.sessionStorage?.removeItem(STRIPE_CHECKOUT_CTX_KEY);
+              } catch {
+                /* ignore */
+              }
+              this.cambioPlanErr.set(null);
+              this.handlePaymentSuccess(r.message);
+              return;
+            }
+            this.empresaApi.getMiEmpresa().subscribe({
+              next: checkResponse,
+              error: () => {
+                if (attempts >= maxAttempts) finishTimeout();
+              }
+            });
+          },
+          error: () => {
+            this.empresaApi.getMiEmpresa().subscribe({
+              next: checkResponse,
+              error: () => {
+                if (attempts >= maxAttempts) finishTimeout();
+              }
+            });
+          }
+        });
+        return;
+      }
+      this.empresaApi.getMiEmpresa().subscribe({
+        next: checkResponse,
+        error: () => {
+          if (attempts >= maxAttempts) {
+            finishTimeout();
+          }
+        }
+      });
+    };
+
+    tick();
+    this.stripeConfirmationPollId = globalThis.setInterval(tick, 2500);
+  }
+
   scrollToCambioPlanCards(): void {
-    globalThis.document.getElementById('planes-disponibles')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const targetId = this.canUpgrade() ? 'planes-disponibles' : 'plan-actual-info';
+    globalThis.document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   scrollToPlanSection(): void {
@@ -1253,6 +1708,80 @@ export class MiEmpresaPage implements OnInit, OnDestroy {
       }
     });
   }
+}
+
+/** Contexto guardado antes de redirigir a Stripe Checkout (clave acotada al origen). */
+const STRIPE_CHECKOUT_CTX_KEY = 'inventario_stripe_checkout_ctx';
+
+type PlanTier = 'STARTER' | 'PRO' | 'EMPRESARIAL' | 'UNKNOWN';
+
+const PLAN_TIER_RANK: Readonly<Record<Exclude<PlanTier, 'UNKNOWN'>, number>> = {
+  STARTER: 1,
+  PRO: 2,
+  EMPRESARIAL: 3
+};
+
+function canonicalPlanTier(codeOrName: string | null | undefined): PlanTier {
+  const raw = (codeOrName ?? '').trim().toUpperCase();
+  if (!raw) return 'UNKNOWN';
+  if (raw === 'STARTER') return 'STARTER';
+  if (raw === 'PRO' || raw === 'PROFESIONAL') return 'PRO';
+  if (raw === 'EMPRESA' || raw === 'EMPRESARIAL') return 'EMPRESARIAL';
+  return 'UNKNOWN';
+}
+
+function tierRank(codeOrName: string | null | undefined): number {
+  const tier = canonicalPlanTier(codeOrName);
+  if (tier === 'UNKNOWN') return 0;
+  return PLAN_TIER_RANK[tier];
+}
+
+function isUpgradeAllowed(currentPlanCode: string | null | undefined, targetPlanCode: string | null | undefined): boolean {
+  const currentRank = tierRank(currentPlanCode);
+  const targetRank = tierRank(targetPlanCode);
+  if (targetRank <= 0) return false;
+  if (currentRank <= 0) return true;
+  return targetRank > currentRank;
+}
+
+function isUpgradePlan(currentPlanCode: string | null | undefined, targetPlanCode: string | null | undefined): boolean {
+  const currentRank = tierRank(currentPlanCode);
+  const targetRank = tierRank(targetPlanCode);
+  return currentRank > 0 && targetRank > currentRank;
+}
+
+function canPurchasePlan(currentPlanCode: string | null | undefined, targetPlanCode: string | null | undefined): boolean {
+  const currentRank = tierRank(currentPlanCode);
+  const targetRank = tierRank(targetPlanCode);
+  if (targetRank <= 0) return false;
+  if (currentRank <= 0) return true;
+  return targetRank > currentRank;
+}
+
+function getCheckoutFlowMode(currentPlanCode: string | null | undefined, targetPlanCode: string): CheckoutFlowMode {
+  return isUpgradePlan(currentPlanCode, targetPlanCode) ? 'UPGRADE' : 'PURCHASE';
+}
+
+function getVisiblePlans(currentPlanCode: string | null | undefined, plans: PublicPlanDto[]): PublicPlanDto[] {
+  return [...plans]
+    .filter((p) => isUpgradeAllowed(currentPlanCode, p.codigo))
+    .sort((a, b) => tierRank(a.codigo) - tierRank(b.codigo));
+}
+
+function getRecommendedPlan(currentPlanCode: string | null | undefined, plans: PublicPlanDto[]): PublicPlanDto | null {
+  if (!plans.length) return null;
+  const currentTier = canonicalPlanTier(currentPlanCode);
+  const byTier = [...plans].sort((a, b) => tierRank(a.codigo) - tierRank(b.codigo));
+  if (currentTier === 'UNKNOWN') {
+    return byTier.find((p) => canonicalPlanTier(p.codigo) === 'STARTER') ?? byTier[0] ?? null;
+  }
+  if (currentTier === 'STARTER') {
+    return byTier.find((p) => canonicalPlanTier(p.codigo) === 'PRO') ?? byTier[0] ?? null;
+  }
+  if (currentTier === 'PRO') {
+    return byTier.find((p) => canonicalPlanTier(p.codigo) === 'EMPRESARIAL') ?? byTier[0] ?? null;
+  }
+  return null;
 }
 
 function mapEmpresaStatus(raw: string | null | undefined): { title: string; description: string; kind: 'ok' | 'warn' } {

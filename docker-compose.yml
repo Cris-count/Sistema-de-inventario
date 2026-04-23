@@ -71,6 +71,10 @@ services:
       APP_SEED_COMPRAS_PASSWORD: ${APP_SEED_COMPRAS_PASSWORD:-Compras123!}
       APP_SEED_GERENCIA_EMAIL: ${APP_SEED_GERENCIA_EMAIL:-gerencia@inventario.local}
       APP_SEED_GERENCIA_PASSWORD: ${APP_SEED_GERENCIA_PASSWORD:-Gerencia123!}
+      # Stripe (test/live): definir en `.env` en la raíz del repo (ver .env.example)
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PUBLIC_KEY: ${STRIPE_PUBLIC_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
     depends_on:
       db:
         condition: service_healthy

@@ -54,3 +54,31 @@ export interface CambioPlanCancelacionResponseDto {
   compraId: number | null;
   pagoId: number | null;
 }
+
+export type CheckoutFlowMode = 'PURCHASE' | 'UPGRADE';
+export type CheckoutResolution = 'SUCCESS' | 'FAILURE' | 'CANCELLED';
+export type CheckoutProvider = 'STRIPE';
+
+export interface CreateCheckoutSessionResponseDto {
+  sessionId: string;
+  compraId: number;
+  pagoId: number;
+  currentPlanCodigo: string | null;
+  targetPlanCodigo: string;
+  mode: CheckoutFlowMode;
+  provider: CheckoutProvider;
+  requiresRedirect: boolean;
+  checkoutUrl: string | null;
+  message: string;
+}
+
+export interface ResolveCheckoutSessionResponseDto {
+  success: boolean;
+  pagoId: number;
+  compraId: number;
+  currentPlanCodigo: string | null;
+  targetPlanCodigo: string;
+  mode: CheckoutFlowMode;
+  result: CheckoutResolution;
+  message: string;
+}

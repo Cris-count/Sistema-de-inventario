@@ -5,8 +5,11 @@ import { environment } from '../../../environments/environment';
 import type {
   CambioPlanCancelacionResponseDto,
   CambioPlanSolicitudResponseDto,
+  CheckoutResolution,
+  CreateCheckoutSessionResponseDto,
   EmpresaActualDto,
-  EmpresaMiUpdateRequest
+  EmpresaMiUpdateRequest,
+  ResolveCheckoutSessionResponseDto
 } from '../models/empresa-actual.model';
 
 @Injectable({ providedIn: 'root' })
@@ -28,5 +31,20 @@ export class EmpresaActualService {
 
   cancelarCambioPlanPendiente(): Observable<CambioPlanCancelacionResponseDto> {
     return this.http.post<CambioPlanCancelacionResponseDto>(`${this.base}/empresa/cambio-plan/cancelar`, {});
+  }
+
+  createCheckoutSession(planCodigo: string): Observable<CreateCheckoutSessionResponseDto> {
+    return this.http.post<CreateCheckoutSessionResponseDto>(`${this.base}/empresa/checkout/session`, { planCodigo });
+  }
+
+  resolveCheckoutSession(
+    pagoId: number,
+    result: CheckoutResolution,
+    sessionId?: string | null
+  ): Observable<ResolveCheckoutSessionResponseDto> {
+    return this.http.post<ResolveCheckoutSessionResponseDto>(
+      `${this.base}/empresa/checkout/session/${pagoId}/resolve`,
+      { result, sessionId: sessionId ?? null }
+    );
   }
 }

@@ -43,16 +43,34 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
             @if (railMode()) {
               <button
                 type="button"
-                class="brand-mark brand-mark--expand"
+                class="brand-mark brand-mark--expand brand-mark--logo"
                 (click)="expandRail()"
                 [attr.aria-label]="'Expandir menú lateral · ' + activeSectionLabel()"
                 [title]="'Abrir panel · ' + activeSectionLabel()"
               >
-                <span class="brand-emoji" aria-hidden="true">{{ activeNavIcon() }}</span>
+                <img
+                  src="/branding/cersik-mark.png"
+                  alt=""
+                  class="brand-logo-img brand-logo-img--rail"
+                  width="36"
+                  height="36"
+                  loading="lazy"
+                />
               </button>
             } @else {
-              <div class="brand-mark" [attr.aria-label]="'Sección: ' + activeSectionLabel()" role="img">
-                <span class="brand-emoji" aria-hidden="true">{{ activeNavIcon() }}</span>
+              <div
+                class="brand-mark brand-mark--logo"
+                [attr.aria-label]="'Cersik · ' + activeSectionLabel()"
+                role="img"
+              >
+                <img
+                  src="/branding/cersik-logo-full.png"
+                  alt=""
+                  class="brand-logo-img"
+                  width="200"
+                  height="48"
+                  loading="lazy"
+                />
               </div>
             }
             <div class="brand-text">
@@ -151,8 +169,18 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
             <span class="menu-icon" aria-hidden="true"></span>
           </button>
           <div class="shell-title-wrap">
-            <span class="shell-title-kicker">Cersik</span>
-            <span class="shell-title" aria-live="polite">{{ activeSectionLabel() }}</span>
+            <img
+              src="/branding/cersik-mark.png"
+              alt=""
+              class="shell-header-mark"
+              width="32"
+              height="32"
+              loading="lazy"
+            />
+            <div class="shell-title-stack">
+              <span class="shell-title-kicker">Cersik</span>
+              <span class="shell-title" aria-live="polite">{{ activeSectionLabel() }}</span>
+            </div>
           </div>
           <div class="shell-header-theme">
             <app-theme-toggle />
@@ -265,6 +293,36 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       box-shadow:
         var(--shadow-sm),
         0 0 0 1px color-mix(in srgb, var(--accent-bright) 22%, transparent);
+    }
+    .brand-mark--logo {
+      width: auto;
+      min-width: 44px;
+      max-width: 220px;
+      height: 60px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+    .sidebar--narrow .brand-mark--logo {
+      width: 52px;
+      min-width: 52px;
+      max-width: 52px;
+      padding: 0.1rem;
+    }
+    .brand-logo-img {
+      display: block;
+      width: auto;
+      max-width: 208px;
+      height: 50px;
+      object-fit: contain;
+      object-position: left center;
+    }
+    .brand-logo-img--rail {
+      max-width: 100%;
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
     }
     .brand-emoji {
       font-size: 1.35rem;
@@ -566,9 +624,23 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       flex: 1;
       min-width: 0;
       display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.55rem;
+      line-height: 1.2;
+    }
+    .shell-header-mark {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+    .shell-title-stack {
+      display: flex;
       flex-direction: column;
       gap: 0.06rem;
-      line-height: 1.2;
+      min-width: 0;
     }
     .shell-title-kicker {
       font-size: 0.58rem;

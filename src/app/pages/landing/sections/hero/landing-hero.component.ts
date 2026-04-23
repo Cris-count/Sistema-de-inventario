@@ -23,6 +23,16 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
         class="relative z-10 mx-auto max-w-7xl px-5 py-14 sm:px-6 sm:py-20 lg:px-8 lg:py-24 lp-hero-pad"
       >
         <div class="max-w-2xl lg:max-w-3xl">
+          <div class="mb-3 sm:mb-4">
+            <img
+              src="/branding/cersik-logo-full.png"
+              alt="Cersik"
+              class="block h-auto w-auto max-h-20 max-w-[min(100%,28rem)] object-contain object-left drop-shadow-[0_2px_16px_rgba(0,0,0,0.45)] sm:max-h-24 sm:max-w-[32rem] lg:max-h-28 lg:max-w-xl xl:max-h-[7.5rem] xl:max-w-2xl"
+              width="480"
+              height="112"
+              loading="eager"
+            />
+          </div>
           <p
             class="max-w-prose text-[13px] font-semibold uppercase leading-snug tracking-[0.14em] text-teal-100/85 drop-shadow-[0_1px_14px_rgba(0,0,0,0.45)] sm:text-sm sm:tracking-[0.16em]"
           >

@@ -15,3 +15,8 @@ spring:
 #   inventory:
 #     stock-alerts:
 #       send-email: false
+#
+# Stripe (modo test): definir en el entorno del proceso, no en código.
+# STRIPE_SECRET_KEY=sk_test_...
+# STRIPE_PUBLIC_KEY=pk_test_...   # reservado (Checkout alojado no lo usa en el front)
+# STRIPE_WEBHOOK_SECRET=whsec_...   # opcional: POST /api/v1/billing/stripe/webhook
