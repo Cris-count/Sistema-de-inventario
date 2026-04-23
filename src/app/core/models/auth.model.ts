@@ -15,3 +15,19 @@ export interface TokenResponse {
   expiresIn: number;
   user: UserSummary;
 }
+
+/**
+ * Respuesta real de POST /auth/login (incluye desafío MFA sin accessToken).
+ * Debe alinearse con {@code AuthLoginResponse} en el backend.
+ */
+export interface AuthLoginResponse {
+  mfaRequired: boolean;
+  challengeToken?: string | null;
+  blockCode?: string | null;
+  accessToken?: string | null;
+  tokenType?: string | null;
+  expiresIn?: number | null;
+  user?: UserSummary | null;
+  refreshToken?: string | null;
+  refreshExpiresIn?: number | null;
+}

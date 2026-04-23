@@ -186,6 +186,23 @@ CREATE TABLE IF NOT EXISTS categoria (
 
 CREATE INDEX IF NOT EXISTS idx_categoria_empresa ON categoria (empresa_id);
 
+CREATE TABLE IF NOT EXISTS proveedor (
+    id            BIGSERIAL PRIMARY KEY,
+    empresa_id    BIGINT       NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
+    documento     VARCHAR(32)  NOT NULL,
+    razon_social  VARCHAR(255) NOT NULL,
+    contacto      VARCHAR(150),
+    telefono      VARCHAR(40),
+    email         VARCHAR(255),
+    activo        BOOLEAN      NOT NULL DEFAULT TRUE,
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ,
+    created_by    BIGINT       REFERENCES usuario (id) ON DELETE SET NULL,
+    CONSTRAINT uk_proveedor_empresa_documento UNIQUE (empresa_id, documento)
+);
+
+CREATE INDEX IF NOT EXISTS idx_proveedor_empresa ON proveedor (empresa_id);
+
 CREATE TABLE IF NOT EXISTS producto (
     id             BIGSERIAL PRIMARY KEY,
     empresa_id     BIGINT       NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
@@ -223,23 +240,6 @@ CREATE TABLE IF NOT EXISTS bodega (
 );
 
 CREATE INDEX IF NOT EXISTS idx_bodega_empresa ON bodega (empresa_id);
-
-CREATE TABLE IF NOT EXISTS proveedor (
-    id            BIGSERIAL PRIMARY KEY,
-    empresa_id    BIGINT       NOT NULL REFERENCES empresa (id) ON DELETE RESTRICT,
-    documento     VARCHAR(32)  NOT NULL,
-    razon_social  VARCHAR(255) NOT NULL,
-    contacto      VARCHAR(150),
-    telefono      VARCHAR(40),
-    email         VARCHAR(255),
-    activo        BOOLEAN      NOT NULL DEFAULT TRUE,
-    created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-    updated_at    TIMESTAMPTZ,
-    created_by    BIGINT       REFERENCES usuario (id) ON DELETE SET NULL,
-    CONSTRAINT uk_proveedor_empresa_documento UNIQUE (empresa_id, documento)
-);
-
-CREATE INDEX IF NOT EXISTS idx_proveedor_empresa ON proveedor (empresa_id);
 
 CREATE TABLE IF NOT EXISTS inventario (
     producto_id  BIGINT        NOT NULL REFERENCES producto (id) ON DELETE RESTRICT,

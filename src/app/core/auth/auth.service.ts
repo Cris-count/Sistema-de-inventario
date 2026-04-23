@@ -1,9 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, switchMap, tap } from 'rxjs';
+import { Observable, switchMap, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { TokenResponse, UserSummary } from '../models/auth.model';
+import { AuthLoginResponse, UserSummary } from '../models/auth.model';
 import { isJwtExpired } from '../util/jwt-expiry';
 
 const TOKEN_KEY = 'inventario_token';
@@ -24,6 +24,14 @@ export class AuthService {
 
   constructor() {
     this.restoreFromStorage();
+    if (typeof globalThis.window !== 'undefined') {
+      globalThis.window.addEventListener('storage', (e: StorageEvent) => {
+        if (e.key != null && e.key !== TOKEN_KEY && e.key !== USER_KEY) {
+          return;
+        }
+        this.restoreFromStorage();
+      });
+    }
   }
 
   private restoreFromStorage(): void {
@@ -35,12 +43,17 @@ export class AuthService {
       }
       return;
     }
+    const trimmed = t.trim();
+    if (!trimmed || trimmed === 'null' || trimmed === 'undefined') {
+      this.clearSession();
+      return;
+    }
     try {
-      if (isJwtExpired(t)) {
+      if (isJwtExpired(trimmed)) {
         this.clearSession();
         return;
       }
-      this._token.set(t);
+      this._token.set(trimmed);
       this._user.set(JSON.parse(u) as UserSummary);
     } catch {
       this.clearSession();
@@ -55,9 +68,28 @@ export class AuthService {
     const e = email.trim().toLowerCase();
     const p = password.trim();
     this.clearSession();
-    return this.http.post<TokenResponse>(`${environment.apiUrl}/auth/login`, { email: e, password: p }).pipe(
-      tap((res) => this.persist(res)),
-      switchMap(() => this.refreshMe())
+    return this.http.post<AuthLoginResponse>(`${environment.apiUrl}/auth/login`, { email: e, password: p }).pipe(
+      switchMap((res) => {
+        if (res.mfaRequired) {
+          return throwError(
+            () =>
+              new Error(
+                'Esta cuenta tiene verificación en dos pasos (MFA). Este cliente aún no incluye el paso MFA tras el login; use una cuenta sin MFA o contacte al administrador.'
+              )
+          );
+        }
+        const at = res.accessToken?.trim();
+        if (!at || at === 'null' || at === 'undefined') {
+          return throwError(
+            () => new Error('El servidor no devolvió un token de acceso válido. Revise credenciales o el estado de la cuenta.')
+          );
+        }
+        if (!res.user) {
+          return throwError(() => new Error('El servidor no devolvió datos de usuario en el login.'));
+        }
+        this.persistAccessAndUser(at, res.user);
+        return this.refreshMe();
+      })
     );
   }
 
@@ -70,11 +102,11 @@ export class AuthService {
     );
   }
 
-  private persist(res: TokenResponse): void {
-    localStorage.setItem(TOKEN_KEY, res.accessToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(res.user));
-    this._token.set(res.accessToken);
-    this._user.set(res.user);
+  private persistAccessAndUser(accessToken: string, user: UserSummary): void {
+    localStorage.setItem(TOKEN_KEY, accessToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    this._token.set(accessToken);
+    this._user.set(user);
   }
 
   clearSession(): void {

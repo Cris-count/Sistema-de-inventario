@@ -12,13 +12,32 @@ function sessionInvalidLogout(auth: AuthService, router: Router): void {
   }
 }
 
+/**
+ * Rutas permitidas sin JWT en el servidor ({@code permitAll}). No deben llevar
+ * {@code Authorization} con un access token inválido: el filtro JWT intentaría
+ * parsearlo y respondería 401 antes de alcanzar el controlador público.
+ * Alineado con {@code SecurityConfig} del backend.
+ */
+function isPublicApiRequest(url: string): boolean {
+  const u = url.toLowerCase();
+  return (
+    u.includes('/auth/login') ||
+    u.includes('/auth/mfa/verify') ||
+    u.includes('/auth/refresh') ||
+    u.includes('/auth/logout') ||
+    u.includes('/public/') ||
+    u.includes('/onboarding/') ||
+    u.includes('/billing/')
+  );
+}
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const token = auth.token();
+  const publicReq = isPublicApiRequest(req.url);
 
-  const isLoginRequest = req.url.includes('/auth/login');
-  if (token && !isLoginRequest && isJwtExpired(token)) {
+  if (token && !publicReq && isJwtExpired(token)) {
     sessionInvalidLogout(auth, router);
     return throwError(
       () =>
@@ -27,7 +46,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   const withAuth =
-    token && !isLoginRequest ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+    token && !publicReq ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
    return next(withAuth).pipe(
     catchError((err) => {

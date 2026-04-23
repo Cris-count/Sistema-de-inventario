@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import type { EmpresaForm } from '../register.models';
 import { UiButtonComponent } from '../../../shared/components/ui/button/ui-button.component';
 
@@ -21,6 +21,7 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
           (input)="patch.emit({ nombre: inputVal($event) })"
         />
       </label>
+
       <label class="block">
         <span class="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-slate-400">Identificación tributaria</span>
         <input
@@ -30,14 +31,21 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
           autocomplete="off"
         />
       </label>
+
       <label class="block">
         <span class="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-slate-400">Sector / tipo</span>
-        <input
-          class="mt-1 w-full rounded-xl border border-slate-200 bg-surface px-3 py-2 text-sm text-primary outline-none ring-accent/30 focus:ring-2 placeholder:text-slate-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:ring-accent/35 dark:placeholder:text-slate-500"
+        <select
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-surface px-3 py-2 text-sm text-primary outline-none ring-accent/30 focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:ring-accent/35"
           [value]="value().sector"
-          (input)="patch.emit({ sector: inputVal($event) })"
-        />
+          (change)="patch.emit({ sector: selectVal($event) })"
+        >
+          <option value="">Selecciona un sector</option>
+          @for (sector of sectores; track sector) {
+            <option [value]="sector">{{ sector }}</option>
+          }
+        </select>
       </label>
+
       <label class="block sm:col-span-2">
         <span class="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-slate-400">Correo de contacto</span>
         <input
@@ -47,6 +55,7 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
           (input)="patch.emit({ emailContacto: inputVal($event) })"
         />
       </label>
+
       <label class="block">
         <span class="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-slate-400">Teléfono</span>
         <input
@@ -55,21 +64,34 @@ import { UiButtonComponent } from '../../../shared/components/ui/button/ui-butto
           (input)="patch.emit({ telefono: inputVal($event) })"
         />
       </label>
+
       <label class="block">
         <span class="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-slate-400">País</span>
-        <input
-          class="mt-1 w-full rounded-xl border border-slate-200 bg-surface px-3 py-2 text-sm text-primary outline-none ring-accent/30 focus:ring-2 placeholder:text-slate-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:ring-accent/35 dark:placeholder:text-slate-500"
+        <select
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-surface px-3 py-2 text-sm text-primary outline-none ring-accent/30 focus:ring-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:ring-accent/35"
           [value]="value().pais"
-          (input)="patch.emit({ pais: inputVal($event) })"
-        />
+          (change)="onPaisChange($event)"
+        >
+          <option value="">Selecciona un país</option>
+          @for (pais of paises; track pais) {
+            <option [value]="pais">{{ pais }}</option>
+          }
+        </select>
       </label>
+
       <label class="block sm:col-span-2">
         <span class="text-xs font-semibold uppercase tracking-wide text-secondary dark:text-slate-400">Ciudad</span>
-        <input
-          class="mt-1 w-full rounded-xl border border-slate-200 bg-surface px-3 py-2 text-sm text-primary outline-none ring-accent/30 focus:ring-2 placeholder:text-slate-400 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:ring-accent/35 dark:placeholder:text-slate-500"
+        <select
+          class="mt-1 w-full rounded-xl border border-slate-200 bg-surface px-3 py-2 text-sm text-primary outline-none ring-accent/30 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:ring-accent/35"
           [value]="value().ciudad"
-          (input)="patch.emit({ ciudad: inputVal($event) })"
-        />
+          (change)="patch.emit({ ciudad: selectVal($event) })"
+          [disabled]="!value().pais"
+        >
+          <option value="">{{ value().pais ? 'Selecciona una ciudad' : 'Primero selecciona un país' }}</option>
+          @for (ciudad of ciudadesDisponibles(); track ciudad) {
+            <option [value]="ciudad">{{ ciudad }}</option>
+          }
+        </select>
       </label>
     </div>
 
@@ -94,7 +116,61 @@ export class RegisterStepCompanyComponent {
   readonly next = output<void>();
   readonly back = output<void>();
 
+  protected readonly sectores = [
+    'Tienda / retail',
+    'Ferretería',
+    'Papelería',
+    'Droguería',
+    'Minimercado',
+    'Moda / confecciones',
+    'Repuestos',
+    'Tecnología',
+    'Distribuidora / mayorista',
+    'Manufactura',
+    'Restaurante / insumos',
+    'Otro'
+  ];
+
+  protected readonly paises = ['Colombia'];
+
+  protected readonly ciudadesPorPais: Record<string, string[]> = {
+    Colombia: [
+      'Armenia',
+      'Bogotá',
+      'Medellín',
+      'Cali',
+      'Barranquilla',
+      'Bucaramanga',
+      'Pereira',
+      'Manizales',
+      'Cartagena',
+      'Cúcuta',
+      'Ibagué',
+      'Santa Marta',
+      'Villavicencio',
+      'Pasto',
+      'Montería'
+    ]
+  };
+
+  protected readonly ciudadesDisponibles = computed(() => {
+    const pais = this.value().pais;
+    return this.ciudadesPorPais[pais] ?? [];
+  });
+
   protected inputVal(ev: Event): string {
     return (ev.target as HTMLInputElement).value;
+  }
+
+  protected selectVal(ev: Event): string {
+    return (ev.target as HTMLSelectElement).value;
+  }
+
+  protected onPaisChange(ev: Event): void {
+    const pais = this.selectVal(ev);
+    this.patch.emit({
+      pais,
+      ciudad: ''
+    });
   }
 }

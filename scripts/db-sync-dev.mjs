@@ -27,6 +27,7 @@ const MIGRATIONS = [
   'database/migrations/004_onboarding_saas.sql',
   'database/migrations/005_billing_compra_pago.sql',
   'database/migrations/005_plan_pricing_cop.sql',
+  'database/migrations/006_plan_limits_capacidad.sql',
   'database/migrations/006_saas_compra_plan_change.sql',
   'database/migrations/006_onboarding_email_totp.sql',
   'database/migrations/007_usuario_mfa.sql',
@@ -35,7 +36,9 @@ const MIGRATIONS = [
   'database/migrations/010_refresh_token_family_expires.sql',
   'database/migrations/011_pedido_proveedor_mensaje.sql',
   'database/migrations/012_onboarding_email_challenge_totp.sql',
-  'database/migrations/013_rol_compras_abastecimiento_display.sql'
+  'database/migrations/013_rol_compras_abastecimiento_display.sql',
+  'database/migrations/014_ventas.sql',
+  'database/migrations/015_ventas_fase2.sql'
 ];
 
 const PSQL_ENV = {
