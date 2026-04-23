@@ -10,6 +10,7 @@
  * Uso: npm run up
  */
 import { spawnSync } from 'node:child_process';
+import net from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -36,8 +37,39 @@ function runOrFail(command, args, description, useShell = false) {
   }
 }
 
+/**
+ * Espera a que algo escuche en TCP (p. ej. Postgres publicado en el host tras `docker compose up`).
+ */
+async function waitForPort(port, options = {}) {
+  const host = options.host ?? '127.0.0.1';
+  const timeoutMs = options.timeoutMs ?? 120_000;
+  const intervalMs = options.intervalMs ?? 500;
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const connected = await new Promise((resolve) => {
+      const socket = net.createConnection({ port, host }, () => {
+        socket.end();
+        resolve(true);
+      });
+      socket.on('error', () => {
+        socket.destroy();
+        resolve(false);
+      });
+    });
+    if (connected) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new Error(
+    `[dev-up] Timeout esperando puerto ${host}:${port} (${timeoutMs} ms). ` +
+      'Revisá: docker compose ps   y   docker compose logs db'
+  );
+}
+
 async function waitForApiHealth(url, timeoutMs = API_HEALTH_TIMEOUT_MS, intervalMs = 2000) {
   const started = Date.now();
+  let lastProgressLog = started;
   while (Date.now() - started < timeoutMs) {
     try {
       const response = await fetch(url);
@@ -50,24 +82,29 @@ async function waitForApiHealth(url, timeoutMs = API_HEALTH_TIMEOUT_MS, interval
     } catch {
       // API aun no esta disponible
     }
+    const now = Date.now();
+    if (now - lastProgressLog >= 25_000) {
+      lastProgressLog = now;
+      const elapsed = Math.round((now - started) / 1000);
+      console.log(
+        `[dev-up]   …aún esperando ${url} (${elapsed}s / ${Math.round(timeoutMs / 1000)}s; 503 suele ser health de mail sin SMTP)…`
+      );
+    }
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
   throw new Error(
     `[dev-up] Timeout esperando health del API en ${url} (${timeoutMs} ms). ` +
-      'Revisá: docker compose logs api   (a menudo es esquema desactualizado; db-sync debería haberlo corregido).'
+      'Revisá: docker compose logs api · Esquema BD: npm run db:sync · Si ves MailHealthIndicator: MANAGEMENT_HEALTH_MAIL_ENABLED=false en compose.'
   );
 }
 
 async function main() {
   runOrFail('docker', ['compose', 'up', '-d', '--build'], '[dev-up] 1/5  Levantando Docker completo (db + api) …');
 
-  console.log('[dev-up] 2/4  Esperando PostgreSQL en 127.0.0.1:5433 …');
+  console.log('[dev-up] 2/5  Esperando PostgreSQL en 127.0.0.1:5433 …');
   await waitForPort(5433);
 
-  console.log(
-    '[dev-up] 3/4  Alineando esquema (migraciones SQL idempotentes en BD existente; ver db-sync-dev.mjs)'
-  );
-  console.log('[dev-up] 2/5  Alineando esquema PostgreSQL (migraciones idempotentes) …');
+  console.log('[dev-up] 3/5  Alineando esquema PostgreSQL (migraciones idempotentes; ver db-sync-dev.mjs) …');
   const { applyDevMigrations } = await import('./db-sync-dev.mjs');
   await applyDevMigrations();
 

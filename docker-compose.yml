@@ -52,6 +52,8 @@ services:
       APP_SEED_COMPRAS_PASSWORD: ${APP_SEED_COMPRAS_PASSWORD:-Compras123!}
       APP_SEED_GERENCIA_EMAIL: ${APP_SEED_GERENCIA_EMAIL:-gerencia@inventario.local}
       APP_SEED_GERENCIA_PASSWORD: ${APP_SEED_GERENCIA_PASSWORD:-Gerencia123!}
+      # Sin SMTP en este compose: el indicador de mail de Actuator deja el agregado en DOWN y dev-up espera health 4 min.
+      MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
     depends_on:
       db:
         condition: service_healthy
