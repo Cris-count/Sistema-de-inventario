@@ -12,8 +12,16 @@
 # puede haberse creado con otras credenciales (POSTGRES_* solo aplican en el primer init). Reset: npm run db:reset
 #
 # API: http://localhost:8080/swagger-ui.html  |  DB en el host: localhost:5433 → 5432 en el contenedor (evita choque con Postgres local en 5432)
+# Correo dev (Mailpit): bandeja web http://localhost:8025 — los «Aprobar y enviar correo» llegan ahí, no a Internet.
 
 services:
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: inventario-mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
   db:
     image: postgres:16-alpine
     container_name: inventario-postgres
@@ -42,6 +50,15 @@ services:
     environment:
       # Sin SMTP en Docker dev el MailHealthIndicator deja el agregado en DOWN y `npm run up` nunca pasa del healthcheck.
       MANAGEMENT_HEALTH_MAIL_ENABLED: "false"
+      # SMTP hacia Mailpit (dev): sí se llama a JavaMailSender; el correo aparece en http://localhost:8025
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: "1025"
+      SPRING_MAIL_USERNAME: noreply@inventario.local
+      SPRING_MAIL_PASSWORD: ""
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED: "false"
+      # Producción / Gmail: sustituí las variables anteriores (host real, 587, auth+TLS, usuario/contraseña de aplicación).
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/inventario
       SPRING_DATASOURCE_USERNAME: inventario
       SPRING_DATASOURCE_PASSWORD: inventario
@@ -57,6 +74,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
 volumes:
   inventario_pgdata:

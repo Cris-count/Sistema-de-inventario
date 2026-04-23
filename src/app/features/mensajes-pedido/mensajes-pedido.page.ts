@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   MensajePedidoEstado,
@@ -6,12 +6,14 @@ import {
   MensajePedidoRow,
   MensajesPedidoService
 } from '../../core/api/mensajes-pedido.service';
+import { backdropFade, modalFadeScale } from '../../core/animations';
 import { getApiErrorMessage, patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 
 @Component({
   selector: 'app-mensajes-pedido',
   imports: [FormsModule, PlanBlockFollowupComponent],
+  animations: [backdropFade, modalFadeScale],
   template: `
     <div class="page stack">
       <header class="page-header">
@@ -91,42 +93,75 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
         <button type="button" class="btn" [disabled]="page() + 1 >= totalPages()" (click)="next()">Siguiente</button>
       </div>
       @if (resolver(); as r) {
-        <div class="card stack card-bordered">
-          <h2>Resolver solicitud #{{ r.id }}</h2>
-          <p class="muted">
-            Existencia al registrar: {{ r.existenciaSnapshot }} {{ r.unidadMedida }} · Mínimo (snapshot):
-            {{ r.stockMinimoSnapshot }} · Cantidad sugerida por el sistema: {{ r.cantidadSugerida }} {{ r.unidadMedida }}
-          </p>
-          <div class="field">
-            <label>Cantidad a enviar al proveedor (puede modificarla)</label>
-            <input
-              type="number"
-              step="any"
-              min="0.0001"
-              class="input-narrow"
-              [ngModel]="cantDraft()"
-              (ngModelChange)="cantDraft.set($event)"
-            />
-          </div>
-          <div class="field">
-            <label>Notas internas (opcional)</label>
-            <textarea
-              class="textarea-fluid"
-              [ngModel]="notasDraft()"
-              (ngModelChange)="notasDraft.set($event)"
-              rows="2"
-            ></textarea>
-          </div>
-          <div class="row">
-            <button type="button" class="btn btn-primary" [disabled]="accionLoading()" (click)="aprobar(r)">
-              Aprobar y enviar correo
-            </button>
-            <button type="button" class="btn" [disabled]="accionLoading()" (click)="rechazar(r)">Rechazar (sin correo)</button>
-            <button type="button" class="btn btn-ghost" [disabled]="accionLoading()" (click)="cerrarResolver()">Cerrar</button>
+        <div
+          class="modal-backdrop"
+          @backdropFade
+          aria-hidden="true"
+          (click)="backdropCerrar()"
+        ></div>
+        <div
+          class="modal-dialog"
+          @modalFadeScale
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="resolver-pedido-titulo"
+        >
+          <div class="resolver-modal-panel stack card-bordered">
+            <h2 id="resolver-pedido-titulo">Resolver solicitud #{{ r.id }}</h2>
+            <p class="muted resolver-modal-lead">
+              Existencia al registrar: {{ r.existenciaSnapshot }} {{ r.unidadMedida }} · Mínimo (snapshot):
+              {{ r.stockMinimoSnapshot }} · Cantidad sugerida por el sistema: {{ r.cantidadSugerida }}
+              {{ r.unidadMedida }}
+            </p>
+            <div class="field">
+              <label>Cantidad a enviar al proveedor (puede modificarla)</label>
+              <input
+                type="number"
+                step="any"
+                min="0.0001"
+                class="input-narrow"
+                [ngModel]="cantDraft()"
+                (ngModelChange)="cantDraft.set($event)"
+              />
+            </div>
+            <div class="field">
+              <label>Notas internas (opcional)</label>
+              <textarea
+                class="textarea-fluid"
+                [ngModel]="notasDraft()"
+                (ngModelChange)="notasDraft.set($event)"
+                rows="3"
+              ></textarea>
+            </div>
+            <div class="row resolver-modal-actions">
+              <button type="button" class="btn btn-primary" [disabled]="accionLoading()" (click)="aprobar(r)">
+                Aprobar y enviar correo
+              </button>
+              <button type="button" class="btn" [disabled]="accionLoading()" (click)="rechazar(r)">
+                Rechazar (sin correo)
+              </button>
+              <button type="button" class="btn btn-ghost" [disabled]="accionLoading()" (click)="cerrarResolver()">
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       }
     </div>
+  `,
+  styles: `
+    .resolver-modal-panel {
+      max-width: min(560px, 100%);
+      max-height: min(90dvh, 900px);
+      overflow-y: auto;
+    }
+    .resolver-modal-lead {
+      line-height: 1.45;
+    }
+    .resolver-modal-actions {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
   `
 })
 export class MensajesPedidoPage implements OnInit {
@@ -188,6 +223,22 @@ export class MensajesPedidoPage implements OnInit {
 
   cerrarResolver(): void {
     this.resolver.set(null);
+  }
+
+  backdropCerrar(): void {
+    if (!this.accionLoading()) {
+      this.cerrarResolver();
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onDocumentKeydown(e: KeyboardEvent): void {
+    if (e.key !== 'Escape') {
+      return;
+    }
+    if (this.resolver() && !this.accionLoading()) {
+      this.cerrarResolver();
+    }
   }
 
   aprobar(r: MensajePedidoRow): void {
