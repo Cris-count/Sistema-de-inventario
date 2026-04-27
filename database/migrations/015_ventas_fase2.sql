@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS venta_consecutivo (
     ultimo     BIGINT NOT NULL DEFAULT 0 CHECK (ultimo >= 0)
 );
 
--- Venta: cliente opcional, código visible, ampliar estados
+-- Venta: cliente opcional, código visible, ampliar estados.
+-- Esta migración se reejecuta en desarrollo; no debe volver a estrechar
+-- el CHECK si la base ya contiene estados POS/anulación de migraciones posteriores.
 ALTER TABLE venta ADD COLUMN IF NOT EXISTS cliente_id BIGINT REFERENCES cliente (id) ON DELETE RESTRICT;
 ALTER TABLE venta ADD COLUMN IF NOT EXISTS codigo_publico VARCHAR(32);
 
@@ -40,4 +42,5 @@ GROUP BY v.empresa_id
 ON CONFLICT (empresa_id) DO UPDATE SET ultimo = GREATEST(venta_consecutivo.ultimo, EXCLUDED.ultimo);
 
 ALTER TABLE venta DROP CONSTRAINT IF EXISTS venta_estado_check;
-ALTER TABLE venta ADD CONSTRAINT venta_estado_check CHECK (estado IN ('CONFIRMADA', 'ANULADA'));
+ALTER TABLE venta ADD CONSTRAINT venta_estado_check
+    CHECK (estado IN ('CONFIRMADA', 'ANULACION_SOLICITADA', 'ANULADA', 'PENDIENTE_PAGO', 'CANCELADA_SIN_PAGO'));

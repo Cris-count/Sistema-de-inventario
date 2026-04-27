@@ -41,7 +41,8 @@ const MIGRATIONS = [
   'database/migrations/015_ventas_fase2.sql',
   'database/migrations/016_onboarding_prepaid_checkout.sql',
   'database/migrations/017_producto_pricing_fields.sql',
-  'database/migrations/018_venta_pos_stripe.sql'
+  'database/migrations/018_venta_pos_stripe.sql',
+  'database/migrations/019_venta_anulacion_solicitada_estado.sql'
 ];
 
 const PSQL_ENV = {
