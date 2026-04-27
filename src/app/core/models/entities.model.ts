@@ -121,7 +121,9 @@ export interface VentaListItem {
   estado: string;
   clienteId?: number | null;
   clienteNombre?: string | null;
-  /** STRIPE_* cuando la venta pasó por Checkout; null en ventas tradicionales. */
+  /** EFECTIVO para cobro directo; STRIPE para Checkout con tarjeta. */
+  metodoPago?: string | null;
+  /** STRIPE_* para ciclo Stripe; null para efectivo/directo. */
   pagoEstado?: string | null;
 }
 
@@ -155,8 +157,11 @@ export interface VentaDetailResponse {
   clienteDocumento?: string | null;
   clienteTelefono?: string | null;
   lineas: VentaDetalleLine[];
+  metodoPago?: string | null;
   pagoEstado?: string | null;
   paidAt?: string | null;
+  montoRecibido?: number | null;
+  cambio?: number | null;
   stripeCheckoutSessionId?: string | null;
   /** Razón social / nombre de la empresa (tenant). */
   empresaNombre?: string | null;
@@ -174,6 +179,7 @@ export interface VentaCreateRequest {
   bodegaId: number;
   clienteId?: number | null;
   observacion?: string;
+  montoRecibido?: number | null;
   lineas: VentaLineRequest[];
 }
 

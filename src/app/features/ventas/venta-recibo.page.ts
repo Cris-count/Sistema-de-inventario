@@ -78,8 +78,18 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
                 </div>
                 <div>
                   <span class="recibo-label">Medio</span>
-                  <strong>{{ row.metodoPagoEtiqueta ?? '—' }}</strong>
+                  <strong>{{ row.metodoPagoEtiqueta ?? labelMetodoPago(row.metodoPago, row.pagoEstado) }}</strong>
                 </div>
+                @if (row.metodoPago === 'EFECTIVO' && row.montoRecibido != null && row.cambio != null) {
+                  <div>
+                    <span class="recibo-label">Recibido</span>
+                    <strong>{{ row.montoRecibido | number: '1.2-2' }}</strong>
+                  </div>
+                  <div>
+                    <span class="recibo-label">Cambio</span>
+                    <strong>{{ row.cambio | number: '1.2-2' }}</strong>
+                  </div>
+                }
               </div>
             </section>
 
@@ -267,6 +277,12 @@ export class VentaReciboPage {
       return '—';
     }
     return 'Pagado';
+  }
+
+  labelMetodoPago(metodo: string | null | undefined, pagoEstado?: string | null): string {
+    if (metodo === 'EFECTIVO') return 'Efectivo';
+    if (metodo === 'STRIPE' || pagoEstado?.startsWith('STRIPE_')) return 'Tarjeta (Stripe)';
+    return '—';
   }
 
   labelEstado(estado: string): string {

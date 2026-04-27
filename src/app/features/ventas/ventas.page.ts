@@ -375,7 +375,7 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
                     [quantityInCart]="cantidadEnCarrito(p.id)"
                     [price]="precioListaProducto(p)"
                     [disabled]="!productoDisponible(p.id)"
-                    [actionDisabled]="pagandoStripe() || !bodegaId || stockCargando() || cantidadMaximaProducto(p.id) < 1"
+                    [actionDisabled]="checkoutEnProceso() || !bodegaId || stockCargando() || cantidadMaximaProducto(p.id) < 1"
                     [actionTitle]="addButtonTitle(p.id)"
                     [outOfStockVisible]="!!bodegaId && !stockCargando() && stockDisponible(p.id) <= 0"
                     [maxQuantity]="cantidadMaximaProducto(p.id)"
@@ -399,7 +399,7 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
                     id="pos-bodega"
                     [(ngModel)]="bodegaId"
                     (ngModelChange)="onBodegaChange()"
-                    [disabled]="pagandoStripe()"
+                    [disabled]="checkoutEnProceso()"
                   >
                     <option [ngValue]="null">Seleccionar…</option>
                     @for (b of bodegas(); track b.id) {
@@ -409,7 +409,7 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
                 </div>
                 <div class="field">
                   <label for="pos-cliente">Cliente (opcional)</label>
-                  <select id="pos-cliente" [(ngModel)]="clienteId" [disabled]="pagandoStripe()">
+                  <select id="pos-cliente" [(ngModel)]="clienteId" [disabled]="checkoutEnProceso()">
                     <option [ngValue]="null">Sin cliente</option>
                     @for (c of clientes(); track c.id) {
                       <option [ngValue]="c.id">{{ c.nombre }}</option>
@@ -424,11 +424,11 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
                     type="text"
                     autocomplete="off"
                     placeholder="Ej. pedido especial"
-                    [disabled]="pagandoStripe()"
+                    [disabled]="checkoutEnProceso()"
                   />
                 </div>
               </div>
-              <button type="button" class="btn btn-secondary btn-sm" (click)="toggleNuevoCliente()">
+              <button type="button" class="btn btn-secondary btn-sm" [disabled]="checkoutEnProceso()" (click)="toggleNuevoCliente()">
                 {{ mostrarNuevoCliente() ? 'Cerrar alta rápida' : '+ Nuevo cliente' }}
               </button>
               @if (mostrarNuevoCliente()) {
@@ -484,7 +484,7 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
                     <li
                       app-venta-pos-cart-line
                       [line]="line"
-                      [paying]="pagandoStripe()"
+                      [paying]="checkoutEnProceso()"
                       [stockLoading]="stockCargando()"
                       [stockInvalid]="filaStockInvalida(line)"
                       [maxQuantity]="cantidadMaximaProducto(line.productoId)"
@@ -516,7 +516,7 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
                   </div>
                   @if (listoParaCobrar()) {
                     <p class="field-hint ventas-pos-ready-hint">
-                      Stock validado. Checkout listo.
+                      Stock validado. Elegí efectivo para confirmar ahora o tarjeta para abrir Stripe.
                     </p>
                   }
                   @if (!listoParaCobrar()) {
@@ -524,22 +524,72 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
                       Revisá precio, stock y total antes de cobrar.
                     </p>
                   }
-                  <button
-                    type="button"
-                    class="btn btn-primary ventas-pos-confirm"
-                    [disabled]="
-                      pagandoStripe() || !bodegaId || lineas().length === 0 || stockBloqueante() || totalVenta() <= 0
-                    "
-                    [attr.aria-busy]="pagandoStripe()"
-                    (click)="irAPagarConStripe()"
-                  >
-                    @if (pagandoStripe()) {
-                      <span class="spinner" aria-hidden="true"></span>
-                      Abriendo cobro…
-                    } @else {
-                      Cobrar con tarjeta
-                    }
-                  </button>
+                  <div class="ventas-pos-payment-actions" aria-label="Opciones de cobro">
+                    <button
+                      type="button"
+                      class="btn btn-secondary ventas-pos-confirm"
+                      [disabled]="!puedeCobrarPos()"
+                      [attr.aria-expanded]="cashPanelAbierto()"
+                      (click)="abrirCobroEfectivo()"
+                    >
+                      Cobrar en efectivo
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-primary ventas-pos-confirm"
+                      [disabled]="!puedeCobrarPos()"
+                      [attr.aria-busy]="pagandoStripe()"
+                      (click)="irAPagarConStripe()"
+                    >
+                      @if (pagandoStripe()) {
+                        <span class="spinner" aria-hidden="true"></span>
+                        Abriendo cobro…
+                      } @else {
+                        Cobrar con tarjeta
+                      }
+                    </button>
+                  </div>
+                  @if (cashPanelAbierto()) {
+                    <div class="ventas-pos-cash-box">
+                      <div class="field">
+                        <label for="pos-cash-received">Recibido en efectivo</label>
+                        <input
+                          id="pos-cash-received"
+                          type="number"
+                          inputmode="decimal"
+                          min="0"
+                          step="any"
+                          [ngModel]="montoRecibidoEfectivo()"
+                          (ngModelChange)="actualizarMontoRecibidoEfectivo($event)"
+                          [disabled]="checkoutEnProceso()"
+                          autocomplete="off"
+                        />
+                      </div>
+                      <div class="ventas-pos-cash-summary">
+                        <span>Total {{ totalVenta() | number: '1.2-2' }}</span>
+                        <strong>Cambio {{ cambioEfectivo() | number: '1.2-2' }}</strong>
+                      </div>
+                      @if (efectivoInsuficiente()) {
+                        <p class="field-hint text-warning ventas-pos-cash-warning">
+                          El efectivo recibido debe cubrir el total de la venta.
+                        </p>
+                      }
+                      <button
+                        type="button"
+                        class="btn btn-primary ventas-pos-cash-submit"
+                        [disabled]="!puedeConfirmarEfectivo()"
+                        [attr.aria-busy]="confirmando()"
+                        (click)="cobrarEnEfectivo()"
+                      >
+                        @if (confirmando()) {
+                          <span class="spinner" aria-hidden="true"></span>
+                          Confirmando…
+                        } @else {
+                          Confirmar efectivo
+                        }
+                      </button>
+                    </div>
+                  }
                 </div>
                 @if (puedePrecioCero() && totalVenta() <= 0 && lineas().length > 0) {
                   <p class="field-hint muted ventas-pos-admin-zero-hint">
@@ -866,6 +916,7 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
                   <th>Estado</th>
                   <th>Bodega</th>
                   <th>Cliente</th>
+                  <th>Medio</th>
                   <th class="data-numeric">Total</th>
                   <th class="data-numeric">Ítems</th>
                   <th>Usuario</th>
@@ -893,6 +944,7 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
                     </td>
                     <td>{{ v.bodegaNombre }}</td>
                     <td>{{ v.clienteNombre ?? '—' }}</td>
+                    <td>{{ labelMetodoPago(v.metodoPago, v.pagoEstado) }}</td>
                     <td class="data-numeric ventas-history-total">{{ v.total | number: '1.2-2' }}</td>
                     <td class="data-numeric">{{ v.cantidadLineas | number }}</td>
                     <td>{{ v.usuarioEmail }}</td>
@@ -1031,6 +1083,9 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
     }
     @media (max-width: 900px) {
       .ventas-pos-grid {
+        grid-template-columns: 1fr;
+      }
+      .ventas-pos-payment-actions {
         grid-template-columns: 1fr;
       }
       .ventas-pos-station-bar,
@@ -1249,12 +1304,38 @@ type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
       color: var(--text);
       background: color-mix(in srgb, var(--color-success, #22c55e) 18%, transparent);
     }
+    .ventas-pos-payment-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+      margin-top: 0.65rem;
+    }
     .ventas-pos-confirm {
       width: 100%;
-      margin-top: 0.65rem;
       min-height: 3.05rem;
       font-size: 1rem;
       font-weight: 800;
+    }
+    .ventas-pos-cash-box {
+      margin-top: 0.7rem;
+      padding: 0.75rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm, 6px);
+      background: color-mix(in srgb, var(--surface2) 72%, transparent);
+    }
+    .ventas-pos-cash-summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: 0.55rem;
+      font-size: 0.88rem;
+    }
+    .ventas-pos-cash-warning {
+      margin: 0.45rem 0 0;
+    }
+    .ventas-pos-cash-submit {
+      width: 100%;
+      margin-top: 0.65rem;
     }
     .ventas-pos-ready-hint {
       margin: 0.4rem 0 0;
@@ -1410,6 +1491,9 @@ export class VentasPage {
   readonly historialLoading = signal(false);
   readonly confirmando = signal(false);
   readonly pagandoStripe = signal(false);
+  readonly checkoutEnProceso = computed(() => this.confirmando() || this.pagandoStripe());
+  readonly cashPanelAbierto = signal(false);
+  readonly montoRecibidoEfectivo = signal('');
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly planFollowup = signal<PlanBlockFollowup | null>(null);
@@ -1486,20 +1570,30 @@ export class VentasPage {
 
   /** Carrito válido para iniciar Checkout (mensaje de “listo” sin duplicar lógica del botón). */
   readonly listoParaCobrar = computed(() => {
-    if (this.pagandoStripe()) {
-      return false;
-    }
-    if (this.bodegaId == null || this.lineas().length === 0 || this.stockBloqueante() || this.totalVenta() <= 0) {
-      return false;
-    }
-    if (!this.puedePrecioCero() && this.lineas().some((l) => l.precioUnitario <= 0)) {
-      return false;
-    }
-    if (this.lineas().some((l) => !(l.cantidad > 0) || l.precioUnitario < 0 || !Number.isFinite(l.cantidad))) {
-      return false;
-    }
-    return true;
+    return this.validarCarritoParaCobro(false);
   });
+
+  readonly puedeCobrarPos = computed(() => this.validarCarritoParaCobro(false));
+
+  readonly montoRecibidoNumero = computed(() => {
+    const n = this.parseMonto(this.montoRecibidoEfectivo());
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  });
+
+  readonly cambioEfectivo = computed(() => {
+    const recibido = this.montoRecibidoNumero();
+    return recibido == null ? 0 : Math.max(0, recibido - this.totalVenta());
+  });
+
+  readonly efectivoInsuficiente = computed(() => {
+    const raw = this.montoRecibidoEfectivo().trim();
+    const recibido = this.montoRecibidoNumero();
+    return raw.length > 0 && (recibido == null || recibido < this.totalVenta());
+  });
+
+  readonly puedeConfirmarEfectivo = computed(
+    () => this.validarCarritoParaCobro(false) && (this.montoRecibidoNumero() ?? -1) >= this.totalVenta()
+  );
 
   constructor() {
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((q) => {
@@ -1608,6 +1702,12 @@ export class VentasPage {
     if (estado === 'ANULADA') return 'badge badge-off';
     if (estado === 'ANULACION_SOLICITADA' || estado === 'PENDIENTE_PAGO') return 'badge badge-pending';
     return 'badge badge-muted';
+  }
+
+  labelMetodoPago(metodo: string | null | undefined, pagoEstado?: string | null): string {
+    if (metodo === 'EFECTIVO') return 'Efectivo';
+    if (metodo === 'STRIPE' || pagoEstado?.startsWith('STRIPE_')) return 'Tarjeta';
+    return '—';
   }
 
   cargarResumen(): void {
@@ -1905,8 +2005,8 @@ export class VentasPage {
   }
 
   cantidadMaximaTitle(line: DraftLine): string {
-    if (this.pagandoStripe()) {
-      return 'No se puede editar mientras se abre el cobro.';
+    if (this.checkoutEnProceso()) {
+      return 'No se puede editar mientras se procesa el cobro.';
     }
     if (this.stockCargando()) {
       return 'Esperá a que termine la carga de stock.';
@@ -1965,14 +2065,14 @@ export class VentasPage {
   }
 
   quitarLinea(productoId: number): void {
-    if (this.pagandoStripe()) {
+    if (this.checkoutEnProceso()) {
       return;
     }
     this.lineas.update((lines) => lines.filter((l) => l.productoId !== productoId));
   }
 
   actualizarCantidad(productoId: number, raw: number | string): void {
-    if (this.pagandoStripe()) {
+    if (this.checkoutEnProceso()) {
       return;
     }
     const n = typeof raw === 'string' ? parseFloat(raw) : raw;
@@ -1992,7 +2092,7 @@ export class VentasPage {
   }
 
   incrementarCantidad(productoId: number): void {
-    if (this.pagandoStripe()) {
+    if (this.checkoutEnProceso()) {
       return;
     }
     this.lineas.update((lines) =>
@@ -2003,7 +2103,7 @@ export class VentasPage {
   }
 
   disminuirCantidad(productoId: number): void {
-    if (this.pagandoStripe()) {
+    if (this.checkoutEnProceso()) {
       return;
     }
     this.lineas.update((lines) =>
@@ -2025,7 +2125,7 @@ export class VentasPage {
   }
 
   actualizarPrecio(productoId: number, raw: number | string): void {
-    if (this.pagandoStripe()) {
+    if (this.checkoutEnProceso()) {
       return;
     }
     const n = typeof raw === 'string' ? parseFloat(raw) : raw;
@@ -2048,6 +2148,8 @@ export class VentasPage {
     this.observacion = '';
     this.clienteId = null;
     this.busqueda.set('');
+    this.cashPanelAbierto.set(false);
+    this.montoRecibidoEfectivo.set('');
     this.error.set(null);
     this.mostrarNuevoCliente.set(false);
     this.nuevoClienteNombre = '';
@@ -2063,23 +2165,13 @@ export class VentasPage {
   }
 
   irAPagarConStripe(): void {
-    if (this.pagandoStripe()) {
+    if (this.checkoutEnProceso()) {
       return;
     }
-    const bid = this.bodegaId;
-    if (bid == null || this.lineas().length === 0 || this.stockBloqueante() || this.totalVenta() <= 0) return;
-    for (const l of this.lineas()) {
-      if (!(l.cantidad > 0) || l.precioUnitario < 0 || !Number.isFinite(l.cantidad) || !Number.isFinite(l.precioUnitario)) {
-        this.error.set('Revisá cantidades (> 0) y precios (≥ 0) en todas las líneas.');
-        return;
-      }
-    }
-    if (!this.puedePrecioCero() && this.lineas().some((l) => l.precioUnitario <= 0)) {
-      this.error.set(
-        'Cada línea debe tener precio unitario mayor a 0. Si necesitás cortesías a precio 0, un administrador debe registrar la venta.'
-      );
+    if (!this.validarCarritoParaCobro(true)) {
       return;
     }
+    const bid = this.bodegaId!;
     this.pagandoStripe.set(true);
     this.error.set(null);
     this.message.set(null);
@@ -2110,17 +2202,43 @@ export class VentasPage {
       });
   }
 
-  confirmar(): void {
+  cobrarEnEfectivo(): void {
+    if (this.checkoutEnProceso()) {
+      return;
+    }
+    if (!this.validarCarritoParaCobro(true)) {
+      return;
+    }
+    const montoRecibido = this.montoRecibidoNumero();
+    if (montoRecibido == null || montoRecibido < this.totalVenta()) {
+      this.error.set('El efectivo recibido debe cubrir el total de la venta.');
+      return;
+    }
+    this.confirmar({ efectivoPos: true, montoRecibido });
+  }
+
+  abrirCobroEfectivo(): void {
+    if (!this.validarCarritoParaCobro(true)) {
+      return;
+    }
+    this.error.set(null);
+    this.cashPanelAbierto.set(true);
+    if (!this.montoRecibidoEfectivo().trim()) {
+      this.montoRecibidoEfectivo.set(this.totalVenta().toFixed(2));
+    }
+  }
+
+  actualizarMontoRecibidoEfectivo(value: unknown): void {
+    this.montoRecibidoEfectivo.set(value == null ? '' : String(value));
+  }
+
+  confirmar(options: { efectivoPos?: boolean; montoRecibido?: number } = {}): void {
+    if (this.confirmando()) {
+      return;
+    }
     const bid = this.bodegaId;
     if (bid == null || this.lineas().length === 0 || this.stockBloqueante()) return;
-    for (const l of this.lineas()) {
-      if (!(l.cantidad > 0) || l.precioUnitario < 0 || !Number.isFinite(l.cantidad) || !Number.isFinite(l.precioUnitario)) {
-        this.error.set('Revisá cantidades (> 0) y precios (≥ 0) en todas las líneas.');
-        return;
-      }
-    }
-    if (!this.puedePrecioCero() && this.lineas().some((l) => l.precioUnitario <= 0)) {
-      this.error.set('Cada línea debe tener precio unitario mayor a 0. Si necesitás cortesías a precio 0, un administrador debe registrar la venta.');
+    if (!this.validarCarritoParaCobro(true, { permitirTotalCeroAdmin: !options.efectivoPos })) {
       return;
     }
     this.confirmando.set(true);
@@ -2133,6 +2251,7 @@ export class VentasPage {
         bodegaId: bid,
         clienteId: this.clienteId ?? undefined,
         observacion: obs,
+        montoRecibido: options.montoRecibido,
         lineas: this.lineas().map((l) => ({
           productoId: l.productoId,
           cantidad: l.cantidad,
@@ -2143,12 +2262,17 @@ export class VentasPage {
       .subscribe({
         next: (v) => {
           this.message.set(
-            `Venta ${v.codigoPublico} confirmada (id ${v.id}). Movimiento inventario #${v.movimientoId}.`
+            options.efectivoPos
+              ? `Venta ${v.codigoPublico} cobrada en efectivo. Movimiento inventario #${v.movimientoId}.`
+              : `Venta ${v.codigoPublico} confirmada (id ${v.id}). Movimiento inventario #${v.movimientoId}.`
           );
           flashSuccess(this.destroyRef, () => this.message.set(null));
           this.lineas.set([]);
           this.observacion = '';
           this.clienteId = null;
+          this.cashPanelAbierto.set(false);
+          this.montoRecibidoEfectivo.set('');
+          this.mostrarNuevoCliente.set(false);
           this.recargarStockBodega();
           this.cargarResumen();
           this.cargarHistorial();
@@ -2160,5 +2284,43 @@ export class VentasPage {
         },
         complete: () => this.confirmando.set(false)
       });
+  }
+
+  private validarCarritoParaCobro(
+    mostrarErrores: boolean,
+    options: { permitirTotalCeroAdmin?: boolean } = {}
+  ): boolean {
+    const permitirTotalCeroAdmin = options.permitirTotalCeroAdmin ?? false;
+    if (this.checkoutEnProceso()) {
+      return false;
+    }
+    const bid = this.bodegaId;
+    if (bid == null || this.lineas().length === 0 || this.stockBloqueante()) {
+      return false;
+    }
+    if (this.totalVenta() <= 0 && !(permitirTotalCeroAdmin && this.puedePrecioCero())) {
+      return false;
+    }
+    for (const l of this.lineas()) {
+      if (!(l.cantidad > 0) || l.precioUnitario < 0 || !Number.isFinite(l.cantidad) || !Number.isFinite(l.precioUnitario)) {
+        if (mostrarErrores) {
+          this.error.set('Revisá cantidades (> 0) y precios (≥ 0) en todas las líneas.');
+        }
+        return false;
+      }
+    }
+    if (!this.puedePrecioCero() && this.lineas().some((l) => l.precioUnitario <= 0)) {
+      if (mostrarErrores) {
+        this.error.set(
+          'Cada línea debe tener precio unitario mayor a 0. Si necesitás cortesías a precio 0, un administrador debe registrar la venta.'
+        );
+      }
+      return false;
+    }
+    return true;
+  }
+
+  private parseMonto(raw: string): number {
+    return Number.parseFloat(raw.replace(',', '.'));
   }
 }

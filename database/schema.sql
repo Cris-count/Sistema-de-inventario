@@ -379,9 +379,20 @@ CREATE TABLE IF NOT EXISTS venta (
     observacion      TEXT,
     created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     pago_estado      VARCHAR(24),
+    metodo_pago      VARCHAR(24) CHECK (metodo_pago IS NULL OR metodo_pago IN ('EFECTIVO', 'STRIPE')),
     stripe_checkout_session_id VARCHAR(255),
     stripe_payment_intent_id   VARCHAR(255),
     paid_at          TIMESTAMPTZ,
+    monto_recibido   NUMERIC(14, 2),
+    cambio           NUMERIC(14, 2),
+    CONSTRAINT venta_cash_amounts_check CHECK (
+        (monto_recibido IS NULL AND cambio IS NULL)
+        OR (
+            metodo_pago = 'EFECTIVO'
+            AND monto_recibido >= total
+            AND cambio = monto_recibido - total
+        )
+    ),
     CONSTRAINT uk_venta_empresa_codigo_publico UNIQUE (empresa_id, codigo_publico)
 );
 

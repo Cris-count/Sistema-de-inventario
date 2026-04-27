@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -50,6 +51,7 @@ public class VentaService {
 
         var preparada = ventaPreparacionService.preparar(usuario, empresaId, req, false);
         String codigoPublico = ventaConsecutivoService.siguienteCodigoPublico(empresaId);
+        BigDecimal cambioEfectivo = calcularCambioEfectivo(preparada.total(), req.montoRecibido());
 
         Movimiento movimiento =
                 movimientoService.registrarMovimientoSalidaPorVenta(
@@ -69,6 +71,9 @@ public class VentaService {
         venta.setFechaVenta(ahora);
         venta.setTotal(preparada.total());
         venta.setEstado(VentaEstado.CONFIRMADA);
+        venta.setMetodoPago(VentaMetodoPago.EFECTIVO);
+        venta.setPaidAt(ahora);
+        aplicarPagoEfectivo(venta, req.montoRecibido(), cambioEfectivo);
         venta.setObservacion(preparada.observacion());
         venta.setCreatedAt(ahora);
 
@@ -254,7 +259,7 @@ public class VentaService {
         List<Venta> filas = ventaRepository.findAllParaExport(empresaId, iDesde, iHastaExcl, usuarioFiltro);
         StringBuilder sb =
                 new StringBuilder(
-                        "codigoPublico,id,fechaVenta,estado,interpretacionOperativa,pagoEstado,aclaracionPago,bodega,vendedor,cliente,total,movimientoId,movimientoEstado\n");
+                        "codigoPublico,id,fechaVenta,estado,interpretacionOperativa,metodoPago,pagoEstado,montoRecibido,cambio,aclaracionPago,bodega,vendedor,cliente,total,movimientoId,movimientoEstado\n");
         for (Venta v : filas) {
             sb.append(csvField(v.getCodigoPublico()))
                     .append(',')
@@ -266,7 +271,13 @@ public class VentaService {
                     .append(',')
                     .append(csvField(interpretacionOperativa(v)))
                     .append(',')
+                    .append(csvField(v.getMetodoPago() != null ? v.getMetodoPago().name() : null))
+                    .append(',')
                     .append(csvField(v.getPagoEstado() != null ? v.getPagoEstado().name() : null))
+                    .append(',')
+                    .append(v.getMontoRecibido() != null ? v.getMontoRecibido() : "")
+                    .append(',')
+                    .append(v.getCambio() != null ? v.getCambio() : "")
                     .append(',')
                     .append(csvField(aclaracionPago(v)))
                     .append(',')
@@ -350,6 +361,7 @@ public class VentaService {
         String cnombre = v.getCliente() != null ? v.getCliente().getNombre() : null;
         Long mid = v.getMovimiento() != null ? v.getMovimiento().getId() : null;
         String pago = v.getPagoEstado() != null ? v.getPagoEstado().name() : null;
+        String metodo = v.getMetodoPago() != null ? v.getMetodoPago().name() : null;
         return new VentaListItemResponse(
                 v.getId(),
                 v.getCodigoPublico(),
@@ -364,6 +376,7 @@ public class VentaService {
                 v.getEstado().name(),
                 cid,
                 cnombre,
+                metodo,
                 pago);
     }
 
@@ -386,6 +399,7 @@ public class VentaService {
         Long mid = v.getMovimiento() != null ? v.getMovimiento().getId() : null;
         String mest = v.getMovimiento() != null ? v.getMovimiento().getEstado().name() : null;
         String pago = v.getPagoEstado() != null ? v.getPagoEstado().name() : null;
+        String metodo = v.getMetodoPago() != null ? v.getMetodoPago().name() : null;
         String empresaNombre = v.getEmpresa() != null ? v.getEmpresa().getNombre() : null;
         return new VentaDetailResponse(
                 v.getId(),
@@ -406,8 +420,11 @@ public class VentaService {
                 cdoc,
                 ctel,
                 lineas,
+                metodo,
                 pago,
                 v.getPaidAt(),
+                v.getMontoRecibido(),
+                v.getCambio(),
                 v.getStripeCheckoutSessionId(),
                 empresaNombre,
                 metodoPagoEtiqueta(v));
@@ -436,14 +453,33 @@ public class VentaService {
         if (v.getEstado() != VentaEstado.CONFIRMADA) {
             return null;
         }
-        VentaPagoEstado pe = v.getPagoEstado();
-        if (pe == VentaPagoEstado.STRIPE_SUCCEEDED) {
+        if (v.getMetodoPago() == VentaMetodoPago.STRIPE || v.getPagoEstado() == VentaPagoEstado.STRIPE_SUCCEEDED) {
             return "Tarjeta (Stripe)";
         }
-        if (pe == null) {
-            return "Punto de venta";
+        if (v.getMetodoPago() == VentaMetodoPago.EFECTIVO) {
+            return "Efectivo";
         }
         return null;
+    }
+
+    private static BigDecimal calcularCambioEfectivo(BigDecimal total, BigDecimal montoRecibido) {
+        if (montoRecibido == null) {
+            return null;
+        }
+        BigDecimal recibido = montoRecibido.setScale(2, RoundingMode.HALF_UP);
+        if (recibido.compareTo(total) < 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "El monto recibido no cubre el total de la venta.");
+        }
+        return recibido.subtract(total).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private static void aplicarPagoEfectivo(Venta venta, BigDecimal montoRecibido, BigDecimal cambio) {
+        if (montoRecibido == null) {
+            return;
+        }
+        BigDecimal recibido = montoRecibido.setScale(2, RoundingMode.HALF_UP);
+        venta.setMontoRecibido(recibido);
+        venta.setCambio(cambio);
     }
 
     private void assertPuedeVerVenta(Venta v) {

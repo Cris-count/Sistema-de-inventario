@@ -43,6 +43,7 @@ class VentaPreparacionServiceTest {
                 3L,
                 null,
                 "  mostrador  ",
+                null,
                 List.of(new VentaLineRequest(7L, new BigDecimal("2.5000"), new BigDecimal("1200.10"))));
         when(tenantEntityLoader.requireBodegaActiva(3L, 99L)).thenReturn(bodega);
         when(tenantEntityLoader.requireProductoActivo(7L, 99L)).thenReturn(producto);
@@ -70,6 +71,7 @@ class VentaPreparacionServiceTest {
                 3L,
                 null,
                 null,
+                null,
                 List.of(
                         new VentaLineRequest(7L, BigDecimal.ONE, BigDecimal.TEN),
                         new VentaLineRequest(7L, BigDecimal.ONE, BigDecimal.TEN)));
@@ -86,6 +88,7 @@ class VentaPreparacionServiceTest {
         Usuario vendedor = usuario(SecurityRoles.VENTAS);
         VentaCreateRequest precioCero = new VentaCreateRequest(
                 3L,
+                null,
                 null,
                 null,
                 List.of(new VentaLineRequest(7L, BigDecimal.ONE, BigDecimal.ZERO)));

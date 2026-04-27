@@ -17,6 +17,7 @@ public final class VentaDtos {
             @NotNull Long bodegaId,
             Long clienteId,
             String observacion,
+            @DecimalMin("0") BigDecimal montoRecibido,
             @NotEmpty @Valid List<VentaLineRequest> lineas
     ) {}
 
@@ -49,6 +50,7 @@ public final class VentaDtos {
             String estado,
             Long clienteId,
             String clienteNombre,
+            String metodoPago,
             String pagoEstado
     ) {}
 
@@ -81,8 +83,11 @@ public final class VentaDtos {
             String clienteDocumento,
             String clienteTelefono,
             List<VentaDetalleLineResponse> lineas,
+            String metodoPago,
             String pagoEstado,
             Instant paidAt,
+            BigDecimal montoRecibido,
+            BigDecimal cambio,
             String stripeCheckoutSessionId,
             String empresaNombre,
             /** Etiqueta operativa para comprobante (ej. tarjeta vs venta registrada sin cobro con tarjeta). */

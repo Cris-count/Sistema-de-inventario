@@ -21,7 +21,7 @@ interface LandingPanelSlide {
 }
 
 /**
- * Sección «Panel» (#panel): carrusel de capturas reales disponibles en `/public/landing/`.
+ * Sección «Panel» (#panel): carrusel de capturas reales disponibles en `/assets/images/landing/panel/`.
  * Navegación manual prioritaria; autoplay lento solo si no hay `prefers-reduced-motion`.
  */
 @Component({
@@ -52,7 +52,7 @@ interface LandingPanelSlide {
             El sistema en acción, pantalla a pantalla
           </h2>
           <p class="mt-4 text-base leading-relaxed text-slate-400 sm:text-lg">
-            Vistas reales del producto: operación diaria, inventario, movimientos y más. Navega con los controles o los
+            Vistas reales del producto: operación diaria, inventario, movimientos y bodegas. Navega con los controles o los
             indicadores.
           </p>
         </div>
@@ -191,43 +191,29 @@ export class LandingBusinessVisualComponent {
       title: 'Dashboard',
       description:
         'Resumen operativo: métricas y estado del negocio para decidir con datos al día.',
-      imageSrc: '/landing/showcase-dashboard.svg',
+      imageSrc: '/assets/images/landing/panel/dashboard.png',
       imageAlt: 'Captura del panel principal con métricas y vista general del inventario'
     },
     {
       id: 'inventario',
       title: 'Inventario',
       description: 'Consulta existencias por producto, bodega o ubicación en una sola vista.',
-      imageSrc: '/landing/showcase-productos.svg',
+      imageSrc: '/assets/images/landing/panel/Inventario.png',
       imageAlt: 'Captura de la vista de inventario y catálogo de productos'
     },
     {
       id: 'movimientos',
       title: 'Movimientos',
       description: 'Entradas, salidas y trazabilidad del stock en el día a día.',
-      imageSrc: '/landing/showcase-movimientos.svg',
+      imageSrc: '/assets/images/landing/panel/movimientos.png',
       imageAlt: 'Captura del registro y seguimiento de movimientos de inventario'
-    },
-    {
-      id: 'reportes',
-      title: 'Reportes',
-      description: 'Kardex, exportación y lectura para auditoría y decisiones (según tu plan).',
-      imageSrc: '/landing/showcase-dashboard.svg',
-      imageAlt: 'Vista ilustrativa alineada a reportes y lectura de operación'
     },
     {
       id: 'bodegas',
       title: 'Bodegas',
       description: 'Organiza el stock por sedes o puntos operativos.',
-      imageSrc: '/landing/showcase-productos.svg',
+      imageSrc: '/assets/images/landing/panel/bodega.png',
       imageAlt: 'Vista ilustrativa de organización por bodegas y existencias'
-    },
-    {
-      id: 'alertas',
-      title: 'Alertas',
-      description: 'Detecta productos bajo mínimo y prioriza reposición.',
-      imageSrc: '/landing/showcase-dashboard.svg',
-      imageAlt: 'Vista ilustrativa con foco en alertas y umbrales de stock'
     }
   ];
 

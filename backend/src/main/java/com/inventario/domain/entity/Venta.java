@@ -67,6 +67,10 @@ public class Venta {
     @Column(name = "pago_estado", length = 24)
     private VentaPagoEstado pagoEstado;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "metodo_pago", length = 24)
+    private VentaMetodoPago metodoPago;
+
     @Column(name = "stripe_checkout_session_id", length = 255)
     private String stripeCheckoutSessionId;
 
@@ -75,6 +79,12 @@ public class Venta {
 
     @Column(name = "paid_at")
     private Instant paidAt;
+
+    @Column(name = "monto_recibido", precision = 14, scale = 2)
+    private BigDecimal montoRecibido;
+
+    @Column(name = "cambio", precision = 14, scale = 2)
+    private BigDecimal cambio;
 
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

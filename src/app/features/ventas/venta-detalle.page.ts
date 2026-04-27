@@ -136,12 +136,22 @@ import { switchMap } from 'rxjs/operators';
               }
             </p>
             <p style="margin: 0">
+              <strong>Medio:</strong>
+              <span class="badge badge-muted">{{ labelMetodoPago(row.metodoPago, row.pagoEstado) }}</span>
+            </p>
+            <p style="margin: 0">
               <strong>Pago:</strong>
-              <span class="badge badge-muted">{{ labelPagoEstado(row.pagoEstado) }}</span>
+              <span class="badge badge-muted">{{ labelPagoEstado(row.pagoEstado, row.metodoPago) }}</span>
               @if (esStripePagadaNoRefund(row)) {
                 <span class="muted"> · pago no marcado como reembolsado</span>
               }
             </p>
+            @if (row.metodoPago === 'EFECTIVO' && row.montoRecibido != null && row.cambio != null) {
+              <p style="margin: 0">
+                <strong>Recibido:</strong> {{ row.montoRecibido | number: '1.2-2' }}
+                <span class="muted"> · Cambio {{ row.cambio | number: '1.2-2' }}</span>
+              </p>
+            }
             <p style="margin: 0">
               <strong>Movimiento inventario:</strong>
               @if (row.movimientoId != null) {
@@ -256,7 +266,10 @@ export class VentaDetallePage {
     return 'badge badge-muted';
   }
 
-  labelPagoEstado(estado: string | null | undefined): string {
+  labelPagoEstado(estado: string | null | undefined, metodo?: string | null): string {
+    if (!estado && metodo === 'EFECTIVO') {
+      return 'Pagado inmediato';
+    }
     const labels: Record<string, string> = {
       STRIPE_PENDING: 'Stripe pendiente',
       STRIPE_SUCCEEDED: 'Stripe pagado',
@@ -264,6 +277,12 @@ export class VentaDetallePage {
       STRIPE_CANCELLED: 'Stripe cancelado'
     };
     return estado ? labels[estado] ?? estado : 'Sin pago Stripe';
+  }
+
+  labelMetodoPago(metodo: string | null | undefined, pagoEstado?: string | null): string {
+    if (metodo === 'EFECTIVO') return 'Efectivo';
+    if (metodo === 'STRIPE' || pagoEstado?.startsWith('STRIPE_')) return 'Tarjeta (Stripe)';
+    return '—';
   }
 
   esStripePagadaNoRefund(row: VentaDetailResponse): boolean {

@@ -69,6 +69,7 @@ public class VentaPosStripeService {
         venta.setFechaVenta(ahora);
         venta.setTotal(preparada.total());
         venta.setEstado(VentaEstado.PENDIENTE_PAGO);
+        venta.setMetodoPago(VentaMetodoPago.STRIPE);
         venta.setPagoEstado(VentaPagoEstado.STRIPE_PENDING);
         venta.setObservacion(preparada.observacion());
         venta.setCreatedAt(ahora);
@@ -255,6 +256,7 @@ public class VentaPosStripeService {
         Instant ahora = Instant.now();
         venta.setMovimiento(movimiento);
         venta.setEstado(VentaEstado.CONFIRMADA);
+        venta.setMetodoPago(VentaMetodoPago.STRIPE);
         venta.setPagoEstado(VentaPagoEstado.STRIPE_SUCCEEDED);
         venta.setPaidAt(ahora);
         if (pi != null) {
