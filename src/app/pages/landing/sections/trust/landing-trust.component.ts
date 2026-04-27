@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { GsapHoverDirective } from '../../../../shared/motion/gsap-hover.directive';
+import { GsapRevealDirective } from '../../../../shared/motion/gsap-reveal.directive';
 
 type TrustIcon = 'cop' | 'lang' | 'team';
 
 @Component({
   selector: 'app-landing-trust',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [GsapHoverDirective, GsapRevealDirective],
   template: `
     <section
       id="confianza"
@@ -39,9 +42,11 @@ type TrustIcon = 'cop' | 'lang' | 'team';
 
       <div class="relative z-10 mx-auto max-w-7xl px-4 pt-10 pb-16 sm:px-8 sm:pt-12 sm:pb-20 lg:px-10 lg:pt-14 lg:pb-24">
         <div
+          appGsapReveal="section"
+          gsapRevealTargets="[data-gsap-trust-item]"
           class="grid gap-9 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] lg:items-start lg:gap-14 xl:gap-16"
         >
-          <div class="max-w-xl lg:max-w-none lg:pt-0.5">
+          <div data-gsap-trust-item class="max-w-xl lg:max-w-none lg:pt-0.5">
             <div
               class="inline-flex items-center gap-2 rounded-full border border-teal-400/35 bg-teal-500/[0.12] px-3.5 py-1.5 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-teal-200 shadow-[0_0_0_1px_rgba(45,212,191,0.08)] ring-1 ring-teal-400/15"
             >
@@ -97,6 +102,8 @@ type TrustIcon = 'cop' | 'lang' | 'team';
           <ul class="space-y-3 lg:space-y-3.5" role="list">
             @for (item of bullets; track item.title) {
               <li
+                appGsapHover="card"
+                data-gsap-trust-item
                 class="flex gap-3 rounded-2xl border border-slate-700/70 bg-slate-800/35 px-4 py-3 shadow-sm backdrop-blur-sm transition duration-300 hover:border-teal-500/35 hover:bg-slate-800/65 sm:gap-3.5 sm:px-4 sm:py-3.5"
               >
                 <span

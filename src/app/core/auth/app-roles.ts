@@ -4,10 +4,13 @@
  */
 export const ROLES_LECTURA_API: string[] = ['ADMIN', 'SUPER_ADMIN', 'AUX_BODEGA', 'COMPRAS', 'GERENCIA', 'VENTAS'];
 
-/** Alta/edición/estado de productos: administración y operación de bodega (mercancía nueva). */
+/**
+ * Alta/edición/estado de productos y carga de stock inicial (alta con existencias o pantalla dedicada):
+ * misma política que POST /api/v1/productos con cantidad inicial y POST /api/v1/inventario/stock-inicial.
+ */
 export const ROLES_GESTION_PRODUCTOS: string[] = ['ADMIN', 'SUPER_ADMIN', 'AUX_BODEGA'];
 
-/** Solo administración: categorías, bodegas escritura, usuarios, stock inicial (según rutas). */
+/** Solo administración: categorías, bodegas escritura, usuarios, mensajes pedido, etc. */
 export const ROLES_ADMIN: string[] = ['ADMIN', 'SUPER_ADMIN'];
 
 /** Entrada de mercancía: backend permite ADMIN, SUPER_ADMIN, AUX_BODEGA, COMPRAS. */

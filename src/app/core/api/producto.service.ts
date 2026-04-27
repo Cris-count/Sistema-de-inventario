@@ -11,8 +11,13 @@ export interface ProductoRequest {
   descripcion?: string;
   categoriaId: number;
   unidadMedida?: string;
+  purchaseCost?: number;
+  salePrice?: number;
   stockMinimo?: string;
   proveedorPreferidoId?: number | null;
+  /** Solo en alta; si cantidad > 0 el backend exige bodega. */
+  initialBodegaId?: number | null;
+  initialCantidad?: number;
 }
 
 @Injectable({ providedIn: 'root' })

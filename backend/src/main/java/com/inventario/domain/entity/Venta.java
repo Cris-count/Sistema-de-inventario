@@ -39,8 +39,9 @@ public class Venta {
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
+    /** Nulo mientras {@link #estado} es {@link VentaEstado#PENDIENTE_PAGO}; obligatorio al confirmar. */
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "movimiento_id", nullable = false, unique = true)
+    @JoinColumn(name = "movimiento_id", unique = true)
     private Movimiento movimiento;
 
     @Column(name = "codigo_publico", nullable = false, length = 32)
@@ -61,6 +62,19 @@ public class Venta {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "pago_estado", length = 24)
+    private VentaPagoEstado pagoEstado;
+
+    @Column(name = "stripe_checkout_session_id", length = 255)
+    private String stripeCheckoutSessionId;
+
+    @Column(name = "stripe_payment_intent_id", length = 255)
+    private String stripePaymentIntentId;
+
+    @Column(name = "paid_at")
+    private Instant paidAt;
 
     @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

@@ -49,6 +49,12 @@ public class Producto {
     @Column(name = "stock_minimo", nullable = false, precision = 14, scale = 4)
     private BigDecimal stockMinimo;
 
+    @Column(name = "purchase_cost", nullable = false, precision = 14, scale = 4)
+    private BigDecimal purchaseCost;
+
+    @Column(name = "sale_price", nullable = false, precision = 14, scale = 4)
+    private BigDecimal salePrice;
+
     /** Proveedor habitual para reposición (alertas de stock bajo). */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "proveedor_preferido_id")

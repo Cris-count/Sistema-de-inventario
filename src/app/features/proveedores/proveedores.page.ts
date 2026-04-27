@@ -4,19 +4,22 @@ import { ProveedorService } from '../../core/api/proveedor.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { Proveedor } from '../../core/models/entities.model';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-proveedores',
-  imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header">
         <h1>Proveedores</h1>
-        <p class="page-lead page-header-lead">
-          Listado para ADMIN, SUPER_ADMIN, COMPRAS y GERENCIA. Alta/edición solo ADMIN/SUPER_ADMIN (API).
-        </p>
+        <app-dismissible-hint hintId="proveedores.pageIntro" persist="local" variant="flush">
+          <p class="page-lead page-header-lead">
+            Administra la información clave de tus proveedores para compras y abastecimiento.
+          </p>
+        </app-dismissible-hint>
       </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">

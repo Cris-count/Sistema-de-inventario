@@ -8,6 +8,7 @@ import com.inventario.domain.repository.SaasPlanRepository;
 import com.inventario.domain.repository.SuscripcionRepository;
 import com.inventario.service.CurrentUserService;
 import com.inventario.service.billing.StripeCheckoutService;
+import com.inventario.service.catalog.VentaPosStripeService;
 import com.inventario.web.dto.empresa.PlanCheckoutDtos;
 import com.inventario.web.error.BusinessException;
 import com.stripe.model.checkout.Session;
@@ -41,6 +42,7 @@ public class SubscriptionCheckoutService {
     private final EmpresaRepository empresaRepository;
     private final StripeCheckoutService stripeCheckoutService;
     private final CurrentUserService currentUserService;
+    private final VentaPosStripeService ventaPosStripeService;
 
     @Value("${app.billing.post-payment-empresa-estado:ACTIVA}")
     private String postPaymentEmpresaEstado;
@@ -217,6 +219,10 @@ public class SubscriptionCheckoutService {
         Map<String, String> md = session.getMetadata();
         if (md == null || md.isEmpty()) {
             log.warn("Stripe webhook: sesión {} sin metadata", sessionId);
+            return;
+        }
+        if (StripeCheckoutService.FLOW_POS_VENTA.equals(md.get("flowType"))) {
+            ventaPosStripeService.applyCheckoutSessionCompletedFromWebhook(session, stripeEventId);
             return;
         }
         String pagoIdRaw = md.get("pagoId");

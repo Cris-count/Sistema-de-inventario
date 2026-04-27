@@ -1,15 +1,18 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { BRANDING_ASSETS } from '../../../../core/branding.paths';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
+import { GsapHoverDirective } from '../../../../shared/motion/gsap-hover.directive';
+import { withGsapContext } from '../../../../shared/motion/gsap-motion';
 
 @Component({
   selector: 'app-landing-hero',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, UiButtonComponent],
+  imports: [RouterLink, UiButtonComponent, GsapHoverDirective],
   template: `
     <section id="producto" class="lp-hero relative overflow-hidden text-slate-50">
       <div
+        data-gsap-hero-photo
         class="lp-hero-photo-layer absolute inset-0 z-0"
         [style.background-image]="heroBackgroundImage"
         aria-hidden="true"
@@ -17,14 +20,14 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
       <div class="lp-hero-photo-scrim absolute inset-0 z-[1]" aria-hidden="true"></div>
 
       <div class="lp-hero-bg" aria-hidden="true"></div>
-      <div class="lp-hero-right-glow" aria-hidden="true"></div>
+      <div data-gsap-hero-glow class="lp-hero-right-glow" aria-hidden="true"></div>
       <div class="lp-hero-vignette" aria-hidden="true"></div>
 
       <div
         class="relative z-10 mx-auto max-w-7xl px-5 py-14 sm:px-6 sm:py-20 lg:px-8 lg:py-24 lp-hero-pad"
       >
         <div class="max-w-2xl lg:max-w-3xl">
-          <div class="mb-3 sm:mb-4">
+          <div data-gsap-hero-item class="mb-3 sm:mb-4">
             <img
               [src]="brand.logoFull"
               alt="Cersik"
@@ -35,27 +38,31 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
             />
           </div>
           <p
+            data-gsap-hero-item
             class="max-w-prose text-[13px] font-semibold uppercase leading-snug tracking-[0.14em] text-teal-100/85 drop-shadow-[0_1px_14px_rgba(0,0,0,0.45)] sm:text-sm sm:tracking-[0.16em]"
           >
             Hecho para PYMES en Colombia
           </p>
 
           <h1
+            data-gsap-hero-item
             class="hero-headline mt-5 max-w-3xl text-balance text-4xl font-bold tracking-tight text-white drop-shadow-[0_2px_28px_rgba(0,0,0,0.55)] sm:mt-6 sm:text-5xl sm:leading-[1.06] lg:text-6xl lg:leading-[1.02]"
           >
             Controla inventario, ventas y compras desde un solo lugar
           </h1>
 
           <p
+            data-gsap-hero-item
             class="mt-6 max-w-2xl text-lg leading-relaxed text-slate-200 drop-shadow-[0_1px_18px_rgba(0,0,0,0.45)] sm:text-xl"
           >
             Consulta existencias, registra movimientos, organiza productos y toma decisiones con reportes claros en una
             plataforma hecha para el día a día de tu negocio.
           </p>
-          <div class="mt-8 flex flex-col gap-3 sm:gap-4">
+          <div data-gsap-hero-item class="mt-8 flex flex-col gap-3 sm:gap-4">
             <div class="flex flex-wrap items-center gap-3">
-              <app-ui-button hostClass="contents" variant="gradient" size="lg" class="!rounded-full" to="/registro">Empieza ahora</app-ui-button>
+              <app-ui-button appGsapHover="cta" hostClass="contents" variant="gradient" size="lg" class="!rounded-full" to="/registro">Empieza ahora</app-ui-button>
               <app-ui-button
+                appGsapHover="subtle"
                 hostClass="contents"
                 variant="landing-on-dark"
                 class="!min-h-[48px] !min-w-0 !rounded-full !border-0 !bg-teal-500/32 !px-6 !py-3 !text-base !font-semibold !text-white !shadow-none hover:!bg-teal-400/42 focus-visible:!outline-white"
@@ -64,6 +71,7 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
               >
             </div>
             <a
+              appGsapHover="subtle"
               routerLink="/landing"
               fragment="funcionalidades"
               class="inline-flex w-fit max-w-full items-center text-sm font-semibold text-teal-100 drop-shadow-[0_1px_12px_rgba(0,0,0,0.5)] underline-offset-4 transition hover:text-white hover:underline focus-visible:rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
@@ -72,7 +80,7 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
             </a>
           </div>
 
-          <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-300 sm:text-[15px]">
+          <div data-gsap-hero-item class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-300 sm:text-[15px]">
             <span>Sin tarjeta</span>
             <span class="h-1 w-1 rounded-full bg-slate-500"></span>
             <span>Configuración rápida</span>
@@ -81,15 +89,15 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
           </div>
 
           <div class="mt-8 grid gap-3 sm:grid-cols-3">
-            <div class="rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.25)] backdrop-blur-md">
+            <div appGsapHover="card" data-gsap-hero-card class="rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.25)] backdrop-blur-md">
               <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Ventas</p>
               <p class="mt-1 text-sm font-medium leading-snug text-white">Registra y consulta al instante</p>
             </div>
-            <div class="rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.25)] backdrop-blur-md">
+            <div appGsapHover="card" data-gsap-hero-card class="rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.25)] backdrop-blur-md">
               <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Inventario</p>
               <p class="mt-1 text-sm font-medium leading-snug text-white">Controla stock y movimientos</p>
             </div>
-            <div class="rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.25)] backdrop-blur-md">
+            <div appGsapHover="card" data-gsap-hero-card class="rounded-2xl border border-white/12 bg-slate-950/35 px-4 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.25)] backdrop-blur-md">
               <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Reportes</p>
               <p class="mt-1 text-sm font-medium leading-snug text-white">Decide con información clara</p>
             </div>
@@ -185,7 +193,50 @@ import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-bu
   `
 })
 export class LandingHeroComponent {
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly brand = BRANDING_ASSETS;
   /** Ruta servida por Angular CLI en runtime. */
   readonly heroBackgroundImage = "url('assets/images/landing/portada.jpeg')";
+
+  constructor() {
+    afterNextRender(() => this.animateIntro());
+  }
+
+  private animateIntro(): void {
+    let cleanup: (() => void) | undefined;
+    let destroyed = false;
+
+    void withGsapContext(this.host.nativeElement, (gsap) => {
+      const introItems = gsap.utils.toArray<HTMLElement>('[data-gsap-hero-item]');
+      const cards = gsap.utils.toArray<HTMLElement>('[data-gsap-hero-card]');
+
+      gsap
+        .timeline({ defaults: { ease: 'power3.out' } })
+        .from('[data-gsap-hero-photo]', { opacity: 0, scale: 1.035, duration: 1.15 }, 0)
+        .from('[data-gsap-hero-glow]', { opacity: 0, x: 24, duration: 1.05, clearProps: 'opacity,transform' }, 0.12)
+        .from(introItems, { opacity: 0, y: 18, duration: 0.68, stagger: 0.07, clearProps: 'opacity,transform' }, 0.08)
+        .from(cards, { opacity: 0, y: 14, duration: 0.58, stagger: 0.06, clearProps: 'opacity,transform' }, 0.5);
+
+      gsap.to('[data-gsap-hero-glow]', {
+        x: 10,
+        y: -8,
+        opacity: 0.92,
+        duration: 7,
+        ease: 'sine.inOut',
+        repeat: -1,
+        yoyo: true
+      });
+    }).then((revert) => {
+      cleanup = revert;
+      if (destroyed) {
+        cleanup();
+      }
+    });
+
+    this.destroyRef.onDestroy(() => {
+      destroyed = true;
+      cleanup?.();
+    });
+  }
 }

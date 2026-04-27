@@ -4,19 +4,22 @@ import { BodegaService } from '../../core/api/bodega.service';
 import { MovimientoApiService } from '../../core/api/movimiento.service';
 import { ProductoService } from '../../core/api/producto.service';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-mov-salida',
-  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header">
         <h1>Salida de inventario</h1>
-        <p class="page-lead page-header-lead">
-          Si el stock es insuficiente, el API responde 409 con mensaje de negocio.
-        </p>
+        <app-dismissible-hint hintId="movimientos.salida.pageIntro" persist="local" variant="flush">
+          <p class="page-lead page-header-lead">
+            Si el stock es insuficiente, el API responde 409 con mensaje de negocio.
+          </p>
+        </app-dismissible-hint>
       </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">

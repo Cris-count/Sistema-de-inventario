@@ -24,7 +24,7 @@ public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
               AND (:tipo IS NULL OR m.tipoMovimiento = :tipo)
               AND m.fechaMovimiento >= :desde AND m.fechaMovimiento < :hasta
             """)
-    @EntityGraph(attributePaths = {"usuario", "detalles", "detalles.producto"})
+    @EntityGraph(attributePaths = {"usuario", "proveedor", "detalles", "detalles.producto"})
     Page<Movimiento> findByEmpresaAndTipoAndFechaBetween(
             @Param("empresaId") Long empresaId,
             @Param("tipo") TipoMovimiento tipo,
@@ -39,7 +39,7 @@ public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
               AND m.fechaMovimiento >= :desde AND m.fechaMovimiento < :hasta
             ORDER BY m.fechaMovimiento ASC
             """)
-    @EntityGraph(attributePaths = {"usuario", "detalles", "detalles.producto"})
+    @EntityGraph(attributePaths = {"usuario", "detalles", "detalles.producto", "detalles.bodegaOrigen", "detalles.bodegaDestino"})
     Page<Movimiento> findKardexByEmpresaAndProducto(
             @Param("empresaId") Long empresaId,
             @Param("productoId") Long productoId,

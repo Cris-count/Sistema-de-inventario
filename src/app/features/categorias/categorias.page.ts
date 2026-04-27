@@ -16,6 +16,7 @@ import {
   patchPlanErrorSignals,
   type PlanBlockFollowup
 } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
@@ -23,16 +24,18 @@ const CATEGORY_ALREADY_EXISTS = 'CATEGORY_ALREADY_EXISTS';
 
 @Component({
   selector: 'app-categorias',
-  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header page-header--split">
         <div class="page-header__intro">
           <h1>Categorías</h1>
-          <p class="page-lead">
-            Agrupa productos para filtros, informes y un catálogo ordenado. Cada producto debe tener una categoría antes de
-            usarse en movimientos.
-          </p>
+          <app-dismissible-hint hintId="categorias.pageIntro" persist="local" variant="flush">
+            <p class="page-lead">
+              Agrupa productos para filtros, informes y un catálogo ordenado. Cada producto debe tener una categoría antes de
+              usarse en movimientos.
+            </p>
+          </app-dismissible-hint>
         </div>
         <div class="page-header__actions">
           <button type="button" class="btn btn-primary" (click)="startCreate()">Nueva categoría</button>

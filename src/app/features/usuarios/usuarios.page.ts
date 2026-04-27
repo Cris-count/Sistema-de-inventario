@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UsuarioService } from '../../core/api/usuario.service';
 import { UsuarioRow } from '../../core/models/entities.model';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
@@ -16,12 +17,14 @@ const ROLES = [
 
 @Component({
   selector: 'app-usuarios',
-  imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header">
         <h1>Usuarios</h1>
-        <p class="page-lead page-header-lead">Alta, edición y activación del equipo (según su rol).</p>
+        <app-dismissible-hint hintId="usuarios.pageIntro" persist="local" variant="flush">
+          <p class="page-lead page-header-lead">Alta, edición y activación del equipo (según su rol).</p>
+        </app-dismissible-hint>
       </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">

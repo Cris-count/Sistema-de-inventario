@@ -12,7 +12,10 @@ export interface Producto {
   descripcion?: string;
   categoria: Categoria;
   unidadMedida: string;
-  stockMinimo: string;
+  /** API serializa `stockMinimo` como número (BigDecimal); la UI acepta ambos. */
+  stockMinimo: string | number;
+  purchaseCost: string | number;
+  salePrice: string | number;
   proveedorPreferidoId?: number | null;
   activo: boolean;
 }
@@ -36,10 +39,17 @@ export interface Proveedor {
 }
 
 export interface InventarioRow {
-  id: { productoId: number; bodegaId: number };
-  producto: Producto;
-  bodega: Bodega;
+  productoId: number;
+  productoCodigo: string;
+  productoNombre: string;
+  unidadMedida: string;
+  productoActivo: boolean;
+  bodegaId: number;
+  bodegaCodigo: string;
+  bodegaNombre: string;
   cantidad: string;
+  stockMinimo: string | number;
+  bajoMinimo: boolean;
   updatedAt: string;
 }
 
@@ -107,10 +117,12 @@ export interface VentaListItem {
   cantidadLineas: number;
   usuarioId: number;
   usuarioEmail: string;
-  movimientoId: number;
+  movimientoId: number | null;
   estado: string;
   clienteId?: number | null;
   clienteNombre?: string | null;
+  /** STRIPE_* cuando la venta pasó por Checkout; null en ventas tradicionales. */
+  pagoEstado?: string | null;
 }
 
 export interface VentaDetalleLine {
@@ -134,13 +146,22 @@ export interface VentaDetailResponse {
   observacion?: string;
   usuarioId: number;
   usuarioEmail: string;
-  movimientoId: number;
-  movimientoEstado: string;
+  /** Nombre del vendedor (y apellido si existe en el maestro). */
+  usuarioNombre?: string | null;
+  movimientoId: number | null;
+  movimientoEstado: string | null;
   clienteId?: number | null;
   clienteNombre?: string | null;
   clienteDocumento?: string | null;
   clienteTelefono?: string | null;
   lineas: VentaDetalleLine[];
+  pagoEstado?: string | null;
+  paidAt?: string | null;
+  stripeCheckoutSessionId?: string | null;
+  /** Razón social / nombre de la empresa (tenant). */
+  empresaNombre?: string | null;
+  /** Etiqueta operativa de medio de pago para comprobantes. */
+  metodoPagoEtiqueta?: string | null;
 }
 
 export interface VentaLineRequest {
@@ -163,6 +184,16 @@ export interface VentaCreatedResponse {
   fechaVenta: string;
   total: number;
   estado: string;
+}
+
+/** Respuesta de POST /ventas/stripe/preparar (POS + Stripe Checkout). */
+export interface VentaStripePrepararResponse {
+  ventaId: number;
+  codigoPublico: string;
+  total: number;
+  estadoVenta: string;
+  checkoutUrl: string;
+  stripeSessionId: string;
 }
 
 /** Catálogo mínimo de clientes para ventas (Fase 2). */
@@ -190,8 +221,42 @@ export interface MovimientoList {
   referenciaDocumento?: string;
   observacion?: string;
   estado: string;
-  usuario?: { id: number; email: string; nombre: string };
-  proveedor?: Proveedor;
+  usuarioId?: number | null;
+  usuarioEmail?: string | null;
+  usuarioNombre?: string | null;
+  proveedorId?: number | null;
+  proveedorRazonSocial?: string | null;
+  totalLineas: number;
+  anulado: boolean;
+  completado: boolean;
+  interpretacionStock: string;
+}
+
+export interface KardexBodegaImpacto {
+  bodegaOrigenId?: number | null;
+  bodegaOrigenNombre?: string | null;
+  bodegaDestinoId?: number | null;
+  bodegaDestinoNombre?: string | null;
+  cantidad: string | number;
+}
+
+export interface KardexMovimiento {
+  id: number;
+  movimientoId: number;
+  tipoMovimiento: TipoMovimiento;
+  estado: string;
+  motivo?: string | null;
+  referenciaDocumento?: string | null;
+  fechaMovimiento: string;
+  usuarioId?: number | null;
+  usuarioEmail?: string | null;
+  productoId: number;
+  productoCodigo?: string | null;
+  productoNombre?: string | null;
+  cantidadMovimiento: string | number;
+  bodegas: KardexBodegaImpacto[];
+  anulado: boolean;
+  interpretacionStock: string;
 }
 
 export interface MovimientoDetalleResponse {

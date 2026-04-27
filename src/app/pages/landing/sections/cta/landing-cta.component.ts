@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
-import { fadeUp } from '../../../../core/animations';
 import { buildWhatsAppLink } from '../../config/landing-contact';
+import { GsapHoverDirective } from '../../../../shared/motion/gsap-hover.directive';
+import { GsapRevealDirective } from '../../../../shared/motion/gsap-reveal.directive';
 
 /**
  * CTA final de la landing. Reutiliza el botón primario del sistema y un
@@ -11,8 +12,7 @@ import { buildWhatsAppLink } from '../../config/landing-contact';
 @Component({
   selector: 'app-landing-cta',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButtonComponent, RouterLink],
-  animations: [fadeUp],
+  imports: [UiButtonComponent, RouterLink, GsapHoverDirective, GsapRevealDirective],
   template: `
     <section
       class="relative overflow-hidden border-t border-white/5 bg-linear-to-br from-slate-950 via-slate-900 to-teal-900 px-5 py-16 text-slate-50 sm:px-6 sm:py-20 lg:px-8 lp-section-pad"
@@ -23,7 +23,7 @@ import { buildWhatsAppLink } from '../../config/landing-contact';
       <div
         class="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-accent/30 to-transparent"
       ></div>
-      <div @fadeUp class="relative mx-auto max-w-2xl text-center">
+      <div appGsapReveal="cta" class="relative mx-auto max-w-2xl text-center">
         <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-400/90">Siguiente paso</p>
         <h2 class="mt-3 text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl">
           Regístrate y opera con inventario real
@@ -33,12 +33,14 @@ import { buildWhatsAppLink } from '../../config/landing-contact';
         </p>
         <div class="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:gap-4">
           <app-ui-button
+            appGsapHover="cta"
             variant="landing-primary"
             class="w-full min-w-0 px-10! sm:w-auto"
             linkTo="/registro"
             >Empieza ahora</app-ui-button
           >
           <a
+            appGsapHover="subtle"
             [href]="whatsappLink"
             target="_blank"
             rel="noopener"

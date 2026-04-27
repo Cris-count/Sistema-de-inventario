@@ -4,21 +4,24 @@ import { BodegaService } from '../../core/api/bodega.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { Bodega } from '../../core/models/entities.model';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-bodegas',
-  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header page-header--split">
         <div class="page-header__intro">
           <h1>Bodegas</h1>
-          <p class="page-lead">
-            Puntos de almacenamiento donde vive el stock: cada movimiento y el inventario referencian una bodega. El código
-            debe ser único en tu empresa.
-          </p>
+          <app-dismissible-hint hintId="bodegas.pageIntro" persist="local" variant="flush">
+            <p class="page-lead">
+              Puntos de almacenamiento donde vive el stock: cada movimiento y el inventario referencian una bodega. El código
+              debe ser único en tu empresa.
+            </p>
+          </app-dismissible-hint>
         </div>
         @if (canGestionarBodegas()) {
           <div class="page-header__actions">
@@ -29,10 +32,12 @@ import { flashSuccess } from '../../core/util/page-flash';
 
       <div class="page-body">
         @if (esSoloConsultaBodegas()) {
-          <div class="alert alert-info" role="note">
-            <strong>Solo consulta:</strong> tu rol puede ver bodegas y usarlas en inventario y movimientos. Alta y edición las
-            realizan <strong>Administración</strong> (según política del servidor).
-          </div>
+          <app-dismissible-hint hintId="bodegas.notaSoloConsulta" persist="local">
+            <div class="alert alert-info" role="note">
+              <strong>Solo consulta:</strong> tu rol puede ver bodegas y usarlas en inventario y movimientos. Alta y edición las
+              realizan <strong>Administración</strong> (según política del servidor).
+            </div>
+          </app-dismissible-hint>
         }
 
         @if (error()) {

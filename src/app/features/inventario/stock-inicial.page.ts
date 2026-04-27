@@ -5,19 +5,22 @@ import { BodegaService } from '../../core/api/bodega.service';
 import { InventarioService } from '../../core/api/inventario.service';
 import { ProductoService } from '../../core/api/producto.service';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-stock-inicial',
-  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header">
         <h1>Stock inicial</h1>
-        <p class="page-lead page-header-lead">
-          Carga inicial por producto y bodega. El backend rechaza si ya existe cantidad &gt; 0 en esa pareja (409).
-        </p>
+        <app-dismissible-hint hintId="inventario.stockInicial.pageIntro" persist="local" variant="flush">
+          <p class="page-lead page-header-lead">
+            Carga inicial por producto y bodega. El backend rechaza si ya existe cantidad &gt; 0 en esa pareja (409).
+          </p>
+        </app-dismissible-hint>
       </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">

@@ -9,6 +9,8 @@ import {
   PLATFORM_ID,
   signal
 } from '@angular/core';
+import { GsapHoverDirective } from '../../../../shared/motion/gsap-hover.directive';
+import { GsapRevealDirective } from '../../../../shared/motion/gsap-reveal.directive';
 
 interface LandingPanelSlide {
   readonly id: string;
@@ -25,6 +27,7 @@ interface LandingPanelSlide {
 @Component({
   selector: 'app-landing-business-visual',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [GsapHoverDirective, GsapRevealDirective],
   template: `
     <section
       id="panel"
@@ -37,7 +40,10 @@ interface LandingPanelSlide {
       ></div>
 
       <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 lg:px-10">
-        <div class="mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-2xl lg:text-left">
+        <div
+          appGsapReveal="section"
+          class="mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-2xl lg:text-left"
+        >
           <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-400/90">Panel</p>
           <h2
             id="panel-heading"
@@ -51,8 +57,9 @@ interface LandingPanelSlide {
           </p>
         </div>
 
-        <div class="relative mt-12 lg:mt-14">
+        <div appGsapReveal="media" [gsapRevealDelay]="90" class="relative mt-12 lg:mt-14">
           <div
+            appGsapHover="media"
             class="relative overflow-hidden rounded-2xl border border-slate-700/90 bg-slate-900 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.75)] ring-1 ring-white/5 sm:rounded-[1.35rem]"
           >
             <div
@@ -109,6 +116,7 @@ interface LandingPanelSlide {
                 <div class="flex justify-center gap-2 sm:justify-start" role="tablist" aria-label="Seleccionar vista">
                   @for (slide of slides; track slide.id; let i = $index) {
                     <button
+                      appGsapHover="subtle"
                       type="button"
                       class="h-2.5 min-w-2.5 rounded-full transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
                       [class]="
@@ -124,6 +132,7 @@ interface LandingPanelSlide {
                 </div>
                 <div class="flex items-center justify-center gap-2 sm:justify-end">
                   <button
+                    appGsapHover="subtle"
                     type="button"
                     class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-slate-600 bg-slate-800/80 text-slate-200 transition hover:border-teal-500/50 hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
                     aria-label="Vista anterior"
@@ -140,6 +149,7 @@ interface LandingPanelSlide {
                     </svg>
                   </button>
                   <button
+                    appGsapHover="subtle"
                     type="button"
                     class="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-slate-600 bg-slate-800/80 text-slate-200 transition hover:border-teal-500/50 hover:bg-slate-800 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
                     aria-label="Vista siguiente"

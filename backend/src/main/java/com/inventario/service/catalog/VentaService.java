@@ -8,8 +8,6 @@ import com.inventario.service.CurrentUserService;
 import com.inventario.service.MovimientoService;
 import com.inventario.service.saas.PlanEntitlementCodes;
 import com.inventario.service.saas.PlanEntitlementService;
-import com.inventario.service.tenant.TenantEntityLoader;
-import com.inventario.web.dto.MovimientoDtos.LineaSalida;
 import com.inventario.web.dto.VentaDtos.*;
 import com.inventario.web.error.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -22,16 +20,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -44,8 +39,8 @@ public class VentaService {
     private final MovimientoService movimientoService;
     private final VentaConsecutivoService ventaConsecutivoService;
     private final CurrentUserService currentUserService;
-    private final TenantEntityLoader tenantEntityLoader;
     private final PlanEntitlementService planEntitlementService;
+    private final VentaPreparacionService ventaPreparacionService;
 
     @Transactional(rollbackFor = Exception.class)
     public VentaCreatedResponse crear(VentaCreateRequest req) {
@@ -53,67 +48,31 @@ public class VentaService {
         Long empresaId = usuario.getEmpresa().getId();
         planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.MOVIMIENTOS_BASICOS);
 
-        Bodega bodega = tenantEntityLoader.requireBodegaActiva(req.bodegaId(), empresaId);
-
-        if (req.lineas() == null || req.lineas().isEmpty()) {
-            throw new BusinessException(HttpStatus.BAD_REQUEST, "La venta debe tener al menos una línea");
-        }
-
-        assertPoliticaPrecioCero(usuario, req.lineas());
-
-        Cliente cliente = null;
-        if (req.clienteId() != null) {
-            cliente = tenantEntityLoader.requireClienteActivo(req.clienteId(), empresaId);
-        }
-
-        Set<Long> productosVistos = new HashSet<>();
-        List<LineaSalida> lineasStock = new ArrayList<>();
-        List<LineaVentaInterna> lineasVenta = new ArrayList<>();
-
-        for (VentaLineRequest line : req.lineas()) {
-            if (!productosVistos.add(line.productoId())) {
-                throw new BusinessException(HttpStatus.BAD_REQUEST, "Producto repetido en la misma venta");
-            }
-            Producto p = tenantEntityLoader.requireProductoActivo(line.productoId(), empresaId);
-            BigDecimal subtotal = line.cantidad().multiply(line.precioUnitario()).setScale(2, RoundingMode.HALF_UP);
-            lineasStock.add(new LineaSalida(line.productoId(), req.bodegaId(), line.cantidad()));
-            lineasVenta.add(new LineaVentaInterna(p, line.cantidad(), line.precioUnitario(), subtotal));
-        }
-
-        BigDecimal total = lineasVenta.stream()
-                .map(LineaVentaInterna::subtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        String obsVenta = normalizeObs(req.observacion());
+        var preparada = ventaPreparacionService.preparar(usuario, empresaId, req, false);
         String codigoPublico = ventaConsecutivoService.siguienteCodigoPublico(empresaId);
 
         Movimiento movimiento =
-                movimientoService.registrarMovimientoSalidaPorVenta(req.bodegaId(), lineasStock, obsVenta, codigoPublico);
+                movimientoService.registrarMovimientoSalidaPorVenta(
+                        preparada.bodega().getId(),
+                        ventaPreparacionService.lineasSalida(preparada),
+                        preparada.observacion(),
+                        codigoPublico);
 
         Instant ahora = Instant.now();
         Venta venta = new Venta();
         venta.setEmpresa(usuario.getEmpresa());
-        venta.setBodega(bodega);
+        venta.setBodega(preparada.bodega());
         venta.setUsuario(usuario);
-        venta.setCliente(cliente);
+        venta.setCliente(preparada.cliente());
         venta.setMovimiento(movimiento);
         venta.setCodigoPublico(codigoPublico);
         venta.setFechaVenta(ahora);
-        venta.setTotal(total);
+        venta.setTotal(preparada.total());
         venta.setEstado(VentaEstado.CONFIRMADA);
-        venta.setObservacion(obsVenta);
+        venta.setObservacion(preparada.observacion());
         venta.setCreatedAt(ahora);
 
-        for (LineaVentaInterna lv : lineasVenta) {
-            VentaDetalle d = new VentaDetalle();
-            d.setVenta(venta);
-            d.setProducto(lv.producto());
-            d.setCantidad(lv.cantidad());
-            d.setPrecioUnitario(lv.precioUnitario().setScale(2, RoundingMode.HALF_UP));
-            d.setSubtotal(lv.subtotal());
-            venta.getDetalles().add(d);
-        }
+        ventaPreparacionService.agregarDetalles(venta, preparada);
 
         Venta guardada = ventaRepository.save(venta);
 
@@ -124,21 +83,6 @@ public class VentaService {
                 guardada.getFechaVenta(),
                 guardada.getTotal(),
                 guardada.getEstado().name());
-    }
-
-    private void assertPoliticaPrecioCero(Usuario usuario, List<VentaLineRequest> lineas) {
-        String rol = SecurityRoles.canonicalCodigo(usuario.getRol().getCodigo());
-        boolean admin = SecurityRoles.ADMIN.equals(rol) || SecurityRoles.SUPER_ADMIN.equals(rol);
-        if (admin) {
-            return;
-        }
-        for (VentaLineRequest line : lineas) {
-            if (line.precioUnitario().compareTo(BigDecimal.ZERO) == 0) {
-                throw new BusinessException(
-                        HttpStatus.BAD_REQUEST,
-                        "Precio unitario 0 no permitido para su rol. Indique un precio mayor a 0 o solicite a un administrador.");
-            }
-        }
     }
 
     @Transactional(readOnly = true)
@@ -310,7 +254,7 @@ public class VentaService {
         List<Venta> filas = ventaRepository.findAllParaExport(empresaId, iDesde, iHastaExcl, usuarioFiltro);
         StringBuilder sb =
                 new StringBuilder(
-                        "codigoPublico,id,fechaVenta,estado,bodega,vendedor,cliente,total,movimientoId,movimientoEstado\n");
+                        "codigoPublico,id,fechaVenta,estado,interpretacionOperativa,pagoEstado,aclaracionPago,bodega,vendedor,cliente,total,movimientoId,movimientoEstado\n");
         for (Venta v : filas) {
             sb.append(csvField(v.getCodigoPublico()))
                     .append(',')
@@ -320,6 +264,12 @@ public class VentaService {
                     .append(',')
                     .append(csvField(v.getEstado().name()))
                     .append(',')
+                    .append(csvField(interpretacionOperativa(v)))
+                    .append(',')
+                    .append(csvField(v.getPagoEstado() != null ? v.getPagoEstado().name() : null))
+                    .append(',')
+                    .append(csvField(aclaracionPago(v)))
+                    .append(',')
                     .append(csvField(v.getBodega().getNombre()))
                     .append(',')
                     .append(csvField(v.getUsuario().getEmail()))
@@ -328,9 +278,9 @@ public class VentaService {
                     .append(',')
                     .append(v.getTotal())
                     .append(',')
-                    .append(v.getMovimiento().getId())
+                    .append(v.getMovimiento() != null ? v.getMovimiento().getId() : "")
                     .append(',')
-                    .append(csvField(v.getMovimiento().getEstado().name()))
+                    .append(csvField(v.getMovimiento() != null ? v.getMovimiento().getEstado().name() : null))
                     .append('\n');
         }
         return sb.toString().getBytes(StandardCharsets.UTF_8);
@@ -341,6 +291,32 @@ public class VentaService {
             return "\"\"";
         }
         return "\"" + s.replace("\"", "\"\"") + "\"";
+    }
+
+    private static String interpretacionOperativa(Venta v) {
+        if (v.getEstado() == VentaEstado.ANULACION_SOLICITADA) {
+            return "Anulación solicitada; pendiente revisión admin; stock aún no revertido";
+        }
+        if (v.getEstado() == VentaEstado.ANULADA) {
+            return "Anulada operativamente; stock revertido";
+        }
+        if (v.getEstado() == VentaEstado.PENDIENTE_PAGO) {
+            return "Pendiente de pago; sin movimiento de inventario";
+        }
+        if (v.getEstado() == VentaEstado.CANCELADA_SIN_PAGO) {
+            return "Cancelada sin pago; sin movimiento de inventario";
+        }
+        return "Confirmada; stock aplicado";
+    }
+
+    private static String aclaracionPago(Venta v) {
+        if (v.getEstado() == VentaEstado.ANULADA && v.getPagoEstado() == VentaPagoEstado.STRIPE_SUCCEEDED) {
+            return "Pago Stripe registrado; la anulación operativa no confirma reembolso";
+        }
+        if (v.getPagoEstado() == VentaPagoEstado.STRIPE_SUCCEEDED) {
+            return "Pago Stripe confirmado";
+        }
+        return null;
     }
 
     @Transactional(readOnly = true)
@@ -372,6 +348,8 @@ public class VentaService {
     private VentaListItemResponse toListItem(Venta v) {
         Long cid = v.getCliente() != null ? v.getCliente().getId() : null;
         String cnombre = v.getCliente() != null ? v.getCliente().getNombre() : null;
+        Long mid = v.getMovimiento() != null ? v.getMovimiento().getId() : null;
+        String pago = v.getPagoEstado() != null ? v.getPagoEstado().name() : null;
         return new VentaListItemResponse(
                 v.getId(),
                 v.getCodigoPublico(),
@@ -382,10 +360,11 @@ public class VentaService {
                 v.getDetalles().size(),
                 v.getUsuario().getId(),
                 v.getUsuario().getEmail(),
-                v.getMovimiento().getId(),
+                mid,
                 v.getEstado().name(),
                 cid,
-                cnombre);
+                cnombre,
+                pago);
     }
 
     private VentaDetailResponse toDetail(Venta v) {
@@ -404,6 +383,10 @@ public class VentaService {
         String cnombre = v.getCliente() != null ? v.getCliente().getNombre() : null;
         String cdoc = v.getCliente() != null ? v.getCliente().getDocumento() : null;
         String ctel = v.getCliente() != null ? v.getCliente().getTelefono() : null;
+        Long mid = v.getMovimiento() != null ? v.getMovimiento().getId() : null;
+        String mest = v.getMovimiento() != null ? v.getMovimiento().getEstado().name() : null;
+        String pago = v.getPagoEstado() != null ? v.getPagoEstado().name() : null;
+        String empresaNombre = v.getEmpresa() != null ? v.getEmpresa().getNombre() : null;
         return new VentaDetailResponse(
                 v.getId(),
                 v.getCodigoPublico(),
@@ -415,13 +398,52 @@ public class VentaService {
                 v.getObservacion(),
                 v.getUsuario().getId(),
                 v.getUsuario().getEmail(),
-                v.getMovimiento().getId(),
-                v.getMovimiento().getEstado().name(),
+                formatoNombreVendedor(v.getUsuario()),
+                mid,
+                mest,
                 cid,
                 cnombre,
                 cdoc,
                 ctel,
-                lineas);
+                lineas,
+                pago,
+                v.getPaidAt(),
+                v.getStripeCheckoutSessionId(),
+                empresaNombre,
+                metodoPagoEtiqueta(v));
+    }
+
+    private static String formatoNombreVendedor(Usuario u) {
+        if (u == null) {
+            return null;
+        }
+        String nom = u.getNombre() != null ? u.getNombre().trim() : "";
+        String ap = u.getApellido() != null ? u.getApellido().trim() : "";
+        if (!nom.isEmpty() && !ap.isEmpty()) {
+            return nom + " " + ap;
+        }
+        if (!nom.isEmpty()) {
+            return nom;
+        }
+        if (!ap.isEmpty()) {
+            return ap;
+        }
+        return u.getEmail();
+    }
+
+    /** Etiqueta breve para comprobantes; no es facturación electrónica. */
+    private static String metodoPagoEtiqueta(Venta v) {
+        if (v.getEstado() != VentaEstado.CONFIRMADA) {
+            return null;
+        }
+        VentaPagoEstado pe = v.getPagoEstado();
+        if (pe == VentaPagoEstado.STRIPE_SUCCEEDED) {
+            return "Tarjeta (Stripe)";
+        }
+        if (pe == null) {
+            return "Punto de venta";
+        }
+        return null;
     }
 
     private void assertPuedeVerVenta(Venta v) {
@@ -443,13 +465,4 @@ public class VentaService {
         return SecurityRoles.VENTAS.equals(SecurityRoles.canonicalCodigo(u.getRol().getCodigo()));
     }
 
-    private static String normalizeObs(String s) {
-        if (s == null) {
-            return null;
-        }
-        String t = s.trim();
-        return t.isEmpty() ? null : t;
-    }
-
-    private record LineaVentaInterna(Producto producto, BigDecimal cantidad, BigDecimal precioUnitario, BigDecimal subtotal) {}
 }

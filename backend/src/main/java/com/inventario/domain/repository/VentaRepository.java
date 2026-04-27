@@ -4,9 +4,11 @@ import com.inventario.domain.entity.Venta;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -27,8 +29,13 @@ public interface VentaRepository extends JpaRepository<Venta, Long>, JpaSpecific
     @EntityGraph(attributePaths = {"usuario", "bodega", "movimiento", "detalles", "cliente"})
     Page<Venta> findByEmpresa_IdAndUsuario_IdOrderByFechaVentaDesc(Long empresaId, Long usuarioId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"usuario", "bodega", "movimiento", "detalles", "detalles.producto", "cliente"})
+    @EntityGraph(attributePaths = {"empresa", "usuario", "bodega", "movimiento", "detalles", "detalles.producto", "cliente"})
     Optional<Venta> findByIdAndEmpresa_Id(Long id, Long empresaId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"empresa", "bodega", "usuario", "cliente", "detalles", "detalles.producto", "movimiento"})
+    @Query("SELECT v FROM Venta v WHERE v.id = :id AND v.empresa.id = :empresaId")
+    Optional<Venta> findByIdAndEmpresa_IdForUpdate(@Param("id") Long id, @Param("empresaId") Long empresaId);
 
     @Query("""
             SELECT COUNT(v) FROM Venta v

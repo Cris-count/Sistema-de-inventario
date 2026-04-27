@@ -8,20 +8,23 @@ import {
 } from '../../core/api/mensajes-pedido.service';
 import { backdropFade, modalFadeScale } from '../../core/animations';
 import { getApiErrorMessage, patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 
 @Component({
   selector: 'app-mensajes-pedido',
-  imports: [FormsModule, PlanBlockFollowupComponent],
+  imports: [FormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   animations: [backdropFade, modalFadeScale],
   template: `
     <div class="page stack">
       <header class="page-header">
         <h1>Mensajes pedido a proveedor</h1>
-        <p class="page-lead page-header-lead max-w-readable">
-          Las alertas de stock bajo y las pruebas desde Inventario generan una solicitud aquí. Solo usted (administrador)
-          puede aprobar el envío del correo al proveedor o rechazarla. Si aprueba, puede ajustar la cantidad del pedido.
-        </p>
+        <app-dismissible-hint hintId="mensajesPedido.pageIntro" persist="local" variant="flush">
+          <p class="page-lead page-header-lead max-w-readable">
+            Las alertas de stock bajo y las pruebas desde Inventario generan una solicitud aquí. Solo usted (administrador)
+            puede aprobar el envío del correo al proveedor o rechazarla. Si aprueba, puede ajustar la cantidad del pedido.
+          </p>
+        </app-dismissible-hint>
       </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">

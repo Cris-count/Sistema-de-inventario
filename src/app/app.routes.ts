@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import {
   ROLES_ADMIN,
   ROLES_ENTRADA,
+  ROLES_GESTION_PRODUCTOS,
   ROLES_LECTURA_API,
   ROLES_PANEL_ABASTECIMIENTO,
   ROLES_MOVIMIENTO_BODEGA,
@@ -12,6 +13,7 @@ import { authGuard } from './core/auth/auth.guard';
 import { guestGuard } from './core/auth/guest.guard';
 import { roleGuard } from './core/auth/role.guard';
 import { syncUserGuard } from './core/auth/sync-user.guard';
+import { ventasSkipGenericDashboardGuard } from './core/auth/ventas-skip-dashboard.guard';
 
 export const routes: Routes = [
   /** Home pública: /app exige JWT; la landing es el punto de entrada sin sesión. */
@@ -37,9 +39,11 @@ export const routes: Routes = [
     runGuardsAndResolvers: 'always',
     loadComponent: () => import('./shared/shell/app-shell.component').then((m) => m.AppShellComponent),
     children: [
+      /** `dashboard` + `ventasSkipGenericDashboardGuard` replica el rol que antes resolvía `defaultAppLandingGuard`. */
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       {
         path: 'dashboard',
+        canActivate: [ventasSkipGenericDashboardGuard],
         loadComponent: () => import('./features/dashboard/dashboard.page').then((m) => m.DashboardPage)
       },
       {
@@ -92,6 +96,19 @@ export const routes: Routes = [
         loadComponent: () => import('./features/ventas/ventas.page').then((m) => m.VentasPage)
       },
       {
+        path: 'ventas/pago-retorno',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_VENTAS_PANEL },
+        loadComponent: () =>
+          import('./features/ventas/venta-pago-retorno.page').then((m) => m.VentaPagoRetornoPage)
+      },
+      {
+        path: 'ventas/recibo/:id',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_VENTAS_PANEL },
+        loadComponent: () => import('./features/ventas/venta-recibo.page').then((m) => m.VentaReciboPage)
+      },
+      {
         path: 'ventas/detalle/:id',
         canActivate: [roleGuard],
         data: { roles: ROLES_VENTAS_PANEL },
@@ -108,7 +125,7 @@ export const routes: Routes = [
       {
         path: 'stock-inicial',
         canActivate: [roleGuard],
-        data: { roles: ROLES_ADMIN },
+        data: { roles: ROLES_GESTION_PRODUCTOS },
         loadComponent: () => import('./features/inventario/stock-inicial.page').then((m) => m.StockInicialPage)
       },
       {

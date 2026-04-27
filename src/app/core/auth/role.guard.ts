@@ -1,5 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { ROLE_CODE_VENTAS } from '../navigation';
 import { AuthService } from './auth.service';
 import { setRouteForbiddenFlash } from '../util/access-flash';
 
@@ -15,5 +16,6 @@ export const roleGuard: CanActivateFn = (route) => {
   if (!allowed?.length) return true;
   if (role && allowed.includes(role)) return true;
   setRouteForbiddenFlash();
-  return router.createUrlTree(['/app/dashboard']);
+  const fallback = role === ROLE_CODE_VENTAS ? '/app/ventas' : '/app/dashboard';
+  return router.createUrlTree([fallback]);
 };

@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UiCardComponent } from '../../../../shared/components/ui/card/ui-card.component';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
+import { GsapHoverDirective } from '../../../../shared/motion/gsap-hover.directive';
+import { GsapRevealDirective } from '../../../../shared/motion/gsap-reveal.directive';
 
 type FeatureIcon =
   | 'box'
@@ -30,7 +32,7 @@ interface FeatureCard {
 @Component({
   selector: 'app-landing-features',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiCardComponent, RevealOnScrollDirective],
+  imports: [UiCardComponent, RevealOnScrollDirective, GsapHoverDirective, GsapRevealDirective],
   template: `
     <section
       id="funcionalidades"
@@ -65,10 +67,12 @@ interface FeatureCard {
         </div>
 
         <div
+          appGsapReveal="cards"
+          gsapRevealTargets=".lp-feature-reveal"
           class="lp-stagger lp-stagger-features mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
         >
           @for (f of features; track f.id) {
-            <article appReveal class="lp-feature-reveal flex h-full flex-col">
+            <article appGsapHover="card" class="lp-feature-reveal flex h-full flex-col">
               <app-ui-card class="lp-card-hover lp-feature-card flex h-full flex-col">
                 <div
                   class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent ring-1 ring-accent/20 dark:bg-accent/15 dark:ring-accent/30"

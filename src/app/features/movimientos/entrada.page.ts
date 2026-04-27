@@ -1,27 +1,31 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { BodegaService } from '../../core/api/bodega.service';
 import { MovimientoApiService } from '../../core/api/movimiento.service';
 import { ProductoService } from '../../core/api/producto.service';
 import { ProveedorService } from '../../core/api/proveedor.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-mov-entrada',
-  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent, RouterLink],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent, RouterLink, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header page-header--split">
         <div class="page-header__intro">
           <h1>Entrada de inventario</h1>
-          <p class="page-lead">
-            Registra ingreso de mercancía a una o más bodegas. Cada línea suma existencias del producto elegido en la bodega
-            destino; revisa producto, destino y cantidad antes de confirmar.
-          </p>
+          <app-dismissible-hint hintId="movimientos.entrada.pageIntro" persist="local" variant="flush">
+            <p class="page-lead">
+              Registra ingreso de mercancía a una o más bodegas. Cada línea suma existencias del producto elegido en la bodega
+              destino; revisa producto, destino y cantidad antes de confirmar.
+            </p>
+          </app-dismissible-hint>
         </div>
         <div class="page-header__actions">
           <a routerLink="/app/dashboard" class="btn btn-text">Ir al panel</a>
@@ -30,14 +34,16 @@ import { flashSuccess } from '../../core/util/page-flash';
       </header>
 
       <div class="page-body">
-        <div class="card card--info stack stack--tight">
-          <h2 class="ds-section-title" style="margin-bottom: 0.25rem">Flujo sugerido</h2>
-          <ol class="ent-steps muted" style="margin: 0; padding-left: 1.25rem; max-width: 62ch">
-            <li>Completa el encabezado (motivo y, si aplica, proveedor y referencia).</li>
-            <li>Por cada línea: elige <strong>producto</strong> y <strong>bodega destino</strong>, luego la <strong>cantidad</strong>.</li>
-            <li>Revisa el <strong>resumen</strong> al pie del formulario (visible cuando todo es válido) y pulsa <strong>Registrar entrada</strong>.</li>
-          </ol>
-        </div>
+        <app-dismissible-hint hintId="movimientos.entrada.flujoSugerido" persist="local">
+          <div class="card card--info stack stack--tight">
+            <h2 class="ds-section-title" style="margin-bottom: 0.25rem">Flujo sugerido</h2>
+            <ol class="ent-steps muted" style="margin: 0; padding-left: 1.25rem; max-width: 62ch">
+              <li>Completa el encabezado (motivo y, si aplica, proveedor y referencia).</li>
+              <li>Por cada línea: elige <strong>producto</strong> y <strong>bodega destino</strong>, luego la <strong>cantidad</strong>.</li>
+              <li>Revisa el <strong>resumen</strong> al pie del formulario (visible cuando todo es válido) y pulsa <strong>Registrar entrada</strong>.</li>
+            </ol>
+          </div>
+        </app-dismissible-hint>
 
         @if (error()) {
           <div class="alert alert-error" role="alert">
@@ -521,6 +527,9 @@ export class MovEntradaPage implements OnInit {
   }
 
   submit(): void {
+    if (this.saving()) {
+      return;
+    }
     this.error.set(null);
     this.planFollowup.set(null);
     this.message.set(null);
@@ -559,31 +568,33 @@ export class MovEntradaPage implements OnInit {
       lineas
     };
     this.saving.set(true);
-    this.api.entrada(body).subscribe({
-      next: (m) => {
-        this.error.set(null);
-        this.planFollowup.set(null);
-        this.lastRegistered.set({ id: m.id });
-        this.message.set(
-          `Entrada #${m.id} registrada correctamente. El stock se actualizó en las bodegas indicadas.`
-        );
-        flashSuccess(this.destroyRef, () => this.message.set(null));
-        this.lines.clear();
-        this.addLine();
-        this.form.patchValue({
-          motivo: '',
-          proveedorId: null,
-          proveedorIdRaw: null,
-          referenciaDocumento: '',
-          observacion: ''
-        });
-        this.form.markAsUntouched();
-      },
-      error: (e) => {
-        this.message.set(null);
-        patchPlanErrorSignals(e, this.error, this.planFollowup);
-      },
-      complete: () => this.saving.set(false)
-    });
+    this.api
+      .entrada(body)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (m) => {
+          this.error.set(null);
+          this.planFollowup.set(null);
+          this.lastRegistered.set({ id: m.id });
+          this.message.set(
+            `Entrada #${m.id} registrada correctamente. El stock se actualizó en las bodegas indicadas.`
+          );
+          flashSuccess(this.destroyRef, () => this.message.set(null));
+          this.lines.clear();
+          this.addLine();
+          this.form.patchValue({
+            motivo: '',
+            proveedorId: null,
+            proveedorIdRaw: null,
+            referenciaDocumento: '',
+            observacion: ''
+          });
+          this.form.markAsUntouched();
+        },
+        error: (e) => {
+          this.message.set(null);
+          patchPlanErrorSignals(e, this.error, this.planFollowup);
+        }
+      });
   }
 }

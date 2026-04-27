@@ -1,6 +1,5 @@
 package com.inventario.web.controller;
 
-import com.inventario.domain.entity.Movimiento;
 import com.inventario.domain.entity.TipoMovimiento;
 import com.inventario.service.CurrentUserService;
 import com.inventario.service.MovimientoService;
@@ -67,7 +66,7 @@ public class MovimientoController {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA','VENTAS')")
     @Operation(summary = "Historial de movimientos")
-    public Page<Movimiento> listar(
+    public Page<MovimientoListItemResponse> listar(
             @RequestParam(required = false) TipoMovimiento tipo,
             @RequestParam LocalDate desde,
             @RequestParam LocalDate hasta,

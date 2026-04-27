@@ -7,21 +7,24 @@ import { InventarioService } from '../../core/api/inventario.service';
 import { MovimientoApiService } from '../../core/api/movimiento.service';
 import { AbastecimientoPanelResponse, MovimientoList } from '../../core/models/entities.model';
 import { getApiErrorMessage, patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 
 @Component({
   selector: 'app-abastecimiento',
-  imports: [RouterLink, FormsModule, PlanBlockFollowupComponent, DatePipe, DecimalPipe],
+  imports: [RouterLink, FormsModule, PlanBlockFollowupComponent, DatePipe, DecimalPipe, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header page-header--split">
         <div class="page-header__intro">
           <p class="card-eyebrow" style="margin: 0 0 0.35rem">Abastecimiento</p>
           <h1>Panel de reposición</h1>
-          <p class="page-lead">
-            Productos con stock en o bajo el mínimo por bodega. Priorizá criticidad, confirmá proveedor sugerido y
-            registrá entradas sin salir del flujo operativo.
-          </p>
+          <app-dismissible-hint hintId="abastecimiento.pageIntro" persist="local" variant="flush">
+            <p class="page-lead">
+              Productos con stock en o bajo el mínimo por bodega. Priorizá criticidad, confirmá proveedor sugerido y
+              registrá entradas sin salir del flujo operativo.
+            </p>
+          </app-dismissible-hint>
         </div>
         <div class="page-header__actions" style="flex-wrap: wrap; gap: 0.5rem">
           <a routerLink="/app/inventario" class="btn btn-secondary">Ver inventario completo</a>
@@ -93,10 +96,12 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
           </div>
         </section>
 
-        <p class="field-hint" style="margin: 0; max-width: 72ch">
-          <strong>Proveedor sugerido:</strong> se calcula por producto (proveedor preferido en ficha del producto, o el
-          último vinculado en una entrada que incluya ese producto). No implica exclusividad por bodega.
-        </p>
+        <app-dismissible-hint hintId="abastecimiento.proveedorSugeridoExplicacion" persist="local">
+          <p class="field-hint" style="margin: 0; max-width: 72ch">
+            <strong>Proveedor sugerido:</strong> se calcula por producto (proveedor preferido en ficha del producto, o el
+            último vinculado en una entrada que incluya ese producto). No implica exclusividad por bodega.
+          </p>
+        </app-dismissible-hint>
 
         <div class="table-wrap">
           <table class="data">
@@ -204,7 +209,7 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
                     </td>
                     <td>{{ m.fechaMovimiento | date: 'short' }}</td>
                     <td>{{ m.motivo || '—' }}</td>
-                    <td>{{ m.proveedor?.razonSocial ?? '—' }}</td>
+                    <td>{{ m.proveedorRazonSocial ?? '—' }}</td>
                   </tr>
                 }
               </tbody>

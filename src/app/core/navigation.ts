@@ -1,6 +1,7 @@
 import {
   ROLES_ADMIN,
   ROLES_ENTRADA,
+  ROLES_GESTION_PRODUCTOS,
   ROLES_LECTURA_API,
   ROLES_PANEL_ABASTECIMIENTO,
   ROLES_MOVIMIENTO_BODEGA,
@@ -8,6 +9,46 @@ import {
   ROLES_VENTAS_PANEL
 } from './auth/app-roles';
 import { PlanEntitlementCodes } from './plan-entitlement-codes';
+
+/** Rol comercial POS (sidebar y landing dedicados). */
+export const ROLE_CODE_VENTAS = 'VENTAS';
+
+/** Orden del menú lateral para VENTAS; solo aplica a ítems ya visibles por rol/plan. */
+const VENTAS_SIDEBAR_ORDER_KEYS: string[] = [
+  'ventas',
+  'movimientos',
+  'reportes/kardex',
+  'reportes/export',
+  'inventario',
+  'productos',
+  'bodegas'
+];
+
+function navPartsKey(item: NavItem): string {
+  return item.parts.join('/');
+}
+
+/**
+ * Reordena y recorta el menú para el rol comercial: sin «Inicio» genérico, prioridad operativa.
+ */
+export function orderNavItemsForRole(role: string | null, items: NavItem[]): NavItem[] {
+  if (role !== ROLE_CODE_VENTAS) {
+    return items;
+  }
+  const withoutDashboard = items.filter((i) => navPartsKey(i) !== 'dashboard');
+  const rank = new Map(VENTAS_SIDEBAR_ORDER_KEYS.map((k, idx) => [k, idx]));
+  const origIndex = new Map(withoutDashboard.map((it, idx) => [it, idx]));
+  return [...withoutDashboard].sort((a, b) => {
+    const ka = navPartsKey(a);
+    const kb = navPartsKey(b);
+    const ra = rank.has(ka) ? rank.get(ka)! : 1000;
+    const rb = rank.has(kb) ? rank.get(kb)! : 1000;
+    if (ra !== rb) {
+      return ra - rb;
+    }
+    return (origIndex.get(a) ?? 0) - (origIndex.get(b) ?? 0);
+  });
+}
 
 /** Enlaces de navegación; `roles` vacío = todos los autenticados. */
 export interface NavItem {
@@ -100,7 +141,7 @@ export const NAV_ITEMS: NavItem[] = [
     parts: ['stock-inicial'],
     label: 'Stock inicial',
     icon: '📥',
-    roles: ROLES_ADMIN,
+    roles: ROLES_GESTION_PRODUCTOS,
     requiresAnyPlanModule: [PlanEntitlementCodes.inventario_basico],
     navSection: 'Inventario'
   },

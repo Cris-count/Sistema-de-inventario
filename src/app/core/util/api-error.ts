@@ -121,6 +121,17 @@ export function patchPlanErrorSignals(
  */
 export function getApiErrorMessage(err: unknown): string {
   if (err instanceof HttpErrorResponse) {
+    const rawMsg = err.message ?? '';
+    if (rawMsg.includes('Http failure during parsing')) {
+      return (
+        'La respuesta del servidor no es JSON válido. Suele indicar que la API no está disponible (revisa que el backend ' +
+        'esté en marcha en el puerto configurado), que el proxy de desarrollo no alcanza el servidor, o que caducó la sesión. ' +
+        'Vuelve a iniciar sesión o levanta el entorno con el script del proyecto (p. ej. npm run up).'
+      );
+    }
+    if (err.status === 502 || err.status === 504) {
+      return 'El servidor de aplicación no respondió a tiempo o no está disponible. Comprueba que el API esté levantado.';
+    }
     const body = err.error;
     const fromProblem = detailFromProblemBody(body);
     if (fromProblem) return fromProblem;
@@ -130,6 +141,9 @@ export function getApiErrorMessage(err: unknown): string {
     }
     if (err.status === 401) {
       return MSG_401_SESION;
+    }
+    if (err.status === 0) {
+      return 'No se pudo conectar con el servidor. Comprueba tu red y que la API esté en marcha.';
     }
     if (err.status === 400) {
       return 'Solicitud no v?lida. Revise los datos enviados.';

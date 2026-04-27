@@ -23,25 +23,39 @@ public class CategoriaController {
 
     public record CategoriaRequest(@NotBlank String nombre, String descripcion) {}
 
+    /**
+     * Sin relaciones JPA: devolver {@link Categoria} tal cual serializaba {@code empresa}/{@code createdBy} y
+     * reproducía ciclos Jackson (p. ej. {@code Usuario} → {@code Empresa} → {@code updatedBy} → …).
+     */
+    public record CategoriaResponse(Long id, String nombre, String descripcion, boolean activo) {}
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA')")
     @Operation(summary = "Listar categorías")
-    public List<Categoria> listar() {
-        return categoriaCatalogService.listar();
+    public List<CategoriaResponse> listar() {
+        return categoriaCatalogService.listar().stream().map(CategoriaController::toResponse).toList();
     }
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear categoría")
-    public Categoria crear(@Valid @RequestBody CategoriaRequest req) {
-        return categoriaCatalogService.crear(req.nombre(), req.descripcion());
+    public CategoriaResponse crear(@Valid @RequestBody CategoriaRequest req) {
+        return toResponse(categoriaCatalogService.crear(req.nombre(), req.descripcion()));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @Operation(summary = "Actualizar categoría")
-    public Categoria actualizar(@PathVariable Long id, @Valid @RequestBody CategoriaRequest req) {
-        return categoriaCatalogService.actualizar(id, req.nombre(), req.descripcion());
+    public CategoriaResponse actualizar(@PathVariable Long id, @Valid @RequestBody CategoriaRequest req) {
+        return toResponse(categoriaCatalogService.actualizar(id, req.nombre(), req.descripcion()));
+    }
+
+    private static CategoriaResponse toResponse(Categoria c) {
+        return new CategoriaResponse(
+                c.getId(),
+                c.getNombre(),
+                c.getDescripcion(),
+                Boolean.TRUE.equals(c.getActivo()));
     }
 }

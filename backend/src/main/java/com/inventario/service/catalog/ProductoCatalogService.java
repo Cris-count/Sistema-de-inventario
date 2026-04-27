@@ -51,7 +51,8 @@ public class ProductoCatalogService {
 
     @Transactional
     public Producto crear(String codigo, String nombre, String descripcion, Long categoriaId,
-                          String unidadMedida, BigDecimal stockMinimo, Long proveedorPreferidoId) {
+                          String unidadMedida, BigDecimal stockMinimo, BigDecimal costoProducto,
+                          BigDecimal precioVenta, Long proveedorPreferidoId) {
         var empresa = currentUserService.requireEmpresa();
         Long empresaId = empresa.getId();
         planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
@@ -69,6 +70,8 @@ public class ProductoCatalogService {
         p.setCategoria(cat);
         p.setUnidadMedida(unidadMedida != null ? unidadMedida : "UND");
         p.setStockMinimo(stockMinimo != null ? stockMinimo : BigDecimal.ZERO);
+        p.setPurchaseCost(normalizeNonNegativeAmount(costoProducto, "El costo del producto no puede ser negativo"));
+        p.setSalePrice(normalizeNonNegativeAmount(precioVenta, "El precio de venta no puede ser negativo"));
         aplicarProveedorPreferido(empresaId, p, proveedorPreferidoId);
         p.setActivo(true);
         p.setCreatedAt(Instant.now());
@@ -79,7 +82,8 @@ public class ProductoCatalogService {
 
     @Transactional
     public Producto actualizar(Long id, String codigo, String nombre, String descripcion, Long categoriaId,
-                               String unidadMedida, BigDecimal stockMinimo, Long proveedorPreferidoId) {
+                               String unidadMedida, BigDecimal stockMinimo, BigDecimal costoProducto,
+                               BigDecimal precioVenta, Long proveedorPreferidoId) {
         Long empresaId = currentUserService.requireEmpresaId();
         planEntitlementService.requireModulo(empresaId, PlanEntitlementCodes.INVENTARIO_BASICO);
         Producto p = tenantEntityLoader.requireProductoInTenant(id, empresaId);
@@ -94,6 +98,12 @@ public class ProductoCatalogService {
         p.setCategoria(cat);
         p.setUnidadMedida(unidadMedida != null ? unidadMedida : p.getUnidadMedida());
         p.setStockMinimo(stockMinimo != null ? stockMinimo : p.getStockMinimo());
+        p.setPurchaseCost(costoProducto != null
+                ? normalizeNonNegativeAmount(costoProducto, "El costo del producto no puede ser negativo")
+                : p.getPurchaseCost());
+        p.setSalePrice(precioVenta != null
+                ? normalizeNonNegativeAmount(precioVenta, "El precio de venta no puede ser negativo")
+                : p.getSalePrice());
         aplicarProveedorPreferido(empresaId, p, proveedorPreferidoId);
         p.setUpdatedAt(Instant.now());
         tenantIntegrityService.assertProductoAndCategoriaSameEmpresa(p, cat);
@@ -131,5 +141,13 @@ public class ProductoCatalogService {
         p.setActivo(activo);
         p.setUpdatedAt(Instant.now());
         return productoRepository.save(p);
+    }
+
+    private static BigDecimal normalizeNonNegativeAmount(BigDecimal value, String errorMessage) {
+        BigDecimal amount = value != null ? value : BigDecimal.ZERO;
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, errorMessage);
+        }
+        return amount;
     }
 }

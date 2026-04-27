@@ -3,19 +3,23 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ReporteService } from '../../core/api/reporte.service';
 import { defaultDesdeHasta } from '../../core/util/dates';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-reporte-export',
-  imports: [ReactiveFormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header">
-        <h1>Exportar movimientos (CSV)</h1>
-        <p class="page-lead page-header-lead">
-          Endpoint: <code>GET /reportes/movimientos/export?desde&amp;hasta</code>
-        </p>
+        <h1>Exportar movimientos</h1>
+        <app-dismissible-hint hintId="reportes.export.pageIntro" persist="local" variant="flush">
+          <p class="page-lead page-header-lead">
+            Descarga un archivo CSV con los movimientos del período seleccionado para conciliación, control operativo o análisis externo.
+            El archivo incluye estado e interpretación de stock para distinguir movimientos efectivos de anulados históricos.
+          </p>
+        </app-dismissible-hint>
       </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">
@@ -29,10 +33,12 @@ import { flashSuccess } from '../../core/util/page-flash';
         <div class="field">
           <label>Desde</label>
           <input type="date" formControlName="desde" />
+          <p class="field-hint">Incluye movimientos desde esta fecha (inicio del período).</p>
         </div>
         <div class="field">
           <label>Hasta</label>
           <input type="date" formControlName="hasta" />
+          <p class="field-hint">Incluye movimientos hasta esta fecha (cierre del período).</p>
         </div>
         <button type="submit" class="btn btn-primary" [disabled]="loading()">
           @if (loading()) {
@@ -81,7 +87,7 @@ export class ExportReportePage {
         URL.revokeObjectURL(url);
         this.error.set(null);
         this.planFollowup.set(null);
-        this.message.set('Descarga iniciada.');
+        this.message.set('Archivo generado. La descarga debería iniciar en unos segundos.');
         flashSuccess(this.destroyRef, () => this.message.set(null));
       },
       error: (e) => {

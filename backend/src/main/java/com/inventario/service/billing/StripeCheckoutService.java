@@ -19,6 +19,9 @@ import java.util.Map;
 @Service
 public class StripeCheckoutService {
 
+    /** Metadata {@code flowType} para Checkout de venta POS (distinguir del webhook SaaS). */
+    public static final String FLOW_POS_VENTA = "POS_VENTA";
+
     @Value("${app.billing.stripe.secret-key:}")
     private String stripeSecretKey;
 
@@ -190,5 +193,70 @@ public class StripeCheckoutService {
     private static long toStripeAmount(BigDecimal amount) {
         BigDecimal safe = amount != null ? amount : BigDecimal.ZERO;
         return safe.movePointRight(2).longValue();
+    }
+
+    /** Monto en unidad menor (p. ej. centavos COP) para validar contra {@link Session#getAmountTotal()}. */
+    public static long toStripeMinorUnits(BigDecimal amount) {
+        return toStripeAmount(amount);
+    }
+
+    /**
+     * Checkout único para una venta POS pendiente: el webhook o la sincronización completan stock tras cobro verificado.
+     */
+    public StripeSessionResult createPosVentaCheckoutSession(
+            Long ventaId,
+            Long empresaId,
+            BigDecimal total,
+            String moneda,
+            String codigoPublico) {
+        ensureConfigured();
+        long amountMinor = toStripeAmount(total);
+        if (amountMinor <= 0) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "El total de la venta debe ser mayor a 0 para cobrar con Stripe.");
+        }
+        try {
+            Stripe.apiKey = stripeSecretKey;
+            SessionCreateParams params = SessionCreateParams.builder()
+                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setSuccessUrl(
+                            frontendBaseUrl
+                                    + "/app/ventas/pago-retorno?session_id={CHECKOUT_SESSION_ID}&venta_id="
+                                    + ventaId)
+                    .setCancelUrl(frontendBaseUrl + "/app/ventas/pago-retorno?cancelled=1&venta_id=" + ventaId)
+                    .addLineItem(SessionCreateParams.LineItem.builder()
+                            .setQuantity(1L)
+                            .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                                    .setCurrency(normalizeCurrency(moneda))
+                                    .setUnitAmount(amountMinor)
+                                    .setProductData(
+                                            SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                                    .setName("Venta " + codigoPublico)
+                                                    .build())
+                                    .build())
+                            .build())
+                    .putMetadata("flowType", FLOW_POS_VENTA)
+                    .putMetadata("ventaId", String.valueOf(ventaId))
+                    .putMetadata("empresaId", String.valueOf(empresaId))
+                    .putMetadata("amountMinor", String.valueOf(amountMinor))
+                    .putMetadata("codigoPublico", codigoPublico)
+                    .build();
+            Session session = Session.create(params);
+            return new StripeSessionResult(session.getId(), session.getUrl());
+        } catch (StripeException ex) {
+            throw new BusinessException(
+                    HttpStatus.BAD_GATEWAY,
+                    "No se pudo crear la sesión de pago en Stripe. Intenta de nuevo.");
+        }
+    }
+
+    /** Recupera la sesión (API Stripe); usar tras redirect o para sincronizar si el webhook va atrasado. */
+    public Session retrieveCheckoutSession(String sessionId) {
+        ensureConfigured();
+        try {
+            Stripe.apiKey = stripeSecretKey;
+            return Session.retrieve(sessionId);
+        } catch (StripeException ex) {
+            throw new BusinessException(HttpStatus.BAD_GATEWAY, "No se pudo consultar el estado en Stripe.");
+        }
     }
 }

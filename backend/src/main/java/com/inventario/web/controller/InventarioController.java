@@ -1,6 +1,5 @@
 package com.inventario.web.controller;
 
-import com.inventario.domain.entity.Inventario;
 import com.inventario.service.MovimientoService;
 import com.inventario.service.catalog.InventarioQueryService;
 import com.inventario.service.inventory.AbastecimientoPanelService;
@@ -9,6 +8,7 @@ import com.inventario.service.CurrentUserService;
 import com.inventario.service.saas.PlanEntitlementCodes;
 import com.inventario.service.saas.PlanEntitlementService;
 import com.inventario.web.dto.AbastecimientoDtos.AbastecimientoPanelResponse;
+import com.inventario.web.dto.InventarioDtos.InventarioRowResponse;
 import com.inventario.web.dto.MovimientoDtos.MovimientoResponse;
 import com.inventario.web.dto.MovimientoDtos.StockInicialRequest;
 import com.inventario.web.dto.SimularCorreoStockDtos.SimularCorreoStockRequest;
@@ -47,7 +47,7 @@ public class InventarioController {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA','VENTAS')")
     @Operation(summary = "Consulta de existencias")
-    public Page<Inventario> listar(
+    public Page<InventarioRowResponse> listar(
             @RequestParam(required = false) Long productoId,
             @RequestParam(required = false) Long bodegaId,
             Pageable pageable) {
@@ -57,7 +57,7 @@ public class InventarioController {
     @GetMapping("/alertas")
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA','VENTAS')")
     @Operation(summary = "Productos bajo stock mínimo")
-    public List<Inventario> alertas(@RequestParam(required = false) Long bodegaId) {
+    public List<InventarioRowResponse> alertas(@RequestParam(required = false) Long bodegaId) {
         return inventarioQueryService.alertas(bodegaId);
     }
 
@@ -103,7 +103,7 @@ public class InventarioController {
     }
 
     @PostMapping("/stock-inicial")
-    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA')")
     @Operation(summary = "Carga de stock inicial")
     public MovimientoResponse stockInicial(@Valid @RequestBody StockInicialRequest req) {
         return movimientoService.stockInicial(req);

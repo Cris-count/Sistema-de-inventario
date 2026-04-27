@@ -6,12 +6,13 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ROLES_ADMIN } from '../../core/auth/app-roles';
 import { VentaDetailResponse } from '../../core/models/entities.model';
 import { getApiErrorMessage, patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-venta-detalle',
-  imports: [RouterLink, PlanBlockFollowupComponent, DatePipe, DecimalPipe],
+  imports: [RouterLink, PlanBlockFollowupComponent, DatePipe, DecimalPipe, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header page-header--split">
@@ -21,9 +22,11 @@ import { switchMap } from 'rxjs/operators';
             Venta {{ v()?.codigoPublico ?? '…' }}
             <span class="muted" style="font-size: 0.55em; font-weight: 500">#{{ ventaId() }}</span>
           </h1>
-          <p class="page-lead muted" style="margin: 0">
-            Referencia comercial y trazabilidad con inventario (movimiento asociado).
-          </p>
+          <app-dismissible-hint hintId="ventas.detalle.pageIntro" persist="local" variant="flush">
+            <p class="page-lead muted" style="margin: 0">
+              Referencia comercial y trazabilidad con inventario (movimiento asociado).
+            </p>
+          </app-dismissible-hint>
         </div>
         <div class="row venta-detalle-no-print" style="flex-wrap: wrap; gap: 0.5rem; align-items: center">
           @if (puedeAnular()) {
@@ -39,7 +42,10 @@ import { switchMap } from 'rxjs/operators';
               Anular venta
             </button>
           }
-          <button type="button" class="btn btn-ghost" (click)="imprimir()">Imprimir / PDF</button>
+          @if (puedeVerRecibo()) {
+            <a [routerLink]="['/app', 'ventas', 'recibo', ventaId()!]" class="btn btn-primary">Comprobante</a>
+          }
+          <button type="button" class="btn btn-ghost" (click)="imprimir()">Imprimir esta página</button>
           <a routerLink="/app/ventas" class="btn btn-secondary">Volver al panel</a>
         </div>
       </header>
@@ -52,12 +58,44 @@ import { switchMap } from 'rxjs/operators';
       }
 
       @if (v(); as row) {
+        @if (row.estado === 'PENDIENTE_PAGO') {
+          <div class="card card--info" role="status">
+            <p class="muted" style="margin: 0; font-size: 0.9rem">
+              <strong>Pendiente de pago:</strong> aún no hay movimiento de inventario. Completá el cobro en Stripe o
+              cancelá la venta pendiente desde el punto de venta. Estado de pago:
+              <span class="badge badge-muted">{{ row.pagoEstado ?? '—' }}</span>
+            </p>
+          </div>
+        }
+        @if (row.estado === 'CANCELADA_SIN_PAGO') {
+          <div class="card card--info" role="status">
+            <p class="muted" style="margin: 0; font-size: 0.9rem">
+              <strong>Cancelada sin pago:</strong> no se registró cobro ni descuento de stock.
+            </p>
+          </div>
+        }
+        @if (row.estado === 'ANULACION_SOLICITADA') {
+          <div class="card card--info venta-anulada-nota" role="status">
+            <p class="muted" style="margin: 0; font-size: 0.9rem">
+              <strong>Anulación solicitada:</strong> pendiente de revisión administrativa. El stock todavía no se ha
+              revertido y el movimiento de inventario sigue siendo la referencia operativa hasta que un ADMIN apruebe.
+            </p>
+          </div>
+        }
         @if (row.estado === 'ANULADA') {
           <div class="card card--info venta-anulada-nota" role="status">
             <p class="muted" style="margin: 0; font-size: 0.9rem">
-              <strong>Venta anulada:</strong> el movimiento #{{ row.movimientoId }} quedó
-              <span class="badge badge-muted">{{ row.movimientoEstado }}</span> y el stock de esta venta fue revertido. El
-              registro se conserva para auditoría; <strong>no cuenta</strong> en KPIs de ventas confirmadas.
+              <strong>Venta anulada operativamente:</strong>
+              @if (row.movimientoId != null) {
+                el movimiento #{{ row.movimientoId }} quedó
+                <span class="badge badge-muted">{{ row.movimientoEstado }}</span> y el stock de esta venta fue revertido.
+              } @else {
+                Sin movimiento asociado.
+              }
+              El registro se conserva para auditoría; <strong>no cuenta</strong> en KPIs de ventas confirmadas.
+              @if (esStripePagadaNoRefund(row)) {
+                <strong> Pago Stripe registrado:</strong> esta anulación operativa no confirma ni ejecuta un reembolso.
+              }
             </p>
           </div>
         }
@@ -65,13 +103,21 @@ import { switchMap } from 'rxjs/operators';
           <div class="row" style="flex-wrap: wrap; gap: 1rem 1.5rem; align-items: baseline">
             <p style="margin: 0">
               <strong>Estado venta:</strong>
-              <span class="badge" [class.badge-warn]="row.estado === 'ANULADA'">{{ labelEstadoVenta(row.estado) }}</span>
+              <span [class]="estadoVentaBadgeClass(row.estado)">{{ labelEstadoVenta(row.estado) }}</span>
             </p>
             <p style="margin: 0">
               <strong>Fecha:</strong> {{ row.fechaVenta | date: 'medium' }}
             </p>
             <p style="margin: 0"><strong>Bodega:</strong> {{ row.bodegaNombre }}</p>
-            <p style="margin: 0"><strong>Vendedor:</strong> {{ row.usuarioEmail }}</p>
+            <p style="margin: 0">
+              <strong>Vendedor:</strong>
+              @if (row.usuarioNombre) {
+                {{ row.usuarioNombre }}
+                <span class="muted"> · {{ row.usuarioEmail }}</span>
+              } @else {
+                {{ row.usuarioEmail }}
+              }
+            </p>
             <p style="margin: 0"><strong>Total:</strong> {{ row.total | number: '1.2-2' }}</p>
           </div>
           <div class="row" style="flex-wrap: wrap; gap: 1rem 1.5rem">
@@ -90,8 +136,20 @@ import { switchMap } from 'rxjs/operators';
               }
             </p>
             <p style="margin: 0">
-              <strong>Movimiento inventario:</strong> #{{ row.movimientoId }}
-              <span class="badge badge-muted">{{ row.movimientoEstado }}</span>
+              <strong>Pago:</strong>
+              <span class="badge badge-muted">{{ labelPagoEstado(row.pagoEstado) }}</span>
+              @if (esStripePagadaNoRefund(row)) {
+                <span class="muted"> · pago no marcado como reembolsado</span>
+              }
+            </p>
+            <p style="margin: 0">
+              <strong>Movimiento inventario:</strong>
+              @if (row.movimientoId != null) {
+                #{{ row.movimientoId }}
+                <span class="badge badge-muted">{{ row.movimientoEstado }}</span>
+              } @else {
+                <span class="muted">— (pendiente de confirmar pago)</span>
+              }
             </p>
           </div>
           @if (row.observacion) {
@@ -169,15 +227,47 @@ export class VentaDetallePage {
     return this.auth.hasAnyRole(ROLES_ADMIN) && row?.estado === 'CONFIRMADA';
   });
 
+  readonly puedeVerRecibo = computed(() => this.v()?.estado === 'CONFIRMADA');
+
   /** Solo presentación; el API sigue usando enums en mayúsculas. */
   labelEstadoVenta(estado: string): string {
     if (estado === 'CONFIRMADA') {
       return 'Confirmada';
     }
     if (estado === 'ANULADA') {
-      return 'Anulada';
+      return 'Anulada (stock revertido)';
+    }
+    if (estado === 'ANULACION_SOLICITADA') {
+      return 'Anulación solicitada';
+    }
+    if (estado === 'PENDIENTE_PAGO') {
+      return 'Pendiente pago';
+    }
+    if (estado === 'CANCELADA_SIN_PAGO') {
+      return 'Cancelada sin pago';
     }
     return estado;
+  }
+
+  estadoVentaBadgeClass(estado: string): string {
+    if (estado === 'CONFIRMADA') return 'badge badge-ok';
+    if (estado === 'ANULADA') return 'badge badge-off';
+    if (estado === 'ANULACION_SOLICITADA' || estado === 'PENDIENTE_PAGO') return 'badge badge-pending';
+    return 'badge badge-muted';
+  }
+
+  labelPagoEstado(estado: string | null | undefined): string {
+    const labels: Record<string, string> = {
+      STRIPE_PENDING: 'Stripe pendiente',
+      STRIPE_SUCCEEDED: 'Stripe pagado',
+      STRIPE_FAILED: 'Stripe fallido',
+      STRIPE_CANCELLED: 'Stripe cancelado'
+    };
+    return estado ? labels[estado] ?? estado : 'Sin pago Stripe';
+  }
+
+  esStripePagadaNoRefund(row: VentaDetailResponse): boolean {
+    return row.estado === 'ANULADA' && row.pagoEstado === 'STRIPE_SUCCEEDED';
   }
 
   imprimir(): void {
@@ -218,7 +308,7 @@ export class VentaDetallePage {
       return;
     }
     const ok = window.confirm(
-      `¿Anular la venta ${row.codigoPublico}? Se revertirá el stock y el movimiento #${row.movimientoId} quedará ANULADO. Esta acción no borra el registro.`
+      `¿Anular operativamente la venta ${row.codigoPublico}? Se revertirá el stock y el movimiento #${row.movimientoId ?? '?'} quedará ANULADO. Esta acción no procesa reembolsos ni borra el registro.`
     );
     if (!ok) {
       return;

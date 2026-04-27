@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
 public final class MovimientoDtos {
@@ -91,5 +92,51 @@ public final class MovimientoDtos {
             BigDecimal cantidad,
             Long bodegaOrigenId,
             Long bodegaDestinoId
+    ) {}
+
+    public record MovimientoListItemResponse(
+            Long id,
+            String tipoMovimiento,
+            String estado,
+            String motivo,
+            String referenciaDocumento,
+            String observacion,
+            Instant fechaMovimiento,
+            Long usuarioId,
+            String usuarioEmail,
+            String usuarioNombre,
+            Long proveedorId,
+            String proveedorRazonSocial,
+            int totalLineas,
+            boolean anulado,
+            boolean completado,
+            String interpretacionStock
+    ) {}
+
+    public record KardexMovimientoResponse(
+            Long id,
+            Long movimientoId,
+            String tipoMovimiento,
+            String estado,
+            String motivo,
+            String referenciaDocumento,
+            Instant fechaMovimiento,
+            Long usuarioId,
+            String usuarioEmail,
+            Long productoId,
+            String productoCodigo,
+            String productoNombre,
+            BigDecimal cantidadMovimiento,
+            List<KardexBodegaImpactoResponse> bodegas,
+            boolean anulado,
+            String interpretacionStock
+    ) {}
+
+    public record KardexBodegaImpactoResponse(
+            Long bodegaOrigenId,
+            String bodegaOrigenNombre,
+            Long bodegaDestinoId,
+            String bodegaDestinoNombre,
+            BigDecimal cantidad
     ) {}
 }

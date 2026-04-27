@@ -1,8 +1,8 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BodegaService } from '../../core/api/bodega.service';
 import { ClienteApiService } from '../../core/api/cliente-api.service';
 import { InventarioService } from '../../core/api/inventario.service';
@@ -21,8 +21,12 @@ import {
   VentaPanelResumen
 } from '../../core/models/entities.model';
 import { getApiErrorMessage, patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { ROLE_CODE_VENTAS } from '../../core/navigation';
 import { flashSuccess } from '../../core/util/page-flash';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
+import { VentaPosCartLineComponent } from './venta-pos-cart-line.component';
+import { VentaPosProductTileComponent } from './venta-pos-product-tile.component';
 
 interface DraftLine {
   productoId: number;
@@ -32,20 +36,45 @@ interface DraftLine {
   precioUnitario: number;
 }
 
+type PosStockFilter = 'todos' | 'disponibles' | 'agotados';
+
 @Component({
   selector: 'app-ventas',
-  imports: [FormsModule, RouterLink, PlanBlockFollowupComponent, DecimalPipe, DatePipe],
+  imports: [
+    FormsModule,
+    RouterLink,
+    PlanBlockFollowupComponent,
+    DecimalPipe,
+    DatePipe,
+    DismissibleHintComponent,
+    VentaPosCartLineComponent,
+    VentaPosProductTileComponent,
+    NgTemplateOutlet
+  ],
   template: `
-    <div class="page stack">
-      <header class="page-header page-header--split">
+    <div class="page stack" [class.ventas-page--pos]="esModoPos()">
+      <header class="page-header page-header--split ventas-page-header">
         <div class="page-header__intro">
-          <p class="card-eyebrow" style="margin: 0 0 0.35rem">Ventas</p>
-          <h1>Panel de ventas</h1>
-          <p class="page-lead">
-            Registro transaccional: referencia visible (ej. <span class="badge">V-000123</span>), cliente opcional, una
-            bodega por venta, descuento de stock y movimiento
-            <span class="badge">SALIDA_POR_VENTA</span>.
-          </p>
+          @if (esModoPos()) {
+            <p class="card-eyebrow" style="margin: 0 0 0.35rem">Punto de venta</p>
+            <h1>Nueva venta</h1>
+            <app-dismissible-hint hintId="ventas.posIntro" persist="local" variant="flush">
+              <p class="page-lead">
+                Buscá, agregá al carrito y cobrá con tarjeta. El stock se valida contra la bodega seleccionada y se
+                descuenta solo cuando el servidor confirma el cobro.
+              </p>
+            </app-dismissible-hint>
+          } @else {
+            <p class="card-eyebrow" style="margin: 0 0 0.35rem">Ventas</p>
+            <h1>Panel de ventas</h1>
+            <app-dismissible-hint hintId="ventas.pageIntro" persist="local" variant="flush">
+              <p class="page-lead">
+                Registro transaccional: referencia visible (ej. <span class="badge">V-000123</span>), cliente opcional, una
+                bodega por venta, descuento de stock y movimiento
+                <span class="badge">SALIDA_POR_VENTA</span>.
+              </p>
+            </app-dismissible-hint>
+          }
         </div>
       </header>
 
@@ -68,34 +97,59 @@ interface DraftLine {
       }
 
       @if (resumen(); as r) {
-        <section class="kpi-grid" aria-label="Resumen de ventas">
-          <div class="card kpi-card">
-            <h2 class="ds-section-title" style="font-size: var(--text-body)">Ventas hoy</h2>
-            <p class="stat">{{ r.ventasHoy | number }}</p>
-            <p class="muted" style="margin: 0; font-size: 0.875rem">zona horaria Colombia</p>
-          </div>
-          <div class="card kpi-card">
-            <h2 class="ds-section-title" style="font-size: var(--text-body)">Unidades vendidas hoy</h2>
-            <p class="stat">{{ r.unidadesVendidasHoy | number }}</p>
-          </div>
-          <div class="card kpi-card">
-            <h2 class="ds-section-title" style="font-size: var(--text-body)">Total vendido hoy</h2>
-            <p class="stat">{{ r.totalVendidoHoy | number: '1.2-2' }}</p>
-          </div>
-          <div class="card kpi-card">
-            <h2 class="ds-section-title" style="font-size: var(--text-body)">Ventas recientes</h2>
-            <p class="stat">{{ r.ventasUltimos7Dias | number }}</p>
-            <p class="muted" style="margin: 0; font-size: 0.875rem">últimos 7 días</p>
-          </div>
-        </section>
+        @if (esModoPos()) {
+          <section class="ventas-pos-kpi-strip" aria-label="Resumen rápido de ventas">
+            <div class="ventas-pos-kpi-chip">
+              <span class="ventas-pos-kpi-label">Hoy</span>
+              <strong>{{ r.ventasHoy | number }}</strong>
+              <span class="muted">ventas</span>
+            </div>
+            <div class="ventas-pos-kpi-chip">
+              <span class="ventas-pos-kpi-label">Unid.</span>
+              <strong>{{ r.unidadesVendidasHoy | number }}</strong>
+            </div>
+            <div class="ventas-pos-kpi-chip">
+              <span class="ventas-pos-kpi-label">Total hoy</span>
+              <strong>{{ r.totalVendidoHoy | number: '1.2-2' }}</strong>
+            </div>
+            <div class="ventas-pos-kpi-chip">
+              <span class="ventas-pos-kpi-label">7 días</span>
+              <strong>{{ r.ventasUltimos7Dias | number }}</strong>
+              <span class="muted">ventas</span>
+            </div>
+          </section>
+        } @else {
+          <section class="kpi-grid" aria-label="Resumen de ventas">
+            <div class="card kpi-card">
+              <h2 class="ds-section-title" style="font-size: var(--text-body)">Ventas hoy</h2>
+              <p class="stat">{{ r.ventasHoy | number }}</p>
+              <p class="muted" style="margin: 0; font-size: 0.875rem">zona horaria Colombia</p>
+            </div>
+            <div class="card kpi-card">
+              <h2 class="ds-section-title" style="font-size: var(--text-body)">Unidades vendidas hoy</h2>
+              <p class="stat">{{ r.unidadesVendidasHoy | number }}</p>
+            </div>
+            <div class="card kpi-card">
+              <h2 class="ds-section-title" style="font-size: var(--text-body)">Total vendido hoy</h2>
+              <p class="stat">{{ r.totalVendidoHoy | number: '1.2-2' }}</p>
+            </div>
+            <div class="card kpi-card">
+              <h2 class="ds-section-title" style="font-size: var(--text-body)">Ventas recientes</h2>
+              <p class="stat">{{ r.ventasUltimos7Dias | number }}</p>
+              <p class="muted" style="margin: 0; font-size: 0.875rem">últimos 7 días</p>
+            </div>
+          </section>
+        }
       }
 
-      <section class="card stack" aria-labelledby="ventas-operativo-title">
-        <h2 id="ventas-operativo-title" class="ds-section-title">Resumen operativo (período)</h2>
-        <p class="field-hint muted ventas-operativo-hint" style="margin: 0">
-          Métricas comerciales sobre ventas <strong>confirmadas</strong>; anuladas se muestran aparte. Zona horaria
-          Colombia. {{ alcanceOperativoHint() }}
-        </p>
+      <ng-template #tplOperativo>
+        <app-dismissible-hint hintId="ventas.resumenOperativoAyuda" persist="local">
+          <p class="field-hint muted ventas-operativo-hint" style="margin: 0">
+            Métricas comerciales sobre ventas <strong>confirmadas</strong>; anuladas se muestran aparte. Zona horaria
+            Colombia. El CSV incluye interpretación operativa y aclaración de pago para no confundir anulación con
+            reembolso. {{ alcanceOperativoHint() }}
+          </p>
+        </app-dismissible-hint>
         <div class="row ventas-operativo-fechas" style="flex-wrap: wrap; gap: var(--space-ds-4); align-items: flex-end">
           <div class="field" style="min-width: 9rem">
             <label for="op-desde">Desde</label>
@@ -134,10 +188,10 @@ interface DraftLine {
               <p class="stat" style="font-size: 1.25rem">{{ op.unidadesVendidasConfirmadas | number }}</p>
             </div>
             <div class="card kpi-card" style="min-width: 10rem; flex: 1">
-              <h3 class="ds-section-title" style="font-size: 0.8rem; margin: 0">Anuladas</h3>
+              <h3 class="ds-section-title" style="font-size: 0.8rem; margin: 0">Anuladas operativas</h3>
               <p class="stat" style="font-size: 1.25rem">{{ op.ventasAnuladas | number }}</p>
               <p class="muted" style="margin: 0; font-size: 0.75rem">
-                Monto histórico {{ op.montoVentasAnuladasSnapshot | number: '1.2-2' }}
+                Stock revertido · monto histórico {{ op.montoVentasAnuladasSnapshot | number: '1.2-2' }}
               </p>
             </div>
           </div>
@@ -213,9 +267,302 @@ interface DraftLine {
             </div>
           }
         }
-      </section>
+      </ng-template>
 
-      @if (canRegistrar()) {
+      @if (!esModoPos()) {
+        <section class="card stack" aria-labelledby="ventas-operativo-title">
+          <h2 id="ventas-operativo-title" class="ds-section-title">Resumen operativo (período)</h2>
+          <ng-container *ngTemplateOutlet="tplOperativo" />
+        </section>
+      }
+
+      @if (canRegistrar() && esModoPos()) {
+        <section class="ventas-pos-workspace card" aria-labelledby="ventas-pos-title">
+          <h2 id="ventas-pos-title" class="ds-section-title ventas-pos-sr-title">Carrito</h2>
+          <div class="ventas-pos-station-bar">
+            <div>
+              <p class="card-eyebrow">Estación POS</p>
+              <h2 class="ventas-pos-station-title">Venta en curso</h2>
+            </div>
+            <div class="ventas-pos-station-metrics" aria-label="Estado de venta actual">
+              <span><strong>{{ lineas().length | number }}</strong> líneas</span>
+              <span><strong>{{ unidadesCarrito() | number }}</strong> unid.</span>
+              <span><strong>{{ totalVenta() | number: '1.2-2' }}</strong> total</span>
+            </div>
+          </div>
+          <div class="ventas-pos-grid">
+            <div class="ventas-pos-catalog stack">
+              <div class="ventas-pos-catalog-head">
+                <div>
+                  <p class="card-eyebrow">Catálogo</p>
+                  <h3 class="ventas-pos-section-title">Productos</h3>
+                </div>
+              </div>
+              <div class="ventas-pos-catalog-tools">
+                <div class="field ventas-pos-search">
+                  <label for="pos-buscar">Buscar producto</label>
+                  <input
+                    id="pos-buscar"
+                    type="search"
+                    [ngModel]="busqueda()"
+                    (ngModelChange)="busqueda.set($event)"
+                    placeholder="Escaneá código o buscá por nombre"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="ventas-pos-filter-chips" role="group" aria-label="Filtro de disponibilidad">
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    [class.is-active]="filtroStock() === 'todos'"
+                    (click)="filtroStock.set('todos')"
+                  >
+                    Todos
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    [class.is-active]="filtroStock() === 'disponibles'"
+                    [disabled]="!bodegaId || stockCargando()"
+                    (click)="filtroStock.set('disponibles')"
+                  >
+                    Disponibles
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-sm"
+                    [class.is-active]="filtroStock() === 'agotados'"
+                    [disabled]="!bodegaId || stockCargando()"
+                    (click)="filtroStock.set('agotados')"
+                  >
+                    Agotados
+                  </button>
+                </div>
+              </div>
+              <div class="ventas-pos-stock-context">
+                <span class="ventas-pos-stock-context-label">Vendiendo desde</span>
+                <strong>{{ bodegaSeleccionadaLabel() }}</strong>
+              </div>
+              @if (!bodegaId) {
+                <p class="field-hint text-warning ventas-pos-bodega-warning">
+                  Elegí la bodega en el panel derecho para ver stock y precios.
+                </p>
+              }
+              @if (stockError()) {
+                <div class="alert alert-error" role="alert">
+                  {{ stockError() }}
+                </div>
+              }
+              @if (bodegaId && stockCargando()) {
+                <p class="muted stock-reload-hint" role="status">
+                  <span class="spinner" aria-hidden="true"></span>
+                  Actualizando stock…
+                </p>
+              }
+              <div class="ventas-pos-product-list" role="list">
+                @if (bodegaId && !stockCargando() && productosFiltrados().length === 0) {
+                  <p class="muted ventas-pos-catalog-empty" role="status">
+                    No hay productos que coincidan con la búsqueda. Probá otro término o borrá el filtro.
+                  </p>
+                }
+                @for (p of productosFiltrados(); track p.id) {
+                  <app-venta-pos-product-tile
+                    [nombre]="p.nombre"
+                    [codigo]="p.codigo"
+                    [stock]="stockDisponible(p.id)"
+                    [availabilityState]="availabilityState(p.id)"
+                    [availabilityLabel]="availabilityLabel(p.id)"
+                    [quantityInCart]="cantidadEnCarrito(p.id)"
+                    [price]="precioListaProducto(p)"
+                    [disabled]="!productoDisponible(p.id)"
+                    [actionDisabled]="pagandoStripe() || !bodegaId || stockCargando() || cantidadMaximaProducto(p.id) < 1"
+                    [actionTitle]="addButtonTitle(p.id)"
+                    [outOfStockVisible]="!!bodegaId && !stockCargando() && stockDisponible(p.id) <= 0"
+                    [maxQuantity]="cantidadMaximaProducto(p.id)"
+                    (add)="agregarProductoRapido(p)"
+                  />
+                }
+              </div>
+            </div>
+            <aside class="ventas-pos-cart stack" [class.ventas-pos-cart--ready]="listoParaCobrar()" aria-label="Detalle de la venta">
+              <div class="ventas-pos-cart-head">
+                <div>
+                  <p class="card-eyebrow">Carrito POS</p>
+                  <h3 class="ds-section-title ventas-pos-cart-heading">Venta actual</h3>
+                </div>
+                <span class="ventas-pos-cart-count">{{ lineas().length | number }} líneas · {{ unidadesCarrito() | number }} unid.</span>
+              </div>
+              <div class="ventas-pos-sale-fields">
+                <div class="field">
+                  <label for="pos-bodega">Bodega</label>
+                  <select
+                    id="pos-bodega"
+                    [(ngModel)]="bodegaId"
+                    (ngModelChange)="onBodegaChange()"
+                    [disabled]="pagandoStripe()"
+                  >
+                    <option [ngValue]="null">Seleccionar…</option>
+                    @for (b of bodegas(); track b.id) {
+                      <option [ngValue]="b.id">{{ b.codigo }} — {{ b.nombre }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="pos-cliente">Cliente (opcional)</label>
+                  <select id="pos-cliente" [(ngModel)]="clienteId" [disabled]="pagandoStripe()">
+                    <option [ngValue]="null">Sin cliente</option>
+                    @for (c of clientes(); track c.id) {
+                      <option [ngValue]="c.id">{{ c.nombre }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="field ventas-pos-note-field">
+                  <label for="pos-obs">Nota en la venta (opcional)</label>
+                  <input
+                    id="pos-obs"
+                    [(ngModel)]="observacion"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Ej. pedido especial"
+                    [disabled]="pagandoStripe()"
+                  />
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" (click)="toggleNuevoCliente()">
+                {{ mostrarNuevoCliente() ? 'Cerrar alta rápida' : '+ Nuevo cliente' }}
+              </button>
+              @if (mostrarNuevoCliente()) {
+                <div class="card card--info stack ventas-pos-new-client-card">
+                  <div class="row ventas-pos-new-client-row">
+                    <div class="field ventas-pos-new-client-field--name">
+                      <label for="pos-nc-nom">Nombre</label>
+                      <input id="pos-nc-nom" [(ngModel)]="nuevoClienteNombre" type="text" autocomplete="name" />
+                    </div>
+                    <div class="field ventas-pos-new-client-field">
+                      <label for="pos-nc-doc">Documento</label>
+                      <input id="pos-nc-doc" [(ngModel)]="nuevoClienteDocumento" type="text" autocomplete="off" />
+                    </div>
+                    <div class="field ventas-pos-new-client-field">
+                      <label for="pos-nc-tel">Teléfono</label>
+                      <input id="pos-nc-tel" [(ngModel)]="nuevoClienteTelefono" type="text" autocomplete="tel" />
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-primary btn-sm"
+                      [disabled]="guardandoCliente()"
+                      (click)="guardarNuevoCliente()"
+                    >
+                      @if (guardandoCliente()) {
+                        <span class="spinner" aria-hidden="true"></span>
+                      }
+                      Guardar y usar
+                    </button>
+                  </div>
+                </div>
+              }
+              @if (lineas().length === 0) {
+                <div class="ventas-pos-cart-empty">
+                  <strong>Listo para armar la venta</strong>
+                  <p class="muted ventas-pos-empty-copy">
+                    @if (!bodegaId) {
+                      Elegí una <strong>bodega</strong> para cargar stock y empezar a vender.
+                    } @else if (stockError()) {
+                      Revisá la carga de stock antes de agregar productos.
+                    } @else {
+                      Agregá productos disponibles para iniciar el cobro.
+                    }
+                  </p>
+                </div>
+              } @else {
+                <div class="ventas-pos-cart-summary">
+                  <span><strong>{{ lineas().length | number }}</strong> líneas</span>
+                  <span><strong>{{ unidadesCarrito() | number }}</strong> unidades</span>
+                  <span>Desde {{ bodegaSeleccionadaLabel() }}</span>
+                </div>
+                <ul class="ventas-pos-lines">
+                  @for (line of lineas(); track line.productoId) {
+                    <li
+                      app-venta-pos-cart-line
+                      [line]="line"
+                      [paying]="pagandoStripe()"
+                      [stockLoading]="stockCargando()"
+                      [stockInvalid]="filaStockInvalida(line)"
+                      [maxQuantity]="cantidadMaximaProducto(line.productoId)"
+                      [maxTitle]="cantidadMaximaTitle(line)"
+                      [stockAvailable]="stockDisponible(line.productoId)"
+                      [warehouseLabel]="bodegaSeleccionadaLabel()"
+                      (remove)="quitarLinea(line.productoId)"
+                      (decrement)="disminuirCantidad(line.productoId)"
+                      (increment)="incrementarCantidad(line.productoId)"
+                      (priceChange)="actualizarPrecio(line.productoId, $event)"
+                    ></li>
+                  }
+                </ul>
+                @if (stockBloqueante()) {
+                  <div class="alert alert-error" role="alert">
+                    Cantidades por encima del stock en esta bodega.
+                  </div>
+                }
+                <div class="ventas-pos-checkout-zone" [class.ventas-pos-checkout-zone--ready]="listoParaCobrar()">
+                  <div class="ventas-pos-checkout-head">
+                    <span class="ventas-pos-checkout-label">Cierre de venta</span>
+                    @if (listoParaCobrar()) {
+                      <span class="ventas-pos-ready-pill">Listo</span>
+                    }
+                  </div>
+                  <div class="ventas-pos-total-row">
+                    <span>Total a cobrar</span>
+                    <strong class="ventas-pos-total">{{ totalVenta() | number: '1.2-2' }}</strong>
+                  </div>
+                  @if (listoParaCobrar()) {
+                    <p class="field-hint ventas-pos-ready-hint">
+                      Stock validado. Checkout listo.
+                    </p>
+                  }
+                  @if (!listoParaCobrar()) {
+                    <p class="field-hint text-warning precio-cero-hint">
+                      Revisá precio, stock y total antes de cobrar.
+                    </p>
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-primary ventas-pos-confirm"
+                    [disabled]="
+                      pagandoStripe() || !bodegaId || lineas().length === 0 || stockBloqueante() || totalVenta() <= 0
+                    "
+                    [attr.aria-busy]="pagandoStripe()"
+                    (click)="irAPagarConStripe()"
+                  >
+                    @if (pagandoStripe()) {
+                      <span class="spinner" aria-hidden="true"></span>
+                      Abriendo cobro…
+                    } @else {
+                      Cobrar con tarjeta
+                    }
+                  </button>
+                </div>
+                @if (puedePrecioCero() && totalVenta() <= 0 && lineas().length > 0) {
+                  <p class="field-hint muted ventas-pos-admin-zero-hint">
+                    Como administrador podés registrar una venta a precio 0 sin pasar por Stripe desde el panel clásico de
+                    ventas (no POS).
+                  </p>
+                }
+              }
+            </aside>
+          </div>
+        </section>
+      }
+
+      @if (esModoPos()) {
+        <section class="card stack ventas-pos-analytics-card" aria-label="Análisis secundario de ventas">
+          <details class="ventas-pos-details">
+            <summary class="ventas-pos-details-summary">Período, CSV y análisis</summary>
+            <ng-container *ngTemplateOutlet="tplOperativo" />
+          </details>
+        </section>
+      }
+
+      @if (canRegistrar() && !esModoPos()) {
         <section class="card stack" aria-labelledby="ventas-nueva-title">
           <h2 id="ventas-nueva-title" class="ds-section-title">Nueva venta</h2>
           <div class="row" style="flex-wrap: wrap; gap: var(--space-ds-4); align-items: flex-end">
@@ -254,9 +601,11 @@ interface DraftLine {
           </div>
           @if (mostrarNuevoCliente()) {
             <div class="card card--info stack" style="padding: 1rem">
-              <p class="muted" style="margin: 0; font-size: 0.875rem">
-                Alta mínima para asociar a esta venta (no es un CRM completo).
-              </p>
+              <app-dismissible-hint hintId="ventas.altaRapidaClienteNota" persist="session">
+                <p class="muted" style="margin: 0; font-size: 0.875rem">
+                  Alta mínima para asociar a esta venta (no es un CRM completo).
+                </p>
+              </app-dismissible-hint>
               <div class="row" style="flex-wrap: wrap; gap: var(--space-ds-4); align-items: flex-end">
                 <div class="field" style="min-width: 12rem">
                   <label for="nc-nom">Nombre</label>
@@ -415,24 +764,39 @@ interface DraftLine {
             </button>
           }
         </section>
-      } @else {
-        <p class="muted card card--info">
-          Tu rol puede consultar ventas y totales. Solo perfiles de ventas o administración registran nuevas ventas.
-        </p>
       }
 
-      <section class="card stack">
-        <div class="row" style="justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem">
-          <h2 class="ds-section-title" style="margin: 0">Historial</h2>
-          <div class="row" style="flex-wrap: wrap; gap: 0.5rem">
-            <button type="button" class="btn btn-ghost btn-sm" (click)="limpiarFiltrosHistorial()">Limpiar filtros</button>
-            <button type="button" class="btn btn-secondary" [disabled]="historialLoading()" (click)="cargarHistorial()">
-              Aplicar / actualizar
-            </button>
-          </div>
+      @if (!canRegistrar()) {
+        <app-dismissible-hint hintId="ventas.rolSoloConsultaVentas" persist="local">
+          <p class="muted card card--info">
+            Tu rol puede consultar ventas y totales. Solo perfiles de ventas o administración registran nuevas ventas.
+          </p>
+        </app-dismissible-hint>
+      }
+
+      <section class="card stack ventas-history-card">
+        <details class="ventas-history-details">
+          <summary class="ventas-history-summary">
+            <div class="ventas-history-head">
+              <div>
+                <p class="card-eyebrow">Revisión</p>
+                <h2 class="ds-section-title ventas-history-title">Historial de ventas</h2>
+              </div>
+              <div class="ventas-history-actions">
+                <span class="ventas-history-count">{{ historial().length | number }} visibles</span>
+              </div>
+            </div>
+          </summary>
+        <app-dismissible-hint hintId="ventas.historialAlcanceAyuda" persist="local">
+          <p class="field-hint historial-alcance">{{ historialAlcanceHint() }}</p>
+        </app-dismissible-hint>
+        <div class="ventas-history-actions ventas-history-actions--toolbar">
+          <button type="button" class="btn btn-ghost btn-sm ventas-history-clear" (click)="limpiarFiltrosHistorial()">Limpiar filtros</button>
+          <button type="button" class="btn btn-secondary ventas-history-apply" [disabled]="historialLoading()" (click)="cargarHistorial()">
+            Actualizar historial
+          </button>
         </div>
-        <p class="field-hint historial-alcance" style="margin: 0">{{ historialAlcanceHint() }}</p>
-        <div class="ventas-filtros row" style="flex-wrap: wrap; gap: var(--space-ds-4); align-items: flex-end">
+        <div class="ventas-filtros ventas-history-filters">
           <div class="field" style="min-width: 9rem">
             <label for="fh-desde">Desde</label>
             <input id="fh-desde" type="date" [(ngModel)]="filtroFechaDesde" />
@@ -455,7 +819,10 @@ interface DraftLine {
             <select id="fh-est" [(ngModel)]="filtroEstado">
               <option value="">Todos</option>
               <option value="CONFIRMADA">Confirmada</option>
-              <option value="ANULADA">Anulada</option>
+              <option value="ANULACION_SOLICITADA">Anulación solicitada</option>
+              <option value="ANULADA">Anulada (stock revertido)</option>
+              <option value="PENDIENTE_PAGO">Pendiente de pago</option>
+              <option value="CANCELADA_SIN_PAGO">Cancelada sin pago</option>
             </select>
           </div>
           <div class="field" style="min-width: 12rem">
@@ -484,14 +851,14 @@ interface DraftLine {
           </div>
         </div>
         @if (historialLoading() && historial().length === 0) {
-          <p class="muted" style="margin: 0">Cargando…</p>
+          <p class="muted ventas-history-empty">Cargando historial…</p>
         } @else if (historial().length === 0) {
-          <p class="muted" style="margin: 0">
+          <p class="muted ventas-history-empty">
             {{ anyFiltroHistorial() ? historialVacioMensaje() : historialSinFiltrosMensaje() }}
           </p>
         } @else {
-          <div class="table-wrap">
-            <table class="data">
+          <div class="table-wrap ventas-history-table-wrap">
+            <table class="data ventas-history-table">
               <thead>
                 <tr>
                   <th>Código</th>
@@ -507,22 +874,33 @@ interface DraftLine {
               </thead>
               <tbody>
                 @for (v of historial(); track v.id) {
-                  <tr [class.table-row-muted]="v.estado === 'ANULADA'">
+                  <tr
+                    [class.table-row-muted]="
+                      v.estado === 'ANULADA' || v.estado === 'CANCELADA_SIN_PAGO' || v.estado === 'PENDIENTE_PAGO'
+                        || v.estado === 'ANULACION_SOLICITADA'
+                    "
+                  >
                     <td>
-                      <strong>{{ v.codigoPublico }}</strong>
-                      <span class="muted" style="font-size: 0.8rem">#{{ v.id }}</span>
+                      <strong class="ventas-history-code">{{ v.codigoPublico }}</strong>
+                      <span class="muted ventas-history-id">#{{ v.id }}</span>
                     </td>
-                    <td>{{ v.fechaVenta | date: 'short' }}</td>
-                    <td>
-                      <span class="badge" [class.badge-warn]="v.estado === 'ANULADA'">{{ labelEstadoVenta(v.estado) }}</span>
+                    <td class="ventas-history-date">{{ v.fechaVenta | date: 'short' }}</td>
+                    <td class="ventas-history-status-cell">
+                      <span [class]="estadoVentaBadgeClass(v.estado)">{{ labelEstadoVenta(v.estado) }}</span>
+                      @if (v.estado === 'ANULADA' && v.pagoEstado === 'STRIPE_SUCCEEDED') {
+                        <div class="table-cell-muted">Pago Stripe no marcado como reembolsado</div>
+                      }
                     </td>
                     <td>{{ v.bodegaNombre }}</td>
                     <td>{{ v.clienteNombre ?? '—' }}</td>
-                    <td class="data-numeric">{{ v.total | number: '1.2-2' }}</td>
+                    <td class="data-numeric ventas-history-total">{{ v.total | number: '1.2-2' }}</td>
                     <td class="data-numeric">{{ v.cantidadLineas | number }}</td>
                     <td>{{ v.usuarioEmail }}</td>
-                    <td>
-                      <a [routerLink]="['/app', 'ventas', 'detalle', v.id]">Ver detalle</a>
+                    <td class="ventas-history-row-actions">
+                      <a class="ventas-history-detail-link" [routerLink]="['/app', 'ventas', 'detalle', v.id]">Detalle</a>
+                      @if (v.estado === 'CONFIRMADA') {
+                        <a class="ventas-history-receipt-link" [routerLink]="['/app', 'ventas', 'recibo', v.id]">Comprobante</a>
+                      }
                     </td>
                   </tr>
                 }
@@ -530,6 +908,7 @@ interface DraftLine {
             </table>
           </div>
         }
+        </details>
       </section>
     </div>
   `,
@@ -553,6 +932,7 @@ interface DraftLine {
       font-size: 0.875rem;
     }
     .historial-alcance {
+      margin: 0;
       font-size: 0.875rem;
       max-width: 72ch;
     }
@@ -562,17 +942,417 @@ interface DraftLine {
       max-width: 72ch;
     }
     .table-row-muted {
-      opacity: 0.72;
+      opacity: 0.78;
     }
-    .badge-warn {
-      background: color-mix(in srgb, var(--color-warning-soft, #fef3c7) 70%, transparent);
-      color: var(--color-text, inherit);
+    .ventas-pos-kpi-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin: -0.2rem 0 0.35rem;
+      opacity: 0.86;
     }
-    .ventas-operativo-hint {
-      max-width: 72ch;
+    .ventas-pos-kpi-chip {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.2rem 0.4rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: var(--radius-sm, 6px);
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      border: 1px solid var(--border-subtle);
+      font-size: 0.78rem;
     }
-    .ventas-op-table {
+    .ventas-pos-kpi-label {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      width: 100%;
+    }
+    .ventas-pos-details-summary {
+      cursor: pointer;
+      font-weight: 600;
+      padding: 0.25rem 0;
+    }
+    .ventas-pos-workspace {
+      padding: 1rem;
+      border-color: color-mix(in srgb, var(--border) 82%, var(--color-primary, var(--accent)));
+      background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--color-primary-soft, var(--accent-soft)) 55%, transparent), transparent 34rem),
+        color-mix(in srgb, var(--surface) 88%, var(--bg-panel));
+    }
+    .ventas-pos-station-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 0.85rem;
+      padding: 0.75rem 0.85rem;
+      border: 1px solid color-mix(in srgb, var(--border-subtle) 78%, var(--color-primary, var(--accent)));
+      border-radius: var(--radius-sm, 6px);
+      background: color-mix(in srgb, var(--surface) 78%, transparent);
+    }
+    .ventas-pos-station-title {
+      margin: 0;
+      font-size: clamp(1.15rem, 2vw, 1.45rem);
+      letter-spacing: -0.035em;
+    }
+    .ventas-pos-station-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.45rem;
+      min-width: min(21rem, 100%);
+    }
+    .ventas-pos-station-metrics span {
+      padding: 0.38rem 0.55rem;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--bg-panel) 58%, transparent);
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    .ventas-pos-sr-title {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .ventas-pos-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(24rem, 28rem);
+      gap: 1.25rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .ventas-pos-grid {
+        grid-template-columns: 1fr;
+      }
+      .ventas-pos-station-bar,
+      .ventas-pos-catalog-tools {
+        grid-template-columns: 1fr;
+      }
+      .ventas-pos-station-bar {
+        flex-direction: column;
+      }
+      .ventas-pos-station-metrics,
+      .ventas-pos-filter-chips {
+        justify-content: flex-start;
+      }
+    }
+    .ventas-pos-catalog-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+    .ventas-pos-catalog-tools {
+      display: grid;
+      grid-template-columns: minmax(14rem, 1fr) auto;
+      gap: 0.65rem;
+      align-items: end;
+      padding: 0.65rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm, 6px);
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+    }
+    .ventas-pos-search input {
+      font-size: 1rem;
+      min-height: 2.65rem;
+      border-color: color-mix(in srgb, var(--border) 72%, var(--color-primary, var(--accent)));
+      background: color-mix(in srgb, var(--bg-panel) 78%, var(--surface));
+    }
+    .ventas-pos-product-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+      gap: 0.65rem;
+      max-height: min(62vh, 38rem);
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
+    .ventas-pos-stock-context {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem 0.5rem;
+      align-items: baseline;
+      font-size: 0.82rem;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid color-mix(in srgb, var(--color-primary, var(--accent)) 35%, var(--border-subtle));
+      border-radius: var(--radius-sm, 6px);
+      background: color-mix(in srgb, var(--color-primary-soft, var(--accent-soft)) 22%, var(--surface));
+    }
+    .ventas-pos-stock-context-label {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      width: 100%;
+    }
+    .ventas-pos-bodega-warning {
+      margin: 0;
+    }
+    .ventas-pos-filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      justify-content: flex-end;
+    }
+    .ventas-pos-filter-chips .is-active {
+      border-color: var(--color-primary, var(--accent));
+      color: var(--color-primary, var(--accent));
+      background: color-mix(in srgb, var(--color-primary-soft, var(--accent-soft)) 45%, transparent);
+    }
+    .ventas-pos-cart {
+      position: sticky;
+      top: 0.5rem;
+      padding: 1rem;
+      border-radius: calc(var(--radius-sm, 6px) + 4px);
+      border: 1px solid color-mix(in srgb, var(--border) 70%, var(--color-primary, var(--accent)));
+      background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface) 92%, var(--color-primary-soft, var(--accent-soft))) 0%,
+        color-mix(in srgb, var(--surface) 92%, var(--bg-panel)) 100%
+      );
+      box-shadow: 0 12px 30px color-mix(in srgb, #000 18%, transparent);
+    }
+    .ventas-pos-cart--ready {
+      border-color: color-mix(in srgb, var(--color-success, #22c55e) 45%, var(--border));
+    }
+    .ventas-pos-cart-heading {
+      font-size: 1rem;
+      margin: 0;
+    }
+    .ventas-pos-cart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .ventas-pos-cart-count {
+      padding: 0.2rem 0.45rem;
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .ventas-pos-sale-fields {
+      padding: 0.55rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm, 6px);
+      background: color-mix(in srgb, var(--surface) 86%, transparent);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+    .ventas-pos-note-field {
+      grid-column: 1 / -1;
+    }
+    .ventas-pos-new-client-card {
+      padding: 1rem;
+    }
+    .ventas-pos-new-client-row {
+      flex-wrap: wrap;
+      gap: var(--space-ds-4);
+      align-items: flex-end;
+    }
+    .ventas-pos-new-client-field {
+      min-width: 10rem;
+    }
+    .ventas-pos-new-client-field--name {
+      min-width: 12rem;
+    }
+    .ventas-pos-cart-empty {
+      margin: 0.5rem 0 0;
+      padding: 0.95rem;
       font-size: 0.875rem;
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-sm, 6px);
+      background: color-mix(in srgb, var(--surface) 85%, var(--bg-panel));
+    }
+    .ventas-pos-empty-copy {
+      margin: 0.25rem 0 0;
+    }
+    .ventas-pos-cart-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 0.75rem;
+      align-items: center;
+      padding: 0.55rem 0.65rem;
+      font-size: 0.76rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm, 6px);
+      background: var(--surface);
+    }
+    .ventas-pos-lines {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: min(42vh, 22rem);
+      overflow-y: auto;
+    }
+    .ventas-pos-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .ventas-pos-total {
+      color: var(--text);
+      font-size: 1.95rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .ventas-pos-checkout-zone {
+      margin-top: 0.75rem;
+      padding: 1.05rem;
+      border-radius: calc(var(--radius-sm, 6px) + 3px);
+      border: 1px solid color-mix(in srgb, var(--color-primary, var(--accent)) 38%, var(--border-subtle));
+      background: color-mix(in srgb, var(--color-primary-soft, var(--accent-soft)) 18%, var(--surface));
+    }
+    .ventas-pos-checkout-zone--ready {
+      border-color: color-mix(in srgb, var(--color-success, #22c55e) 42%, var(--border-subtle));
+      background: color-mix(in srgb, var(--color-success, #22c55e) 8%, var(--surface));
+    }
+    .ventas-pos-checkout-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.45rem;
+    }
+    .ventas-pos-checkout-label,
+    .ventas-pos-ready-pill {
+      font-size: 0.66rem;
+      font-weight: 800;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+    .ventas-pos-checkout-label {
+      color: var(--muted);
+    }
+    .ventas-pos-ready-pill {
+      padding: 0.16rem 0.45rem;
+      border-radius: 999px;
+      color: var(--text);
+      background: color-mix(in srgb, var(--color-success, #22c55e) 18%, transparent);
+    }
+    .ventas-pos-confirm {
+      width: 100%;
+      margin-top: 0.65rem;
+      min-height: 3.05rem;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+    .ventas-pos-ready-hint {
+      margin: 0.4rem 0 0;
+      font-size: 0.78rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .ventas-pos-admin-zero-hint {
+      margin: 0.5rem 0 0;
+      font-size: 0.8rem;
+    }
+    .ventas-pos-catalog-empty {
+      margin: 0;
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-sm, 6px);
+    }
+    .ventas-history-card {
+      margin-top: 0.1rem;
+      padding: 0.65rem 0.8rem;
+      border-color: var(--border-subtle);
+      background: color-mix(in srgb, var(--surface) 80%, transparent);
+    }
+    .ventas-history-summary {
+      cursor: pointer;
+      list-style: none;
+    }
+    .ventas-history-summary::-webkit-details-marker {
+      display: none;
+    }
+    .ventas-history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding-bottom: 0;
+    }
+    .ventas-history-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .ventas-history-actions--toolbar {
+      margin-top: 0.75rem;
+    }
+    .ventas-history-count {
+      padding: 0.22rem 0.5rem;
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--surface);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+    .ventas-history-filters {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(8rem, 1fr));
+      gap: 0.65rem;
+      align-items: end;
+      margin-top: 0.75rem;
+      padding: 0.65rem;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm, 6px);
+      background: color-mix(in srgb, var(--bg-panel) 38%, transparent);
+    }
+    .ventas-history-empty {
+      margin: 0;
+      padding: 1rem;
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-sm, 6px);
+      background: color-mix(in srgb, var(--surface) 82%, var(--bg-panel));
+    }
+    .ventas-history-table thead th {
+      color: var(--muted);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: color-mix(in srgb, var(--bg-panel) 74%, transparent);
+    }
+    .ventas-history-table td,
+    .ventas-history-table th {
+      padding-block: 0.7rem;
+    }
+    .ventas-history-detail-link {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.18rem 0.45rem;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--color-primary-soft, var(--accent-soft)) 40%, transparent);
+      font-weight: 700;
+    }
+    .ventas-history-receipt-link {
+      margin-left: 0.35rem;
+      font-size: 0.82rem;
+      color: var(--muted);
     }
   `
 })
@@ -585,6 +1365,8 @@ export class VentasPage {
   private readonly usuarioApi = inject(UsuarioService);
   private readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly bodegas = signal<Bodega[]>([]);
   readonly productos = signal<Producto[]>([]);
@@ -592,6 +1374,7 @@ export class VentasPage {
   readonly usuariosFiltro = signal<UsuarioRow[]>([]);
   readonly stockPorProducto = signal<Map<number, number>>(new Map());
   readonly busqueda = signal('');
+  readonly filtroStock = signal<PosStockFilter>('todos');
   bodegaId: number | null = null;
   clienteId: number | null = null;
   observacion = '';
@@ -620,18 +1403,24 @@ export class VentasPage {
   readonly lineas = signal<DraftLine[]>([]);
   /** Indica recarga de existencias tras elegir o cambiar de bodega (paginación GET /inventario). */
   readonly stockCargando = signal(false);
+  readonly stockError = signal<string | null>(null);
   readonly resumen = signal<VentaPanelResumen | null>(null);
   readonly resumenLoading = signal(false);
   readonly historial = signal<VentaListItem[]>([]);
   readonly historialLoading = signal(false);
   readonly confirmando = signal(false);
+  readonly pagandoStripe = signal(false);
   readonly message = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly planFollowup = signal<PlanBlockFollowup | null>(null);
+  private stockRequestSeq = 0;
 
   readonly canRegistrar = computed(() => this.auth.hasAnyRole(ROLES_VENTA_REGISTRO));
   readonly puedePrecioCero = computed(() => this.auth.hasAnyRole(ROLES_ADMIN));
   readonly puedeFiltrarVendedor = computed(() => this.auth.hasAnyRole(ROLES_ADMIN));
+
+  /** Workspace tipo POS solo para el rol comercial. */
+  readonly esModoPos = computed(() => this.auth.role() === ROLE_CODE_VENTAS);
 
   readonly alcanceOperativoHint = computed(() =>
     this.auth.hasAnyRole(['VENTAS'])
@@ -670,7 +1459,15 @@ export class VentasPage {
 
   readonly productosFiltrados = computed(() => {
     const q = this.busqueda().trim().toLowerCase();
-    const all = this.productos().filter((p) => p.activo);
+    const filtro = this.filtroStock();
+    let all = this.productos().filter((p) => p.activo);
+    if (this.bodegaId != null && !this.stockCargando()) {
+      if (filtro === 'disponibles') {
+        all = all.filter((p) => this.stockDisponible(p.id) > 0);
+      } else if (filtro === 'agotados') {
+        all = all.filter((p) => this.stockDisponible(p.id) <= 0);
+      }
+    }
     if (!q) return all.slice(0, 80);
     return all
       .filter((p) => p.codigo.toLowerCase().includes(q) || p.nombre.toLowerCase().includes(q))
@@ -683,8 +1480,44 @@ export class VentasPage {
 
   readonly stockBloqueante = computed(() => this.lineas().some((l) => this.filaStockInvalida(l)));
 
+  readonly unidadesCarrito = computed(() =>
+    this.lineas().reduce((acc, l) => acc + (Number.isFinite(l.cantidad) ? l.cantidad : 0), 0)
+  );
+
+  /** Carrito válido para iniciar Checkout (mensaje de “listo” sin duplicar lógica del botón). */
+  readonly listoParaCobrar = computed(() => {
+    if (this.pagandoStripe()) {
+      return false;
+    }
+    if (this.bodegaId == null || this.lineas().length === 0 || this.stockBloqueante() || this.totalVenta() <= 0) {
+      return false;
+    }
+    if (!this.puedePrecioCero() && this.lineas().some((l) => l.precioUnitario <= 0)) {
+      return false;
+    }
+    if (this.lineas().some((l) => !(l.cantidad > 0) || l.precioUnitario < 0 || !Number.isFinite(l.cantidad))) {
+      return false;
+    }
+    return true;
+  });
+
   constructor() {
-    this.bodegaApi.list().subscribe((b) => this.bodegas.set(b.filter((x) => x.activo)));
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((q) => {
+      if (q.get('limpiar') !== '1' || this.auth.role() !== ROLE_CODE_VENTAS) {
+        return;
+      }
+      this.limpiarCarritoPosTrasVenta();
+      void this.router.navigate(['/app', 'ventas'], { replaceUrl: true, queryParams: {} });
+    });
+
+    this.bodegaApi.list().subscribe((b) => {
+      const activas = b.filter((x) => x.activo);
+      this.bodegas.set(activas);
+      if (this.esModoPos() && this.bodegaId == null && activas.length > 0) {
+        this.bodegaId = activas[0].id;
+        this.recargarStockBodega();
+      }
+    });
     this.productoApi.list(0, 1000).subscribe({
       next: (p) => this.productos.set(p.content),
       error: () => this.productos.set([])
@@ -756,9 +1589,25 @@ export class VentasPage {
       return 'Confirmada';
     }
     if (estado === 'ANULADA') {
-      return 'Anulada';
+      return 'Anulada (stock revertido)';
+    }
+    if (estado === 'ANULACION_SOLICITADA') {
+      return 'Anulación solicitada';
+    }
+    if (estado === 'PENDIENTE_PAGO') {
+      return 'Pendiente pago';
+    }
+    if (estado === 'CANCELADA_SIN_PAGO') {
+      return 'Cancelada sin pago';
     }
     return estado;
+  }
+
+  estadoVentaBadgeClass(estado: string): string {
+    if (estado === 'CONFIRMADA') return 'badge badge-ok';
+    if (estado === 'ANULADA') return 'badge badge-off';
+    if (estado === 'ANULACION_SOLICITADA' || estado === 'PENDIENTE_PAGO') return 'badge badge-pending';
+    return 'badge badge-muted';
   }
 
   cargarResumen(): void {
@@ -944,23 +1793,30 @@ export class VentasPage {
   onBodegaChange(): void {
     this.lineas.set([]);
     this.productoElegidoId = null;
+    this.stockError.set(null);
     this.recargarStockBodega();
   }
 
   recargarStockBodega(): void {
     const bid = this.bodegaId;
+    const requestId = ++this.stockRequestSeq;
     if (bid == null) {
       this.stockCargando.set(false);
+      this.stockError.set(null);
       this.stockPorProducto.set(new Map());
       return;
     }
     this.stockCargando.set(true);
+    this.stockError.set(null);
     const acc = new Map<number, number>();
     const loadPage = (page: number): void => {
       this.inventarioApi.list(page, 500, { bodegaId: bid }).subscribe({
         next: (p) => {
+          if (requestId !== this.stockRequestSeq || this.bodegaId !== bid) {
+            return;
+          }
           for (const row of p.content) {
-            const pid = row.producto.id;
+            const pid = row.productoId;
             const q = parseFloat(String(row.cantidad));
             acc.set(pid, (acc.get(pid) ?? 0) + (Number.isFinite(q) ? q : 0));
           }
@@ -972,7 +1828,11 @@ export class VentasPage {
           }
         },
         error: () => {
+          if (requestId !== this.stockRequestSeq || this.bodegaId !== bid) {
+            return;
+          }
           this.stockPorProducto.set(acc);
+          this.stockError.set('No se pudo cargar el stock de la bodega seleccionada. Actualizá o elegí otra bodega.');
           this.stockCargando.set(false);
         }
       });
@@ -984,10 +1844,94 @@ export class VentasPage {
     return this.stockPorProducto().get(productoId) ?? 0;
   }
 
+  cantidadEnCarrito(productoId: number): number {
+    return this.lineas().find((line) => line.productoId === productoId)?.cantidad ?? 0;
+  }
+
+  bodegaSeleccionadaLabel(): string {
+    if (this.bodegaId == null) {
+      return 'sin bodega seleccionada';
+    }
+    const b = this.bodegas().find((x) => x.id === this.bodegaId);
+    return b ? `${b.codigo} — ${b.nombre}` : `bodega #${this.bodegaId}`;
+  }
+
+  productoDisponible(productoId: number): boolean {
+    return this.bodegaId != null && !this.stockCargando() && this.cantidadMaximaProducto(productoId) >= 1;
+  }
+
+  cantidadMaximaProducto(productoId: number): number {
+    const stock = this.stockDisponible(productoId);
+    return Number.isFinite(stock) ? Math.max(0, Math.floor(stock)) : 0;
+  }
+
+  availabilityState(productoId: number): 'available' | 'low' | 'out' | 'loading' | 'no-warehouse' {
+    if (this.bodegaId == null) {
+      return 'no-warehouse';
+    }
+    if (this.stockCargando()) {
+      return 'loading';
+    }
+    const stock = this.stockDisponible(productoId);
+    if (stock <= 0) {
+      return 'out';
+    }
+    if (stock <= 3) {
+      return 'low';
+    }
+    return 'available';
+  }
+
+  availabilityLabel(productoId: number): string {
+    const state = this.availabilityState(productoId);
+    if (state === 'no-warehouse') return 'Elegí bodega';
+    if (state === 'loading') return 'Verificando stock';
+    if (state === 'out') return 'Agotado';
+    if (state === 'low') return 'Stock bajo';
+    return 'Disponible';
+  }
+
+  addButtonTitle(productoId: number): string {
+    if (this.bodegaId == null) {
+      return 'Elegí una bodega para cargar stock.';
+    }
+    if (this.stockCargando()) {
+      return 'Esperá a que termine la carga de stock.';
+    }
+    if (this.cantidadMaximaProducto(productoId) < 1) {
+      return 'Sin stock en la bodega seleccionada.';
+    }
+    return 'Agregar producto al carrito.';
+  }
+
+  cantidadMaximaTitle(line: DraftLine): string {
+    if (this.pagandoStripe()) {
+      return 'No se puede editar mientras se abre el cobro.';
+    }
+    if (this.stockCargando()) {
+      return 'Esperá a que termine la carga de stock.';
+    }
+    if (line.cantidad >= this.cantidadMaximaProducto(line.productoId)) {
+      return 'Ya está en el máximo disponible para esta bodega.';
+    }
+    return 'Aumentar cantidad';
+  }
+
+  /** Precio de lista del maestro (venta); si no es válido, 0. */
+  precioListaProducto(p: Producto): number {
+    const raw = p.salePrice;
+    const n = typeof raw === 'string' ? parseFloat(String(raw).replace(',', '.')) : Number(raw);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  }
+
   agregarLinea(): void {
     const bid = this.bodegaId;
     const pid = this.productoElegidoId;
-    if (bid == null || pid == null || this.stockCargando()) return;
+    if (bid == null) {
+      this.error.set('Elegí una bodega para cargar stock antes de agregar productos.');
+      return;
+    }
+    if (pid == null || this.stockCargando()) return;
     if (this.lineas().some((l) => l.productoId === pid)) {
       this.error.set('Este producto ya está en el detalle.');
       this.planFollowup.set(null);
@@ -996,11 +1940,12 @@ export class VentasPage {
     const p = this.productos().find((x) => x.id === pid);
     if (!p) return;
     this.error.set(null);
-    const disp = this.stockDisponible(pid);
-    if (disp <= 0) {
+    const disp = this.cantidadMaximaProducto(pid);
+    if (disp < 1) {
       this.error.set('No hay stock disponible en la bodega seleccionada para este producto.');
       return;
     }
+    const precioUnitario = this.precioListaProducto(p);
     this.lineas.update((lines) => [
       ...lines,
       {
@@ -1008,24 +1953,81 @@ export class VentasPage {
         codigo: p.codigo,
         nombre: p.nombre,
         cantidad: 1,
-        precioUnitario: 0
+        precioUnitario
       }
     ]);
     this.productoElegidoId = null;
   }
 
+  agregarProductoRapido(p: Producto): void {
+    this.productoElegidoId = p.id;
+    this.agregarLinea();
+  }
+
   quitarLinea(productoId: number): void {
+    if (this.pagandoStripe()) {
+      return;
+    }
     this.lineas.update((lines) => lines.filter((l) => l.productoId !== productoId));
   }
 
   actualizarCantidad(productoId: number, raw: number | string): void {
+    if (this.pagandoStripe()) {
+      return;
+    }
     const n = typeof raw === 'string' ? parseFloat(raw) : raw;
     this.lineas.update((lines) =>
-      lines.map((l) => (l.productoId === productoId ? { ...l, cantidad: Number.isFinite(n) ? n : l.cantidad } : l))
+      lines.map((l) => {
+        if (l.productoId !== productoId) {
+          return l;
+        }
+        const cantidad = this.esModoPos()
+          ? this.cantidadCarritoValida(productoId, n, l.cantidad)
+          : Number.isFinite(n)
+            ? n
+            : l.cantidad;
+        return { ...l, cantidad };
+      })
     );
   }
 
+  incrementarCantidad(productoId: number): void {
+    if (this.pagandoStripe()) {
+      return;
+    }
+    this.lineas.update((lines) =>
+      lines.map((l) =>
+        l.productoId === productoId ? { ...l, cantidad: this.cantidadCarritoValida(productoId, l.cantidad + 1, l.cantidad) } : l
+      )
+    );
+  }
+
+  disminuirCantidad(productoId: number): void {
+    if (this.pagandoStripe()) {
+      return;
+    }
+    this.lineas.update((lines) =>
+      lines.map((l) =>
+        l.productoId === productoId ? { ...l, cantidad: this.cantidadCarritoValida(productoId, l.cantidad - 1, l.cantidad) } : l
+      )
+    );
+  }
+
+  private cantidadCarritoValida(productoId: number, raw: number, fallback: number): number {
+    const max = this.cantidadMaximaProducto(productoId);
+    if (max < 1) {
+      return fallback;
+    }
+    if (!Number.isFinite(raw)) {
+      return fallback;
+    }
+    return Math.min(max, Math.max(1, Math.floor(raw)));
+  }
+
   actualizarPrecio(productoId: number, raw: number | string): void {
+    if (this.pagandoStripe()) {
+      return;
+    }
     const n = typeof raw === 'string' ? parseFloat(raw) : raw;
     this.lineas.update((lines) =>
       lines.map((l) => (l.productoId === productoId ? { ...l, precioUnitario: Number.isFinite(n) ? n : l.precioUnitario } : l))
@@ -1038,6 +2040,74 @@ export class VentasPage {
 
   filaStockInvalida(line: DraftLine): boolean {
     return line.cantidad > this.stockDisponible(line.productoId) + 1e-9;
+  }
+
+  /** Limpia el carrito del POS tras una venta con tarjeta confirmada (enlace con ?limpiar=1). */
+  private limpiarCarritoPosTrasVenta(): void {
+    this.lineas.set([]);
+    this.observacion = '';
+    this.clienteId = null;
+    this.busqueda.set('');
+    this.error.set(null);
+    this.mostrarNuevoCliente.set(false);
+    this.nuevoClienteNombre = '';
+    this.nuevoClienteDocumento = '';
+    this.nuevoClienteTelefono = '';
+    if (this.bodegaId != null) {
+      this.recargarStockBodega();
+    }
+    this.message.set('Carrito vacío. Podés armar la siguiente venta.');
+    flashSuccess(this.destroyRef, () => this.message.set(null));
+    this.cargarResumen();
+    this.cargarHistorial();
+  }
+
+  irAPagarConStripe(): void {
+    if (this.pagandoStripe()) {
+      return;
+    }
+    const bid = this.bodegaId;
+    if (bid == null || this.lineas().length === 0 || this.stockBloqueante() || this.totalVenta() <= 0) return;
+    for (const l of this.lineas()) {
+      if (!(l.cantidad > 0) || l.precioUnitario < 0 || !Number.isFinite(l.cantidad) || !Number.isFinite(l.precioUnitario)) {
+        this.error.set('Revisá cantidades (> 0) y precios (≥ 0) en todas las líneas.');
+        return;
+      }
+    }
+    if (!this.puedePrecioCero() && this.lineas().some((l) => l.precioUnitario <= 0)) {
+      this.error.set(
+        'Cada línea debe tener precio unitario mayor a 0. Si necesitás cortesías a precio 0, un administrador debe registrar la venta.'
+      );
+      return;
+    }
+    this.pagandoStripe.set(true);
+    this.error.set(null);
+    this.message.set(null);
+    this.planFollowup.set(null);
+    const obs = this.observacion.trim() || undefined;
+    this.ventaApi
+      .prepararStripeCheckout({
+        bodegaId: bid,
+        clienteId: this.clienteId ?? undefined,
+        observacion: obs,
+        lineas: this.lineas().map((l) => ({
+          productoId: l.productoId,
+          cantidad: l.cantidad,
+          precioUnitario: l.precioUnitario
+        }))
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (r) => {
+          globalThis.location.assign(r.checkoutUrl);
+        },
+        error: (e) => {
+          this.pagandoStripe.set(false);
+          this.message.set(null);
+          this.error.set(getApiErrorMessage(e));
+          patchPlanErrorSignals(e, this.error, this.planFollowup);
+        }
+      });
   }
 
   confirmar(): void {

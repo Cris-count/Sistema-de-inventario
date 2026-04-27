@@ -7,16 +7,19 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ROLES_GESTION_PRODUCTOS } from '../../core/auth/app-roles';
 import { InventarioRow } from '../../core/models/entities.model';
 import { getApiErrorMessage, patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 
 @Component({
   selector: 'app-inventario',
-  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header">
         <h1>Inventario</h1>
-        <p class="page-lead page-header-lead">Existencias por producto y bodega; filtros y alertas.</p>
+        <app-dismissible-hint hintId="inventario.pageIntro" persist="local" variant="flush">
+          <p class="page-lead page-header-lead">Existencias por producto y bodega; filtros y alertas.</p>
+        </app-dismissible-hint>
       </header>
       <div class="card stack">
         <h2>Filtros</h2>
@@ -52,11 +55,13 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
       @if (alertasMode()) {
         <h2>Alertas (bajo mínimo)</h2>
         @if (rows().length > 0) {
-          <p class="muted max-w-readable" style="margin: 0 0 0.75rem; font-size: 0.88rem">
-            Las alertas automáticas y el botón de prueba crean una solicitud en <strong>Mensajes pedido</strong> (solo
-            administradores). Tras aprobar allí, el sistema envía el correo al <strong>proveedor vinculado</strong>
-            (preferido en el producto o última entrada COMPRA; el e-mail está en <strong>Proveedores</strong>).
-          </p>
+          <app-dismissible-hint hintId="inventario.alertasGuiaMensajes" persist="session">
+            <p class="muted max-w-readable" style="margin: 0 0 0.75rem; font-size: 0.88rem">
+              Las alertas automáticas y el botón de prueba crean una solicitud en <strong>Mensajes pedido</strong> (solo
+              administradores). Tras aprobar allí, el sistema envía el correo al <strong>proveedor vinculado</strong>
+              (preferido en el producto o última entrada COMPRA; el e-mail está en <strong>Proveedores</strong>).
+            </p>
+          </app-dismissible-hint>
         }
       }
       @if (simMsg()) {
@@ -87,13 +92,13 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
             </tr>
           </thead>
           <tbody>
-            @for (r of rows(); track r.id.productoId + '-' + r.id.bodegaId) {
+            @for (r of rows(); track r.productoId + '-' + r.bodegaId) {
               <tr>
-                <td>{{ r.producto.codigo }} {{ r.producto.nombre }}</td>
-                <td>{{ r.bodega.nombre }}</td>
+                <td>{{ r.productoCodigo }} {{ r.productoNombre }}</td>
+                <td>{{ r.bodegaNombre }}</td>
                 <td>{{ r.cantidad }}</td>
                 <td>
-                  @if (minEditKey() === r.id.productoId + '-' + r.id.bodegaId) {
+                  @if (minEditKey() === r.productoId + '-' + r.bodegaId) {
                     <span class="row table-actions">
                       <input
                         type="number"
@@ -110,7 +115,7 @@ import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.com
                     </span>
                   } @else {
                     <span class="row table-actions">
-                      {{ r.producto.stockMinimo }}
+                      {{ r.stockMinimo }}
                       @if (puedeEditarMinimo()) {
                         <button type="button" class="btn btn-ghost" (click)="startMinEdit(r)">Editar mínimo</button>
                       }
@@ -238,8 +243,8 @@ export class InventarioPage implements OnInit {
     this.simErr.set(null);
     this.api
       .simularCorreoStock({
-        productoId: row.id.productoId,
-        bodegaId: row.id.bodegaId
+        productoId: row.productoId,
+        bodegaId: row.bodegaId
       })
       .subscribe({
         next: (r) => {
@@ -285,8 +290,8 @@ export class InventarioPage implements OnInit {
   startMinEdit(r: InventarioRow): void {
     this.error.set(null);
     this.planFollowup.set(null);
-    this.minEditKey.set(`${r.id.productoId}-${r.id.bodegaId}`);
-    this.minEditDraft.set(String(r.producto.stockMinimo));
+    this.minEditKey.set(`${r.productoId}-${r.bodegaId}`);
+    this.minEditDraft.set(String(r.stockMinimo));
   }
 
   cancelMinEdit(): void {
@@ -305,7 +310,7 @@ export class InventarioPage implements OnInit {
     this.minSaving.set(true);
     this.error.set(null);
     this.planFollowup.set(null);
-    this.productoApi.patchStockMinimo(r.producto.id, n).subscribe({
+    this.productoApi.patchStockMinimo(r.productoId, n).subscribe({
       next: () => {
         this.minSaving.set(false);
         this.cancelMinEdit();

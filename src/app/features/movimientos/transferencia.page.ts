@@ -4,17 +4,20 @@ import { BodegaService } from '../../core/api/bodega.service';
 import { MovimientoApiService } from '../../core/api/movimiento.service';
 import { ProductoService } from '../../core/api/producto.service';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
 @Component({
   selector: 'app-mov-transferencia',
-  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header">
         <h1>Transferencia entre bodegas</h1>
-        <p class="page-lead page-header-lead">Mueve existencias de origen a destino por línea.</p>
+        <app-dismissible-hint hintId="movimientos.transferencia.pageIntro" persist="local" variant="flush">
+          <p class="page-lead page-header-lead">Mueve existencias de origen a destino por línea.</p>
+        </app-dismissible-hint>
       </header>
       @if (error()) {
         <div class="alert alert-error" role="alert">

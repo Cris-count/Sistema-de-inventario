@@ -1,8 +1,10 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, inject } from '@angular/core';
 import { fadeUp } from '../../../../core/animations';
 import { UiButtonComponent } from '../../../../shared/components/ui/button/ui-button.component';
 import { UiBadgeComponent } from '../../../../shared/components/ui/badge/ui-badge.component';
 import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on-scroll.directive';
+import { GsapHoverDirective } from '../../../../shared/motion/gsap-hover.directive';
+import { runWhenVisible, withGsapContext } from '../../../../shared/motion/gsap-motion';
 
 /**
  * Showcase principal del producto.
@@ -20,7 +22,7 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
 @Component({
   selector: 'app-landing-product-showcase',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [UiButtonComponent, UiBadgeComponent, RevealOnScrollDirective],
+  imports: [UiButtonComponent, UiBadgeComponent, RevealOnScrollDirective, GsapHoverDirective],
   animations: [fadeUp],
   template: `
     <section
@@ -38,6 +40,8 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
         <div class="grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
           <div appReveal class="lg:col-span-7">
             <div
+              appGsapHover="media"
+              data-gsap-showcase-panel
               class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-surface p-3 shadow-soft dark:border-slate-600/70 dark:bg-slate-900/85 sm:p-4"
             >
               <img
@@ -80,7 +84,7 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
 
             <ul class="mt-6 space-y-3" role="list">
               @for (item of highlights; track item) {
-                <li class="flex items-start gap-3">
+                <li appGsapHover="subtle" data-gsap-showcase-item class="flex items-start gap-3">
                   <span
                     class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent ring-1 ring-accent/20 dark:bg-accent/15 dark:ring-accent/30"
                     aria-hidden="true"
@@ -106,10 +110,11 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
             </ul>
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-              <app-ui-button variant="landing-primary" linkTo="/registro"
+              <app-ui-button appGsapHover="cta" variant="landing-primary" linkTo="/registro"
                 >Empieza ahora</app-ui-button
               >
               <app-ui-button
+                appGsapHover="subtle"
                 variant="landing-secondary"
                 (click)="scrollToPlanes()"
                 >Ver planes</app-ui-button
@@ -122,12 +127,56 @@ import { RevealOnScrollDirective } from '../../../../shared/directives/reveal-on
   `
 })
 export class LandingProductShowcaseComponent {
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly highlights = [
     'KPIs clave del día: productos, stock bajo y movimientos registrados.',
     'Catálogo ordenado con código, nombre y stock actualizado al instante.',
     'Entradas, salidas y transferencias con responsable y fecha, siempre.',
     'Alertas de stock crítico antes de que se conviertan en un problema.'
   ];
+
+  constructor() {
+    afterNextRender(() => this.animateShowcase());
+  }
+
+  private animateShowcase(): void {
+    let cleanupGsap: (() => void) | undefined;
+    let cleanupObserver: (() => void) | undefined;
+    let destroyed = false;
+
+    void withGsapContext(this.host.nativeElement, (gsap) => {
+      const panel = this.host.nativeElement.querySelector<HTMLElement>('[data-gsap-showcase-panel]');
+      const items = gsap.utils.toArray<HTMLElement>('[data-gsap-showcase-item]');
+
+      if (!panel) {
+        return;
+      }
+
+      gsap.set(panel, { opacity: 0, y: 24, scale: 0.985 });
+      gsap.set(items, { opacity: 0, y: 12 });
+
+      cleanupObserver = runWhenVisible(this.host.nativeElement, () => {
+        gsap
+          .timeline({ defaults: { ease: 'power3.out' } })
+          .to(panel, { opacity: 1, y: 0, scale: 1, duration: 0.7, clearProps: 'opacity,transform' }, 0)
+          .to(items, { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, clearProps: 'opacity,transform' }, 0.18);
+      });
+    }).then((revert) => {
+      cleanupGsap = revert;
+      if (destroyed) {
+        cleanupObserver?.();
+        cleanupGsap();
+      }
+    });
+
+    this.destroyRef.onDestroy(() => {
+      destroyed = true;
+      cleanupObserver?.();
+      cleanupGsap?.();
+    });
+  }
 
   protected scrollToPlanes(): void {
     if (typeof document === 'undefined') {

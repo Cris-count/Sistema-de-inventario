@@ -2,6 +2,7 @@ package com.inventario.web.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -47,7 +48,8 @@ public final class VentaDtos {
             Long movimientoId,
             String estado,
             Long clienteId,
-            String clienteNombre
+            String clienteNombre,
+            String pagoEstado
     ) {}
 
     public record VentaDetalleLineResponse(
@@ -71,14 +73,32 @@ public final class VentaDtos {
             String observacion,
             Long usuarioId,
             String usuarioEmail,
+            String usuarioNombre,
             Long movimientoId,
             String movimientoEstado,
             Long clienteId,
             String clienteNombre,
             String clienteDocumento,
             String clienteTelefono,
-            List<VentaDetalleLineResponse> lineas
+            List<VentaDetalleLineResponse> lineas,
+            String pagoEstado,
+            Instant paidAt,
+            String stripeCheckoutSessionId,
+            String empresaNombre,
+            /** Etiqueta operativa para comprobante (ej. tarjeta vs venta registrada sin cobro con tarjeta). */
+            String metodoPagoEtiqueta
     ) {}
+
+    public record VentaStripePrepararResponse(
+            Long ventaId,
+            String codigoPublico,
+            BigDecimal total,
+            String estadoVenta,
+            String checkoutUrl,
+            String stripeSessionId
+    ) {}
+
+    public record VentaStripeSyncRequest(@NotBlank String sessionId) {}
 
     public record VentaPanelResumenResponse(
             long ventasHoy,

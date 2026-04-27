@@ -10,7 +10,8 @@ import {
   NAV_ITEMS,
   navExactActive,
   navVisibleForPlan,
-  navVisibleForRole
+  navVisibleForRole,
+  orderNavItemsForRole
 } from '../../core/navigation';
 import { BRANDING_ASSETS } from '../../core/branding.paths';
 import { EmpresaActualService } from '../../core/services/empresa-actual.service';
@@ -696,6 +697,27 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       max-width: 100%;
     }
 
+    @media print {
+      .shell {
+        height: auto;
+        max-height: none;
+        overflow: visible;
+      }
+      .sidebar,
+      .nav-backdrop,
+      .shell-header {
+        display: none !important;
+      }
+      .main-col {
+        overflow: visible;
+      }
+      .main-inner {
+        overflow: visible;
+        padding: 0.35rem 0.5rem 0.5rem !important;
+        background: #fff;
+      }
+    }
+
     @media (min-width: 769px) and (max-width: 1199px) {
       .main-inner {
         padding-left: max(1.15rem, env(safe-area-inset-left, 0px));
@@ -899,7 +921,8 @@ export class AppShellComponent {
   readonly navGroups = computed(() => {
     const role = this.auth.role();
     const mods = this.planModules();
-    const items = NAV_ITEMS.filter((i) => navVisibleForRole(role, i) && navVisibleForPlan(i, mods));
+    const visible = NAV_ITEMS.filter((i) => navVisibleForRole(role, i) && navVisibleForPlan(i, mods));
+    const items = orderNavItemsForRole(role, visible);
     const groups: { section: string; items: NavItem[] }[] = [];
     for (const item of items) {
       const last = groups[groups.length - 1];

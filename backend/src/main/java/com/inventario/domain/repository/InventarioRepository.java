@@ -5,6 +5,7 @@ import com.inventario.domain.entity.InventarioId;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -25,6 +26,7 @@ public interface InventarioRepository extends JpaRepository<Inventario, Inventar
               AND (:productoId IS NULL OR i.id.productoId = :productoId)
               AND (:bodegaId IS NULL OR i.id.bodegaId = :bodegaId)
             """)
+    @EntityGraph(attributePaths = {"producto", "bodega"})
     Page<Inventario> buscarPorEmpresa(
             @Param("empresaId") Long empresaId,
             @Param("productoId") Long productoId,
@@ -39,6 +41,7 @@ public interface InventarioRepository extends JpaRepository<Inventario, Inventar
               AND i.cantidad <= p.stockMinimo
               AND (:bodegaId IS NULL OR i.id.bodegaId = :bodegaId)
             """)
+    @EntityGraph(attributePaths = {"producto", "bodega"})
     List<Inventario> findBajoMinimoPorEmpresa(@Param("empresaId") Long empresaId, @Param("bodegaId") Long bodegaId);
 
     @Query("SELECT i.id.bodegaId FROM Inventario i WHERE i.id.productoId = :productoId")

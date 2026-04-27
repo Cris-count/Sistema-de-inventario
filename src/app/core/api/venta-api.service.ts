@@ -9,7 +9,8 @@ import {
   VentaDetailResponse,
   VentaListItem,
   VentaOperativoResumen,
-  VentaPanelResumen
+  VentaPanelResumen,
+  VentaStripePrepararResponse
 } from '../models/entities.model';
 
 @Injectable({ providedIn: 'root' })
@@ -87,6 +88,18 @@ export class VentaApiService {
 
   crear(body: VentaCreateRequest): Observable<VentaCreatedResponse> {
     return this.http.post<VentaCreatedResponse>(this.base, body);
+  }
+
+  prepararStripeCheckout(body: VentaCreateRequest): Observable<VentaStripePrepararResponse> {
+    return this.http.post<VentaStripePrepararResponse>(`${this.base}/stripe/preparar`, body);
+  }
+
+  sincronizarStripePago(ventaId: number, sessionId: string): Observable<VentaDetailResponse> {
+    return this.http.post<VentaDetailResponse>(`${this.base}/${ventaId}/stripe/sincronizar`, { sessionId });
+  }
+
+  cancelarVentaPendiente(ventaId: number): Observable<void> {
+    return this.http.post<void>(`${this.base}/${ventaId}/cancelar-pendiente`, {});
   }
 
   anular(id: number): Observable<void> {

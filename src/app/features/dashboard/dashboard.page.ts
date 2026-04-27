@@ -8,6 +8,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { NAV_ITEMS, navVisibleForPlan, navVisibleForRole } from '../../core/navigation';
 import { EmpresaActualService } from '../../core/services/empresa-actual.service';
 import { consumeAccessFlash } from '../../core/util/access-flash';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 
 /** Orden de accesos rápidos; cada entrada debe existir en NAV_ITEMS con la misma ruta. */
 const QUICK_NAV_PARTS: string[][] = [
@@ -21,7 +22,7 @@ const QUICK_NAV_PARTS: string[][] = [
 
 @Component({
   selector: 'app-dashboard',
-  imports: [RouterLink, DecimalPipe],
+  imports: [RouterLink, DecimalPipe, DismissibleHintComponent],
   template: `
     <div class="page stack dash">
       <header class="dash-header page-header">
@@ -40,7 +41,7 @@ const QUICK_NAV_PARTS: string[][] = [
               <span class="muted dash-greeting-email"> · {{ auth.user()?.email }}</span>
             </p>
             <p class="dash-microcopy muted">
-              Operaciones y permisos según su rol; el menú lateral agrupa todas las áreas habilitadas.
+              Gestiona la operación desde los módulos habilitados según la estructura de tu empresa.
             </p>
           </div>
           <div class="dash-header-meta" aria-label="Contexto de sesión">
@@ -94,51 +95,55 @@ const QUICK_NAV_PARTS: string[][] = [
       </section>
 
       <div class="dash-operational">
-        <section class="card card--info dash-panel" aria-labelledby="dash-quick-title">
-          <div class="dash-panel-head">
-            <h2 id="dash-quick-title">Accesos rápidos</h2>
-            <p class="dash-panel-sub muted">Atajos a tareas frecuentes según su plan y rol.</p>
-          </div>
-          @if (visibleQuickActions().length === 0) {
-            <p class="muted dash-empty-quick">No hay atajos adicionales visibles con su configuración actual.</p>
-          } @else {
-            <ul class="dash-quick-grid">
-              @for (item of visibleQuickActions(); track item.trackKey) {
-                <li>
-                  <a class="dash-quick-card" [routerLink]="item.link">
-                    <span class="dash-quick-ico" aria-hidden="true">{{ item.icon }}</span>
-                    <span class="dash-quick-text">
-                      <span class="dash-quick-label">{{ item.label }}</span>
-                      <span class="dash-quick-hint muted">{{ item.hint }}</span>
-                    </span>
-                    <span class="dash-quick-arrow" aria-hidden="true">→</span>
-                  </a>
+        <app-dismissible-hint hintId="dashboard.quickActions" persist="local">
+          <section class="card card--info dash-panel" aria-labelledby="dash-quick-title">
+            <div class="dash-panel-head">
+              <h2 id="dash-quick-title">Accesos rápidos</h2>
+              <p class="dash-panel-sub muted">Atajos a tareas frecuentes según su plan y rol.</p>
+            </div>
+            @if (visibleQuickActions().length === 0) {
+              <p class="muted dash-empty-quick">No hay atajos adicionales visibles con su configuración actual.</p>
+            } @else {
+              <ul class="dash-quick-grid">
+                @for (item of visibleQuickActions(); track item.trackKey) {
+                  <li>
+                    <a class="dash-quick-card" [routerLink]="item.link">
+                      <span class="dash-quick-ico" aria-hidden="true">{{ item.icon }}</span>
+                      <span class="dash-quick-text">
+                        <span class="dash-quick-label">{{ item.label }}</span>
+                        <span class="dash-quick-hint muted">{{ item.hint }}</span>
+                      </span>
+                      <span class="dash-quick-arrow" aria-hidden="true">→</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </app-dismissible-hint>
+
+        <app-dismissible-hint hintId="dashboard.workflowRecommended" persist="local">
+          <section class="card card--info dash-panel" aria-labelledby="dash-flow-title">
+            <div class="dash-panel-head">
+              <h2 id="dash-flow-title">Flujo de trabajo recomendado</h2>
+              <p class="dash-panel-sub muted">Orden sugerido para dejar el inventario consistente.</p>
+            </div>
+            <ol class="dash-flow-steps">
+              @for (step of workflowSteps; track step.n) {
+                <li class="dash-flow-step">
+                  <div class="dash-flow-num" aria-hidden="true">{{ step.n }}</div>
+                  <div class="dash-flow-body">
+                    <div class="dash-flow-title-row">
+                      <span class="dash-flow-ico" aria-hidden="true">{{ step.icon }}</span>
+                      <span class="dash-flow-title">{{ step.title }}</span>
+                    </div>
+                    <p class="dash-flow-text muted">{{ step.text }}</p>
+                  </div>
                 </li>
               }
-            </ul>
-          }
-        </section>
-
-        <section class="card card--info dash-panel" aria-labelledby="dash-flow-title">
-          <div class="dash-panel-head">
-            <h2 id="dash-flow-title">Flujo de trabajo recomendado</h2>
-            <p class="dash-panel-sub muted">Orden sugerido para dejar el inventario consistente.</p>
-          </div>
-          <ol class="dash-flow-steps">
-            @for (step of workflowSteps; track step.n) {
-              <li class="dash-flow-step">
-                <div class="dash-flow-num" aria-hidden="true">{{ step.n }}</div>
-                <div class="dash-flow-body">
-                  <div class="dash-flow-title-row">
-                    <span class="dash-flow-ico" aria-hidden="true">{{ step.icon }}</span>
-                    <span class="dash-flow-title">{{ step.title }}</span>
-                  </div>
-                  <p class="dash-flow-text muted">{{ step.text }}</p>
-                </div>
-              </li>
-            }
-          </ol>
-        </section>
+            </ol>
+          </section>
+        </app-dismissible-hint>
       </div>
     </div>
   `,
@@ -520,7 +525,7 @@ export class DashboardPage implements OnInit {
       n: 2,
       icon: '📥',
       title: 'Stock inicial',
-      text: 'Cargar existencias de partida (equipos de administración).'
+      text: 'Cargar existencias de partida (administración o auxiliar de bodega, según permisos).'
     },
     {
       n: 3,

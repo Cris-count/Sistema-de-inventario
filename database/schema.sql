@@ -225,13 +225,17 @@ CREATE TABLE IF NOT EXISTS producto (
     categoria_id   BIGINT       NOT NULL REFERENCES categoria (id) ON DELETE RESTRICT,
     unidad_medida  VARCHAR(20)  NOT NULL DEFAULT 'UND',
     stock_minimo          NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (stock_minimo >= 0),
+    purchase_cost         NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (purchase_cost >= 0),
+    sale_price            NUMERIC(14,4) NOT NULL DEFAULT 0 CHECK (sale_price >= 0),
     proveedor_preferido_id BIGINT       REFERENCES proveedor (id) ON DELETE SET NULL,
     activo                BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ,
     created_by     BIGINT       REFERENCES usuario (id) ON DELETE SET NULL,
     CONSTRAINT uk_producto_empresa_codigo UNIQUE (empresa_id, codigo),
-    CONSTRAINT chk_producto_stock_min CHECK (stock_minimo >= 0)
+    CONSTRAINT chk_producto_stock_min CHECK (stock_minimo >= 0),
+    CONSTRAINT chk_producto_purchase_cost CHECK (purchase_cost >= 0),
+    CONSTRAINT chk_producto_sale_price CHECK (sale_price >= 0)
 );
 
 CREATE INDEX IF NOT EXISTS idx_producto_empresa ON producto (empresa_id);
@@ -366,20 +370,26 @@ CREATE TABLE IF NOT EXISTS venta (
     bodega_id        BIGINT        NOT NULL REFERENCES bodega (id) ON DELETE RESTRICT,
     usuario_id       BIGINT        NOT NULL REFERENCES usuario (id) ON DELETE RESTRICT,
     cliente_id       BIGINT        REFERENCES cliente (id) ON DELETE RESTRICT,
-    movimiento_id    BIGINT        NOT NULL UNIQUE REFERENCES movimiento (id) ON DELETE RESTRICT,
+    movimiento_id    BIGINT        UNIQUE REFERENCES movimiento (id) ON DELETE RESTRICT,
     codigo_publico   VARCHAR(32)   NOT NULL,
     fecha_venta      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     total            NUMERIC(14, 2) NOT NULL CHECK (total >= 0),
     estado           VARCHAR(24)   NOT NULL DEFAULT 'CONFIRMADA'
-        CHECK (estado IN ('CONFIRMADA', 'ANULADA')),
+        CHECK (estado IN ('CONFIRMADA', 'ANULACION_SOLICITADA', 'ANULADA', 'PENDIENTE_PAGO', 'CANCELADA_SIN_PAGO')),
     observacion      TEXT,
     created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+    pago_estado      VARCHAR(24),
+    stripe_checkout_session_id VARCHAR(255),
+    stripe_payment_intent_id   VARCHAR(255),
+    paid_at          TIMESTAMPTZ,
     CONSTRAINT uk_venta_empresa_codigo_publico UNIQUE (empresa_id, codigo_publico)
 );
 
 CREATE INDEX IF NOT EXISTS idx_venta_empresa_fecha ON venta (empresa_id, fecha_venta DESC);
 CREATE INDEX IF NOT EXISTS idx_venta_usuario ON venta (usuario_id);
 CREATE INDEX IF NOT EXISTS idx_venta_cliente ON venta (cliente_id) WHERE cliente_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_venta_stripe_session ON venta (stripe_checkout_session_id)
+    WHERE stripe_checkout_session_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS venta_detalle (
     id                BIGSERIAL PRIMARY KEY,

@@ -23,25 +23,41 @@ public class BodegaController {
 
     public record BodegaRequest(@NotBlank String codigo, @NotBlank String nombre, String direccion) {}
 
+    /**
+     * Respuesta estable sin relaciones JPA: serializar {@link Bodega} tal cual exponía
+     * {@code createdBy} → {@link com.inventario.domain.entity.Usuario} (eager {@code empresa}/{@code rol})
+     * y producía ciclos o profundidad excesiva; el cliente Angular solo usa estos campos.
+     */
+    public record BodegaResponse(Long id, String codigo, String nombre, String direccion, boolean activo) {}
+
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN','AUX_BODEGA','COMPRAS','GERENCIA','VENTAS')")
     @Operation(summary = "Listar bodegas")
-    public List<Bodega> listar() {
-        return bodegaCatalogService.listar();
+    public List<BodegaResponse> listar() {
+        return bodegaCatalogService.listar().stream().map(BodegaController::toResponse).toList();
     }
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear bodega")
-    public Bodega crear(@Valid @RequestBody BodegaRequest req) {
-        return bodegaCatalogService.crear(req.codigo(), req.nombre(), req.direccion());
+    public BodegaResponse crear(@Valid @RequestBody BodegaRequest req) {
+        return toResponse(bodegaCatalogService.crear(req.codigo(), req.nombre(), req.direccion()));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN','SUPER_ADMIN')")
     @Operation(summary = "Actualizar bodega")
-    public Bodega actualizar(@PathVariable Long id, @Valid @RequestBody BodegaRequest req) {
-        return bodegaCatalogService.actualizar(id, req.codigo(), req.nombre(), req.direccion());
+    public BodegaResponse actualizar(@PathVariable Long id, @Valid @RequestBody BodegaRequest req) {
+        return toResponse(bodegaCatalogService.actualizar(id, req.codigo(), req.nombre(), req.direccion()));
+    }
+
+    private static BodegaResponse toResponse(Bodega b) {
+        return new BodegaResponse(
+                b.getId(),
+                b.getCodigo(),
+                b.getNombre(),
+                b.getDireccion(),
+                Boolean.TRUE.equals(b.getActivo()));
     }
 }

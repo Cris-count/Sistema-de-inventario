@@ -1,12 +1,24 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormsModule,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { BodegaService } from '../../core/api/bodega.service';
 import { CategoriaService } from '../../core/api/categoria.service';
+import { InventarioService } from '../../core/api/inventario.service';
 import { ProductoService, ProductoRequest } from '../../core/api/producto.service';
 import { ProveedorService } from '../../core/api/proveedor.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ROLES_GESTION_PRODUCTOS } from '../../core/auth/app-roles';
-import { Producto, Proveedor } from '../../core/models/entities.model';
+import { Bodega, Producto, Proveedor } from '../../core/models/entities.model';
 import { patchPlanErrorSignals, type PlanBlockFollowup } from '../../core/util/api-error';
+import { DismissibleHintComponent } from '../../shared/dismissible-hint/dismissible-hint.component';
 import { PlanBlockFollowupComponent } from '../../shared/plan-block-followup.component';
 import { flashSuccess } from '../../core/util/page-flash';
 
@@ -33,19 +45,42 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
   { codigo: 'HRS', nombre: 'Hora (servicio)' },
   { codigo: 'SERV', nombre: 'Servicio' }
 ];
+const DECIMAL_PATTERN = /^(?:\d+|\d*[.,]\d{1,4})$/;
+
+function parseNonNegativeDecimal(raw: unknown): number | null {
+  if (typeof raw !== 'string' && typeof raw !== 'number') return null;
+  const txt = String(raw).trim().replace(',', '.');
+  if (!txt || !DECIMAL_PATTERN.test(txt)) return null;
+  const num = Number(txt);
+  if (!Number.isFinite(num) || num < 0) return null;
+  return num;
+}
+
+function initialStockOptionalValidator(): ValidatorFn {
+  return (group: AbstractControl): ValidationErrors | null => {
+    const qty = parseNonNegativeDecimal(group.get('initialCantidad')?.value);
+    const bodegaRaw = group.get('initialBodegaId')?.value;
+    if (qty !== null && qty > 0 && (bodegaRaw === null || bodegaRaw === undefined || bodegaRaw === '')) {
+      return { initialBodegaRequired: true };
+    }
+    return null;
+  };
+}
 
 @Component({
   selector: 'app-productos',
-  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent],
+  imports: [ReactiveFormsModule, FormsModule, PlanBlockFollowupComponent, RouterLink, DismissibleHintComponent],
   template: `
     <div class="page stack">
       <header class="page-header page-header--split">
         <div class="page-header__intro">
           <h1>Productos</h1>
-          <p class="page-lead">
-            Catálogo para movimientos y existencias: busca por código o nombre, revisa estado y mantén límites de reposición
-            al día.
-          </p>
+          <app-dismissible-hint hintId="productos.pageIntro" persist="local" variant="flush">
+            <p class="page-lead">
+              Catálogo para movimientos y existencias: busca por código o nombre, revisa estado y mantén límites de reposición
+              al día.
+            </p>
+          </app-dismissible-hint>
         </div>
         @if (canGestionarProductos()) {
           <div class="page-header__actions">
@@ -56,17 +91,21 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
 
       <div class="page-body">
         @if (canGestionarProductos()) {
-          <div class="alert alert-info" role="note">
-            <strong>Mercancía nueva:</strong> si recibes ítems cuyo código aún no está en el catálogo, regístralos aquí antes
-            de cargar existencias o registrar movimientos.
-          </div>
+          <app-dismissible-hint hintId="productos.notaMercanciaNueva" persist="local">
+            <div class="alert alert-info" role="note">
+              <strong>Mercancía nueva:</strong> si recibes ítems cuyo código aún no está en el catálogo, regístralos aquí antes
+              de cargar existencias o registrar movimientos.
+            </div>
+          </app-dismissible-hint>
         }
         @if (esSoloLecturaProductos()) {
-          <div class="alert alert-info" role="note">
-            <strong>Solo consulta:</strong> tu rol (<strong>{{ auth.role() }}</strong>) puede ver el catálogo. Alta, edición y
-            activación las realizan <strong>Administración</strong> o <strong>Auxiliar de bodega</strong>, según política del
-            servidor.
-          </div>
+          <app-dismissible-hint hintId="productos.notaSoloConsulta" persist="local">
+            <div class="alert alert-info" role="note">
+              <strong>Solo consulta:</strong> tu rol (<strong>{{ auth.role() }}</strong>) puede ver el catálogo. Alta, edición y
+              activación las realizan <strong>Administración</strong> o <strong>Auxiliar de bodega</strong>, según política del
+              servidor.
+            </div>
+          </app-dismissible-hint>
         }
 
         @if (error()) {
@@ -170,7 +209,138 @@ const CATALOGO_UNIDADES: { codigo: string; nombre: string }[] = [
                       este proveedor.
                     </p>
                   </div>
+                  <div class="field form-grid__full">
+                    <app-dismissible-hint hintId="productos.ayudaStockVsMinimo" persist="local">
+                      <div class="card card--info stack stack--tight" style="margin: 0; padding: var(--space-ds-3)">
+                        <p class="field-hint" style="margin: 0; max-width: 72ch">
+                          <strong>Cantidad en bodega frente al mínimo:</strong> este formulario es el maestro del producto y solo
+                          guarda el <em>mínimo</em> para alertas. La cantidad que <em>llega</em> o la que <em>hay disponible</em> se
+                          registra por bodega con una
+                          <a [routerLink]="['/app/movimientos/entrada']">entrada de mercancía</a>
+                          (o con
+                          <a [routerLink]="['/app/stock-inicial']">stock inicial</a>
+                          si corresponde al arranque). El detalle por bodega está en
+                          <a [routerLink]="['/app/inventario']">Inventario</a>.
+                        </p>
+                      </div>
+                    </app-dismissible-hint>
+                    @if (formMode() === 'edit') {
+                      <div
+                        class="card card--info stack stack--tight"
+                        style="margin: var(--space-ds-3) 0 0; padding: var(--space-ds-3)"
+                      >
+                        @if (stockResumenLoading()) {
+                          <p class="field-hint" style="margin: 0">Cargando existencias por bodega…</p>
+                        } @else if (stockResumenError()) {
+                          <p class="field-hint" style="margin: 0">
+                            No se pudieron cargar las existencias. Revisá permisos o abrí la pantalla Inventario.
+                          </p>
+                        } @else if (stockResumenByBodega().length === 0) {
+                          <p class="field-hint" style="margin: 0">
+                            <strong>Sin saldo en bodegas:</strong> aún no hay cantidad registrada para este producto. Usá una
+                            entrada para sumar unidades.
+                          </p>
+                        } @else {
+                          <p class="field-hint" style="margin: 0">
+                            <strong>Total en bodegas:</strong> {{ stockResumenTotalLabel() }}
+                            <span class="muted"> (suma de todas las líneas con este producto)</span>
+                          </p>
+                          <ul
+                            class="muted-list"
+                            style="margin: 0.35rem 0 0; padding-left: 1.25rem; font-size: var(--text-body-sm)"
+                          >
+                            @for (line of stockResumenByBodega(); track line.bodegaId) {
+                              <li>{{ line.bodegaNombre }}: <strong>{{ line.cantidad }}</strong></li>
+                            }
+                          </ul>
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
+              </fieldset>
+
+              @if (formMode() === 'create') {
+                <fieldset class="form-section">
+                  <legend class="form-section__legend">Stock inicial (opcional)</legend>
+                  <p class="form-section__hint">
+                    Si indicas una cantidad mayor que cero, el sistema registrará un movimiento de inventario real (stock inicial)
+                    en la bodega elegida, con la misma trazabilidad que en «Inventario». Si dejas la cantidad en 0, solo se crea el
+                    producto en el catálogo.
+                  </p>
+                  <div class="form-grid form-grid--2">
+                    <div
+                      class="field"
+                      [class.field--error]="
+                        (form.controls.initialBodegaId.invalid && form.controls.initialBodegaId.touched) ||
+                        (form.hasError('initialBodegaRequired') && form.touched)
+                      "
+                    >
+                      <label for="prod-stock-ini-bodega">Bodega inicial</label>
+                      <select id="prod-stock-ini-bodega" formControlName="initialBodegaId">
+                        <option [ngValue]="null">— Sin carga de existencias —</option>
+                        @for (b of bodegas(); track b.id) {
+                          <option [ngValue]="b.id">{{ b.nombre }}</option>
+                        }
+                      </select>
+                      <p class="field-hint">Obligatoria solo si la cantidad inicial es mayor que 0.</p>
+                      @if (form.hasError('initialBodegaRequired') && form.touched) {
+                        <p class="field-error">Elige bodega para registrar el stock inicial.</p>
+                      }
+                    </div>
+                    <div
+                      class="field"
+                      [class.field--error]="form.controls.initialCantidad.invalid && form.controls.initialCantidad.touched"
+                    >
+                      <label for="prod-stock-ini-qty">Cantidad inicial</label>
+                      <input
+                        id="prod-stock-ini-qty"
+                        formControlName="initialCantidad"
+                        type="text"
+                        inputmode="decimal"
+                        placeholder="0"
+                      />
+                      <p class="field-hint">Decimal no negativo; 0 = sin movimiento de inventario.</p>
+                      @if (form.controls.initialCantidad.invalid && form.controls.initialCantidad.touched) {
+                        <p class="field-error">Usa un número válido mayor o igual a 0.</p>
+                      }
+                    </div>
+                  </div>
+                </fieldset>
+              }
+
+              <fieldset class="form-section">
+                <legend class="form-section__legend">Precios y rentabilidad</legend>
+                <div class="form-grid form-grid--2">
+                  <div class="field" [class.field--error]="form.controls.purchaseCost.invalid && form.controls.purchaseCost.touched">
+                    <label for="prod-cost">Costo del producto</label>
+                    <input id="prod-cost" formControlName="purchaseCost" type="text" inputmode="decimal" placeholder="0.00" />
+                    <p class="field-hint">Valor al que ingresa el producto al negocio.</p>
+                    @if (form.controls.purchaseCost.invalid && form.controls.purchaseCost.touched) {
+                      <p class="field-error">Ingresa un costo válido mayor o igual a 0.</p>
+                    }
+                  </div>
+                  <div class="field" [class.field--error]="form.controls.salePrice.invalid && form.controls.salePrice.touched">
+                    <label for="prod-price">Precio de venta</label>
+                    <input id="prod-price" formControlName="salePrice" type="text" inputmode="decimal" placeholder="0.00" />
+                    <p class="field-hint">Valor sugerido o actual al que se vende el producto.</p>
+                    @if (form.controls.salePrice.invalid && form.controls.salePrice.touched) {
+                      <p class="field-error">Ingresa un precio de venta válido mayor o igual a 0.</p>
+                    }
+                  </div>
+                </div>
+                @if (pricingReady()) {
+                  <p class="field-hint" style="margin: 0">
+                    Utilidad estimada: <strong>{{ estimatedProfit() }}</strong>
+                    @if (marginPercent() !== null) {
+                      · Margen: <strong>{{ marginPercent() }}%</strong>
+                    }
+                  </p>
+                } @else {
+                  <p class="field-hint" style="margin: 0">
+                    Completa costo y precio para ver utilidad estimada y margen.
+                  </p>
+                }
               </fieldset>
 
               <div class="form-actions form-actions--start" style="margin-top: 0">
@@ -348,6 +518,8 @@ export class ProductosPage implements OnInit {
   private readonly productoApi = inject(ProductoService);
   private readonly proveedorApi = inject(ProveedorService);
   private readonly categoriaApi = inject(CategoriaService);
+  private readonly bodegaApi = inject(BodegaService);
+  private readonly inventarioApi = inject(InventarioService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   readonly auth = inject(AuthService);
@@ -366,6 +538,7 @@ export class ProductosPage implements OnInit {
   readonly rows = signal<Producto[]>([]);
   readonly categorias = signal<{ id: number; nombre: string }[]>([]);
   readonly proveedores = signal<Proveedor[]>([]);
+  readonly bodegas = signal<Bodega[]>([]);
   readonly page = signal(0);
   readonly totalPages = signal(1);
   readonly formMode = signal<'create' | 'edit' | null>(null);
@@ -376,6 +549,11 @@ export class ProductosPage implements OnInit {
 
   readonly searchQuery = signal('');
   readonly estadoFiltro = signal<'todos' | 'activos' | 'inactivos'>('todos');
+
+  readonly stockResumenLoading = signal(false);
+  readonly stockResumenError = signal(false);
+  readonly stockResumenTotalLabel = signal<string | null>(null);
+  readonly stockResumenByBodega = signal<{ bodegaId: number; bodegaNombre: string; cantidad: string }[]>([]);
 
   readonly displayRows = computed(() => {
     let list = this.rows();
@@ -399,21 +577,32 @@ export class ProductosPage implements OnInit {
 
   readonly unidadesForSelect = signal(CATALOGO_UNIDADES);
 
-  readonly form = this.fb.nonNullable.group({
-    codigo: ['', Validators.required],
-    nombre: ['', Validators.required],
-    descripcion: [''],
-    categoriaId: [0, [Validators.required, Validators.min(1)]],
-    unidadMedida: ['UND'],
-    stockMinimo: ['0'],
-    proveedorPreferidoId: null as number | null
-  });
+  readonly form = this.fb.nonNullable.group(
+    {
+      codigo: ['', Validators.required],
+      nombre: ['', Validators.required],
+      descripcion: [''],
+      categoriaId: [0, [Validators.required, Validators.min(1)]],
+      unidadMedida: ['UND'],
+      stockMinimo: ['0'],
+      purchaseCost: ['0', [Validators.required, Validators.pattern(DECIMAL_PATTERN)]],
+      salePrice: ['0', [Validators.required, Validators.pattern(DECIMAL_PATTERN)]],
+      proveedorPreferidoId: null as number | null,
+      initialBodegaId: null as number | null,
+      initialCantidad: ['0', [Validators.pattern(DECIMAL_PATTERN)]]
+    },
+    { validators: [initialStockOptionalValidator()] }
+  );
 
   ngOnInit(): void {
     this.categoriaApi.list().subscribe((c) => this.categorias.set(c));
     this.proveedorApi.list().subscribe({
       next: (list) => this.proveedores.set(list),
       error: () => this.proveedores.set([])
+    });
+    this.bodegaApi.list().subscribe({
+      next: (list) => this.bodegas.set(list),
+      error: () => this.bodegas.set([])
     });
     this.load();
   }
@@ -474,6 +663,7 @@ export class ProductosPage implements OnInit {
     this.message.set(null);
     this.error.set(null);
     this.planFollowup.set(null);
+    this.resetStockResumen();
     this.formMode.set('create');
     this.editingId.set(null);
     this.unidadesForSelect.set(CATALOGO_UNIDADES);
@@ -484,7 +674,11 @@ export class ProductosPage implements OnInit {
       categoriaId: 0,
       unidadMedida: 'UND',
       stockMinimo: '0',
-      proveedorPreferidoId: null
+      purchaseCost: '0',
+      salePrice: '0',
+      proveedorPreferidoId: null,
+      initialBodegaId: null,
+      initialCantidad: '0'
     });
     this.scrollFormIntoView();
   }
@@ -508,12 +702,18 @@ export class ProductosPage implements OnInit {
       categoriaId: p.categoria.id,
       unidadMedida: p.unidadMedida,
       stockMinimo: String(p.stockMinimo),
-      proveedorPreferidoId: p.proveedorPreferidoId ?? null
+      purchaseCost: String(p.purchaseCost ?? 0),
+      salePrice: String(p.salePrice ?? 0),
+      proveedorPreferidoId: p.proveedorPreferidoId ?? null,
+      initialBodegaId: null,
+      initialCantidad: '0'
     });
+    this.loadStockResumen(p.id);
     this.scrollFormIntoView();
   }
 
   cancelForm(clearFeedback = false): void {
+    this.resetStockResumen();
     this.formMode.set(null);
     this.editingId.set(null);
     this.unidadesForSelect.set(CATALOGO_UNIDADES);
@@ -537,13 +737,24 @@ export class ProductosPage implements OnInit {
       categoriaId: v.categoriaId,
       unidadMedida: v.unidadMedida || undefined,
       stockMinimo: v.stockMinimo || undefined,
+      purchaseCost: this.decimalFromInput(v.purchaseCost) ?? 0,
+      salePrice: this.decimalFromInput(v.salePrice) ?? 0,
       proveedorPreferidoId: v.proveedorPreferidoId ?? null
     };
+    const esAlta = this.formMode() === 'create';
+    let initialQtyAlta = 0;
+    if (esAlta) {
+      const iq = this.decimalFromInput(v.initialCantidad) ?? 0;
+      initialQtyAlta = iq;
+      body.initialCantidad = iq;
+      if (iq > 0) {
+        body.initialBodegaId = v.initialBodegaId ?? undefined;
+      }
+    }
     this.saving.set(true);
     this.error.set(null);
     this.planFollowup.set(null);
     const id = this.editingId();
-    const esAlta = this.formMode() === 'create';
     const req = esAlta ? this.productoApi.create(body) : this.productoApi.update(id!, body);
     req.subscribe({
       next: () => {
@@ -551,7 +762,9 @@ export class ProductosPage implements OnInit {
         this.planFollowup.set(null);
         this.message.set(
           esAlta
-            ? 'Producto nuevo registrado en el catálogo. Ya puede usarlo en movimientos y existencias.'
+            ? initialQtyAlta > 0
+              ? 'Producto registrado y stock inicial cargado con movimiento trazable en la bodega indicada.'
+              : 'Producto nuevo registrado en el catálogo. Ya puede usarlo en movimientos y existencias.'
             : 'Cambios guardados en el producto.'
         );
         flashSuccess(this.destroyRef, () => this.message.set(null));
@@ -583,5 +796,84 @@ export class ProductosPage implements OnInit {
         patchPlanErrorSignals(e, this.error, this.planFollowup);
       }
     });
+  }
+
+  pricingReady(): boolean {
+    return this.decimalFromInput(this.form.controls.purchaseCost.value) !== null
+      && this.decimalFromInput(this.form.controls.salePrice.value) !== null;
+  }
+
+  estimatedProfit(): string {
+    const purchase = this.decimalFromInput(this.form.controls.purchaseCost.value);
+    const sale = this.decimalFromInput(this.form.controls.salePrice.value);
+    if (purchase === null || sale === null) return '—';
+    return this.formatMoney(sale - purchase);
+  }
+
+  marginPercent(): string | null {
+    const purchase = this.decimalFromInput(this.form.controls.purchaseCost.value);
+    const sale = this.decimalFromInput(this.form.controls.salePrice.value);
+    if (purchase === null || sale === null || sale <= 0) return null;
+    return ((sale - purchase) / sale * 100).toFixed(2);
+  }
+
+  private decimalFromInput(raw: unknown): number | null {
+    return parseNonNegativeDecimal(raw);
+  }
+
+  private formatMoney(value: number): string {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  }
+
+  private resetStockResumen(): void {
+    this.stockResumenLoading.set(false);
+    this.stockResumenError.set(false);
+    this.stockResumenTotalLabel.set(null);
+    this.stockResumenByBodega.set([]);
+  }
+
+  private loadStockResumen(productoId: number): void {
+    this.stockResumenError.set(false);
+    this.stockResumenTotalLabel.set(null);
+    this.stockResumenByBodega.set([]);
+    this.stockResumenLoading.set(true);
+    this.inventarioApi.list(0, 500, { productoId }).subscribe({
+      next: (page) => {
+        const rows = page.content;
+        let sum = 0;
+        const lines: { bodegaId: number; bodegaNombre: string; cantidad: string }[] = [];
+        for (const r of rows) {
+          const q = Number(String(r.cantidad).replace(',', '.'));
+          if (Number.isFinite(q)) {
+            sum += q;
+          }
+          lines.push({
+            bodegaId: r.bodegaId,
+            bodegaNombre: r.bodegaNombre ?? 'Bodega',
+            cantidad: String(r.cantidad)
+          });
+        }
+        lines.sort((a, b) => a.bodegaNombre.localeCompare(b.bodegaNombre, 'es'));
+        this.stockResumenByBodega.set(lines);
+        this.stockResumenTotalLabel.set(this.formatQty(sum));
+        this.stockResumenLoading.set(false);
+      },
+      error: () => {
+        this.stockResumenLoading.set(false);
+        this.stockResumenError.set(true);
+      }
+    });
+  }
+
+  private formatQty(value: number): string {
+    return new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 4
+    }).format(value);
   }
 }
