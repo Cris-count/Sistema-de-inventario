@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 /**
  * Desarrollo unificado:
- * 1) Levanta Docker completo (db + api) con build
- * 2) Aplica migraciones SQL en Postgres (evita fallo de Hibernate validate si el volumen es antiguo)
- * 3) Reinicia el contenedor api para que arranque con esquema al día
- * 4) Espera health del API
- * 5) Arranca frontend local
+ * 1) Levanta Docker completo (db + api + ai-service) con build
+ * 2) Espera PostgreSQL en el puerto host 5433
+ * 3) Migraciones SQL (db-sync-dev)
+ * 4) Reinicia el contenedor api (arranque con esquema al día)
+ * 5) Health de AI y API en paralelo (omitir AI: SKIP_AI_HEALTH=1)
+ * 6) Frontend local (npm run frontend)
  *
  * Uso: npm run up
  */
@@ -18,21 +19,47 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const API_HEALTH_URL = process.env.API_HEALTH_URL ?? 'http://localhost:8080/actuator/health';
 const API_HEALTH_TIMEOUT_MS = Number(process.env.API_HEALTH_TIMEOUT_MS ?? 240_000);
+const AI_HEALTH_URL = process.env.AI_HEALTH_URL || 'http://localhost:8000/health';
+const AI_HEALTH_TIMEOUT_MS = Number(process.env.AI_HEALTH_TIMEOUT_MS || 120000);
+const SKIP_AI_HEALTH = ['1', 'true', 'yes'].includes(String(process.env.SKIP_AI_HEALTH ?? '').toLowerCase());
 
 function runOrFail(command, args, description, useShell = false) {
   if (description) {
     console.log(description);
   }
+  const captureOutput = command === 'docker';
   const r = spawnSync(useShell ? `${command} ${args.join(' ')}` : command, useShell ? [] : args, {
     cwd: root,
-    stdio: 'inherit',
+    stdio: captureOutput ? 'pipe' : 'inherit',
+    encoding: captureOutput ? 'utf8' : undefined,
     shell: useShell,
     env: process.env
   });
+  if (captureOutput) {
+    if (r.stdout) process.stdout.write(r.stdout);
+    if (r.stderr) process.stderr.write(r.stderr);
+  }
   if (r.error) {
+    if (command === 'docker') {
+      throw new Error(`[dev-up] No se pudo ejecutar Docker: ${r.error.message}. Inicia Docker Desktop y vuelve a intentar.`);
+    }
     throw r.error;
   }
   if (r.status !== 0) {
+    const text = `${r.stderr || ''}\n${r.stdout || ''}`.toLowerCase();
+    if (
+      command === 'docker' &&
+      (text.includes('dockerdesktop') ||
+        text.includes('cannot connect') ||
+        text.includes('failed to connect') ||
+        text.includes('is the docker daemon running') ||
+        text.includes('open //./pipe/docker') ||
+        text.includes('error during connect'))
+    ) {
+      console.error('[dev-up] Docker no esta disponible. Inicia Docker Desktop y vuelve a ejecutar: npm run up');
+    } else {
+      console.error(`[dev-up] Fallo el comando: ${command} ${args.join(' ')} (codigo ${r.status}).`);
+    }
     process.exit(r.status ?? 1);
   }
 }
@@ -82,23 +109,53 @@ async function waitForApiHealth(url, timeoutMs = API_HEALTH_TIMEOUT_MS, interval
   );
 }
 
-async function main() {
-  runOrFail('docker', ['compose', 'up', '-d', '--build'], '[dev-up] 1/5  Levantando Docker completo (db + api) …');
+async function waitForAiHealth(url, timeoutMs = AI_HEALTH_TIMEOUT_MS, intervalMs = 2000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        return;
+      }
+    } catch {
+      // AI service aun no esta disponible
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  throw new Error(
+    `AI service did not become healthy at ${url}\n` +
+    'Troubleshooting hints:\n' +
+    '  docker compose logs ai-service\n' +
+    '  docker compose ps\n' +
+    `  curl ${url}`
+  );
+}
 
-  console.log('[dev-up] 2/5  Esperando PostgreSQL en 127.0.0.1:5433 …');
+async function main() {
+  runOrFail('docker', ['compose', 'up', '-d', '--build'], '[dev-up] 1/6  Levantando Docker completo (db + api + ai-service) ...');
+
+  console.log('[dev-up] 2/6  Esperando PostgreSQL en 127.0.0.1:5433 …');
   await waitForPort(5433);
 
-  console.log('[dev-up] 3/5  Alineando esquema PostgreSQL (migraciones idempotentes; ver db-sync-dev.mjs) …');
+  console.log('[dev-up] 3/6  Alineando esquema PostgreSQL (migraciones idempotentes; ver db-sync-dev.mjs) …');
   const { applyDevMigrations } = await import('./db-sync-dev.mjs');
   await applyDevMigrations();
 
-  console.log('[dev-up]     Reiniciando servicio api (arranque limpio tras migraciones) …');
+  // Reinicio inmediato tras migrar: Spring valida Hibernate con el esquema ya aplicado.
+  console.log('[dev-up] 4/6  Reiniciando servicio api (arranque limpio tras migraciones) …');
   runOrFail('docker', ['compose', 'restart', 'api'], '');
 
-  console.log(`[dev-up] 4/5  Esperando API saludable en ${API_HEALTH_URL} (hasta ${API_HEALTH_TIMEOUT_MS / 1000}s) …`);
-  await waitForApiHealth(API_HEALTH_URL);
+  console.log('[dev-up] 5/6  Esperando health de AI y API en paralelo …');
+  if (SKIP_AI_HEALTH) {
+    console.log(`[dev-up]     Omitiendo AI (SKIP_AI_HEALTH). Solo API → ${API_HEALTH_URL}`);
+    await waitForApiHealth(API_HEALTH_URL);
+  } else {
+    console.log(`[dev-up]     AI ↔ ${AI_HEALTH_URL} (máx ${AI_HEALTH_TIMEOUT_MS / 1000}s)`);
+    console.log(`[dev-up]     API ↔ ${API_HEALTH_URL} (máx ${API_HEALTH_TIMEOUT_MS / 1000}s)`);
+    await Promise.all([waitForAiHealth(AI_HEALTH_URL), waitForApiHealth(API_HEALTH_URL)]);
+  }
 
-  runOrFail('npm', ['run', 'frontend'], '[dev-up] 5/5  Iniciando frontend Angular …', process.platform === 'win32');
+  runOrFail('npm', ['run', 'frontend'], '[dev-up] 6/6  Iniciando frontend Angular …', process.platform === 'win32');
 }
 
 main().catch((e) => {

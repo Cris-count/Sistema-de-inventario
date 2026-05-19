@@ -44,7 +44,8 @@ const MIGRATIONS = [
   'database/migrations/018_venta_pos_stripe.sql',
   'database/migrations/019_venta_anulacion_solicitada_estado.sql',
   'database/migrations/020_venta_metodo_pago.sql',
-  'database/migrations/021_venta_cash_amounts.sql'
+  'database/migrations/021_venta_cash_amounts.sql',
+  'database/migrations/022_ai_recommendations_and_purchase.sql'
 ];
 
 const PSQL_ENV = {

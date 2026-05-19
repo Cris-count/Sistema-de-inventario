@@ -154,6 +154,12 @@ app:
     gerencia-password: ${APP_SEED_GERENCIA_PASSWORD:Gerencia123!}
     ventas-email: ${APP_SEED_VENTAS_EMAIL:ventas@inventario.local}
     ventas-password: ${APP_SEED_VENTAS_PASSWORD:Ventas123!}
+  # Integración con el microservicio Python de IA (FastAPI). Angular debe llamar solo a Spring Boot.
+  ai:
+    service-url: ${AI_SERVICE_URL:http://localhost:8000}
+    connect-timeout-ms: ${AI_SERVICE_CONNECT_TIMEOUT_MS:5000}
+    read-timeout-ms: ${AI_SERVICE_READ_TIMEOUT_MS:20000}
+
   inventory:
     stock-alerts:
       # true: intenta envío SMTP cuando exista bean JavaMailSender (requiere spring.mail.host + credenciales).

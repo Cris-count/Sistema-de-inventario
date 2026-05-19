@@ -5,6 +5,7 @@
 /tmp
 /out-tsc
 /bazel-out
+backend/target/
 
 # Node
 /node_modules
@@ -14,6 +15,9 @@ yarn-error.log
 # Entorno local (docker compose / secretos)
 .env
 .env.local
+.env.*.local
+.evn/
+!.env.example
 
 # IDEs and editors
 .idea/
@@ -34,7 +38,7 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
+/.angular/
 .sass-cache/
 /connect.lock
 /coverage
@@ -42,13 +46,12 @@ yarn-error.log
 testem.log
 /typings
 __screenshots__/
+__pycache__/
+.pytest_cache/
 
 # System files
 .DS_Store
 Thumbs.db
-
-# Maven (backend Spring Boot)
-backend/target/
 
 # SMTP / overrides locales del API (copiar desde application-local.yml.example)
 backend/src/main/resources/application-local.yml

@@ -1,5 +1,6 @@
 package com.inventario;
 
+import com.inventario.config.AiIntegrationProperties;
 import com.inventario.config.RefreshTokenProperties;
 import com.inventario.ratelimit.RateLimitProperties;
 import org.springframework.boot.SpringApplication;
@@ -22,7 +23,7 @@ import com.inventario.config.SecurityHintsRegistrar;
         })
 @EnableScheduling
 @EnableAsync
-@EnableConfigurationProperties({RateLimitProperties.class, RefreshTokenProperties.class})
+@EnableConfigurationProperties({RateLimitProperties.class, RefreshTokenProperties.class, AiIntegrationProperties.class})
 @ImportRuntimeHints(SecurityHintsRegistrar.class)
 public class InventarioApplication {
 

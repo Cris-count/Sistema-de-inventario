@@ -75,11 +75,33 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_PUBLIC_KEY: ${STRIPE_PUBLIC_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Microservicio FastAPI (Compose DNS: nombre de servicio `ai-service`). Local fuera de Docker: http://localhost:8000
+      AI_SERVICE_URL: ${AI_SERVICE_URL:-http://ai-service:8000}
     depends_on:
       db:
         condition: service_healthy
       mailpit:
         condition: service_started
+      ai-service:
+        condition: service_started
+
+  # Optional: Inventory intelligence API (FastAPI). Copy ai-service/.env.example → ai-service/.env before first run.
+  ai-service:
+    build:
+      context: ./ai-service
+    container_name: inventory-ai-service
+    ports:
+      - "8000:8000"
+    # Optional overlay: copy `ai-service/.env.example` → `ai-service/.env` for local overrides.
+    # `required: false` keeps `docker compose` working when `.env` is not present yet.
+    env_file:
+      - path: ./ai-service/.env
+        required: false
+    environment:
+      AI_SERVICE_NAME: inventory-ai-service
+      AI_SERVICE_VERSION: "0.1.0"
+      ENVIRONMENT: development
+      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://localhost:8080"
 
 volumes:
   inventario_pgdata:

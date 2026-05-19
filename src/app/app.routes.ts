@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import {
   ROLES_ADMIN,
+  ROLES_AI_ASSISTANT,
   ROLES_ENTRADA,
   ROLES_GESTION_PRODUCTOS,
   ROLES_LECTURA_API,
@@ -187,6 +188,13 @@ export const routes: Routes = [
         canActivate: [roleGuard],
         data: { roles: ROLES_ADMIN },
         loadComponent: () => import('./features/usuarios/usuarios.page').then((m) => m.UsuariosPage)
+      },
+      {
+        path: 'asistente-ia',
+        canActivate: [roleGuard],
+        data: { roles: ROLES_AI_ASSISTANT },
+        loadComponent: () =>
+          import('./features/asistente-ia/asistente-ia.page').then((m) => m.AsistenteIaPage)
       }
     ]
   },

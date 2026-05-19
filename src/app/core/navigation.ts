@@ -1,5 +1,6 @@
 import {
   ROLES_ADMIN,
+  ROLES_AI_ASSISTANT,
   ROLES_ENTRADA,
   ROLES_GESTION_PRODUCTOS,
   ROLES_LECTURA_API,
@@ -207,6 +208,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: '👥',
     roles: ROLES_ADMIN,
     requiresAnyPlanModule: [PlanEntitlementCodes.usuarios],
+    navSection: 'Administración'
+  },
+  {
+    parts: ['asistente-ia'],
+    label: 'Asistente IA',
+    icon: '🤖',
+    roles: ROLES_AI_ASSISTANT,
     navSection: 'Administración'
   }
 ];

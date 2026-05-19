@@ -133,6 +133,31 @@ public interface VentaRepository extends JpaRepository<Venta, Long>, JpaSpecific
             @Param("hasta") Instant hasta,
             @Param("usuarioFilter") Long usuarioFilter);
 
+    /**
+     * Top productos por unidades vendidas en rango (ventas confirmadas). Usado para contexto sanitizado del asistente IA.
+     */
+    @Query(
+            value =
+                    """
+                    SELECT d.producto_id, p.nombre, COALESCE(SUM(d.cantidad), 0)
+                    FROM venta_detalle d
+                    INNER JOIN venta v ON v.id = d.venta_id
+                    INNER JOIN producto p ON p.id = d.producto_id
+                    WHERE v.empresa_id = :empresaId
+                      AND v.estado = 'CONFIRMADA'
+                      AND v.fecha_venta >= :desde
+                      AND v.fecha_venta < :hasta
+                    GROUP BY d.producto_id, p.nombre
+                    ORDER BY COALESCE(SUM(d.cantidad), 0) DESC
+                    LIMIT :limit
+                    """,
+            nativeQuery = true)
+    List<Object[]> findTopProductosPorCantidadVendidaEnRango(
+            @Param("empresaId") Long empresaId,
+            @Param("desde") Instant desde,
+            @Param("hasta") Instant hasta,
+            @Param("limit") int limit);
+
     @EntityGraph(attributePaths = {"bodega", "usuario", "cliente", "movimiento"})
     @Query("""
             SELECT v FROM Venta v

@@ -32,3 +32,9 @@ export const ROLES_PROVEEDOR_LECTURA: string[] = ['ADMIN', 'SUPER_ADMIN', 'COMPR
 export const ROLES_VENTAS_PANEL: string[] = ['VENTAS', 'ADMIN', 'SUPER_ADMIN', 'GERENCIA'];
 
 export const ROLES_VENTA_REGISTRO: string[] = ['VENTAS', 'ADMIN', 'SUPER_ADMIN'];
+
+/**
+ * Asistente IA + recomendaciones persistidas (Spring /api/v1/ai/chat y /api/v1/ai/recommendations).
+ * Alineado con backend: ADMIN, SUPER_ADMIN, GERENCIA, COMPRAS, AUX_BODEGA (sin VENTAS).
+ */
+export const ROLES_AI_ASSISTANT: string[] = ['ADMIN', 'SUPER_ADMIN', 'GERENCIA', 'COMPRAS', 'AUX_BODEGA'];

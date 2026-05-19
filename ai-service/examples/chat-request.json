@@ -1,0 +1,46 @@
+{
+  "company_id": 1,
+  "user_id": 42,
+  "role": "ADMIN",
+  "question": "¿Qué debería comprar esta semana según mi inventario?",
+  "context": {
+    "products": [
+      {
+        "id": 101,
+        "name": "Arroz 5kg",
+        "sku": "ARR-005",
+        "category": "Abarrotes",
+        "active": true,
+        "createdAt": "2025-01-15T12:00:00Z"
+      }
+    ],
+    "stock": [
+      {
+        "productId": 101,
+        "productName": "Arroz 5kg",
+        "currentStock": 4,
+        "warehouseName": "Bodega Central",
+        "minimumStock": 20,
+        "riskLevel": "HIGH"
+      }
+    ],
+    "sales": [
+      {
+        "productId": 101,
+        "productName": "Arroz 5kg",
+        "quantitySold": 120,
+        "period": "last_30_days"
+      }
+    ],
+    "movements": [
+      {
+        "movementId": 999,
+        "type": "SALIDA",
+        "productName": "Arroz 5kg",
+        "quantity": 10,
+        "warehouseName": "Bodega Central",
+        "createdAt": "2026-05-15T14:22:05Z"
+      }
+    ]
+  }
+}

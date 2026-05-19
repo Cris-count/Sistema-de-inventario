@@ -24,7 +24,16 @@ public interface MovimientoRepository extends JpaRepository<Movimiento, Long> {
               AND (:tipo IS NULL OR m.tipoMovimiento = :tipo)
               AND m.fechaMovimiento >= :desde AND m.fechaMovimiento < :hasta
             """)
-    @EntityGraph(attributePaths = {"usuario", "proveedor", "detalles", "detalles.producto"})
+    /** Incluye bodegas de línea para contexto sanitizado del asistente IA (tenant ya filtrado en la JPQL). */
+    @EntityGraph(
+            attributePaths = {
+                "usuario",
+                "proveedor",
+                "detalles",
+                "detalles.producto",
+                "detalles.bodegaOrigen",
+                "detalles.bodegaDestino"
+            })
     Page<Movimiento> findByEmpresaAndTipoAndFechaBetween(
             @Param("empresaId") Long empresaId,
             @Param("tipo") TipoMovimiento tipo,

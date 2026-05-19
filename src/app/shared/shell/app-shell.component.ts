@@ -1,8 +1,9 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { catchError, filter, map, of, switchMap } from 'rxjs';
+import { catchError, filter, map, merge, of, switchMap, take } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
+import { ROLES_AI_ASSISTANT } from '../../core/auth/app-roles';
 import { routeFadeAnimation, prepareRouteSnapshot } from '../../core/animations';
 import {
   matchNavItemByUrl,
@@ -14,6 +15,7 @@ import {
   orderNavItemsForRole
 } from '../../core/navigation';
 import { BRANDING_ASSETS } from '../../core/branding.paths';
+import { AiAssistantService } from '../../core/api/ai-assistant.service';
 import { EmpresaActualService } from '../../core/services/empresa-actual.service';
 import { ThemeToggleComponent } from '../components/theme-toggle/theme-toggle.component';
 
@@ -121,12 +123,15 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
                       [routerLink]="['/app', ...item.parts]"
                       routerLinkActive="active"
                       [routerLinkActiveOptions]="{ exact: navExactActive(item) || item.parts[0] === 'dashboard' }"
-                      [attr.title]="railMode() ? item.label : null"
-                      [attr.aria-label]="item.label"
+                      [attr.title]="railMode() ? navLinkAriaLabel(item) : null"
+                      [attr.aria-label]="navLinkAriaLabel(item)"
                       (click)="closeNav()"
                     >
                       <span class="nav-ico" aria-hidden="true">{{ item.icon }}</span>
                       <span class="nav-txt">{{ item.label }}</span>
+                      @if (showAiAssistantBadge(item)) {
+                        <span class="nav-badge" aria-hidden="true">{{ aiAssistantPendingCount() }}</span>
+                      }
                     </a>
                   }
                 </div>
@@ -438,6 +443,28 @@ const SIDEBAR_RAIL_KEY = 'inventario_sidebar_rail';
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .nav-badge {
+      margin-left: auto;
+      flex-shrink: 0;
+      font-size: 0.62rem;
+      font-weight: 800;
+      min-width: 1.28rem;
+      padding: 0.12rem 0.38rem;
+      border-radius: 999px;
+      background: linear-gradient(145deg, var(--accent-bright), var(--accent-dim));
+      color: #0c1420;
+      line-height: 1.15;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-bright) 35%, transparent);
+    }
+    .sidebar--narrow .nav-badge {
+      position: absolute;
+      top: 0.12rem;
+      right: 0.12rem;
+      margin-left: 0;
+      font-size: 0.52rem;
+      min-width: 1rem;
+      padding: 0.05rem 0.22rem;
     }
     .sidebar--narrow .nav-link {
       flex-direction: column;
@@ -807,10 +834,14 @@ export class AppShellComponent {
   readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly empresaApi = inject(EmpresaActualService);
+  private readonly aiAssistant = inject(AiAssistantService);
   private readonly destroyRef = inject(DestroyRef);
   readonly navExactActive = navExactActive;
   readonly navOpen = signal(false);
   readonly prepareRoute = prepareRouteSnapshot;
+
+  /** Recomendaciones IA pendientes (solo UI; errores ⇒ 0 sin tumbar el shell). */
+  readonly aiAssistantPendingCount = signal(0);
 
   /**
    * Vista de escritorio (mismo breakpoint que el cajón móvil): en móvil el menú es ancho aunque railMode
@@ -869,7 +900,17 @@ export class AppShellComponent {
       .subscribe(() => {
         this.urlPath.set(this.router.url);
         this.navOpen.set(false);
+        this.computeAiAssistantPendingCount()
+          .pipe(take(1))
+          .subscribe((n) => this.aiAssistantPendingCount.set(n));
       });
+
+    merge(of(undefined), toObservable(this.auth.user), this.aiAssistant.pendingRecommendationsRefresh$)
+      .pipe(
+        switchMap(() => this.computeAiAssistantPendingCount()),
+        takeUntilDestroyed()
+      )
+      .subscribe((n) => this.aiAssistantPendingCount.set(n));
 
     toObservable(this.auth.user)
       .pipe(
@@ -934,4 +975,30 @@ export class AppShellComponent {
     }
     return groups;
   });
+
+  /** Solo ítem Asistente IA, cuando hay recomendaciones pendientes y el ítem ya es visible por rol/plan. */
+  protected showAiAssistantBadge(item: NavItem): boolean {
+    return (
+      item.parts.length === 1 &&
+      item.parts[0] === 'asistente-ia' &&
+      this.aiAssistantPendingCount() > 0
+    );
+  }
+
+  protected navLinkAriaLabel(item: NavItem): string {
+    const base = item.label;
+    if (!this.showAiAssistantBadge(item)) {
+      return base;
+    }
+    const n = this.aiAssistantPendingCount();
+    return `${base}, ${n} recomendaciones pendientes`;
+  }
+
+  private computeAiAssistantPendingCount() {
+    const role = this.auth.role();
+    if (!role || !ROLES_AI_ASSISTANT.includes(role)) {
+      return of(0);
+    }
+    return this.aiAssistant.getPendingRecommendationsCount();
+  }
 }

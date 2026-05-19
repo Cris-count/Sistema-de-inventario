@@ -1,114 +1,115 @@
-# Frontend — Sistema de inventario (PASO 6)
+# Frontend Angular
 
-## Objetivo
+Esta carpeta contiene documentacion del frontend. El codigo real de la aplicacion Angular esta en la raiz del repositorio, principalmente en `src/`, `angular.json`, `package.json` y los archivos de entorno.
 
-Aplicación **Angular21** (standalone components) que consume el **API monolítico modular** Spring Boot (`/api/v1`), con **JWT** en cabecera `Authorization: Bearer`, formularios reactivos para movimientos y maestros, **guards** por autenticación y rol, e **interceptor** HTTP para adjuntar el token y manejar `401`.
+## Stack
 
-El código fuente del frontend está en la **raíz del monorepo** (`src/`, `angular.json`, `package.json`), no dentro de esta carpeta `frontend/` (esta carpeta documenta y referencia el proyecto).
+- Angular 21 con componentes standalone.
+- Angular Router con rutas lazy.
+- RxJS y `HttpClient`.
+- Interceptor HTTP para adjuntar JWT y tratar respuestas `401`.
+- Guards de autenticacion, sesion sincronizada y rol.
+- CSS del proyecto, tokens de diseno, Tailwind CSS v4 y animaciones controladas.
+- GSAP limitado principalmente a la landing publica.
 
-## Tecnologías
+## Organizacion Principal
 
-- Angular 21, RxJS, `HttpClient` con functional interceptors
-- Estilos: `src/styles.css`, `src/landing-styles.css` y **Tailwind CSS v4** (`@tailwindcss/postcss` en el build)
-- Build: `outputMode: static` (SPA sin SSR) para simplificar sesión JWT y `localStorage`
-
-## Estructura de carpetas (`src/app/`)
-
-| Ruta | Propósito |
+| Ruta | Proposito |
 |------|-----------|
-| `core/auth/` | `AuthService`, `authGuard`, `guestGuard`, `roleGuard` |
-| `core/interceptors/` | `authInterceptor` (Bearer + redirección en401) |
-| `core/api/` | Servicios HTTP alineados a controladores Spring |
-| `core/models/` | Tipos de DTO/página (`Page<T>`, entidades de lectura) |
-| `core/util/` | `api-error` (RFC 7807 `detail`), fechas |
-| `core/navigation.ts` | Ítems del menú y visibilidad por rol |
-| `shared/shell/` | Layout con sidebar y `router-outlet` |
-| `features/auth/` | Login |
-| `features/dashboard/` | Panel simple con conteos |
-| `features/productos/`, `categorias/`, `bodegas/`, `proveedores/` | Maestros |
-| `features/inventario/` | Consulta, alertas, stock inicial (admin) |
-| `features/movimientos/` | Historial, detalle, entrada, salida, transferencia, ajuste |
-| `features/reportes/` | Kardex, export CSV |
-| `features/usuarios/` | ABM usuarios (admin) |
+| `src/app/app.routes.ts` | Rutas publicas y autenticadas. |
+| `src/app/core/auth/` | `AuthService`, guards y definicion de roles. |
+| `src/app/core/api/` | Servicios HTTP para consumir `/api/v1`. |
+| `src/app/core/models/` | Tipos usados por servicios y pantallas. |
+| `src/app/core/navigation.ts` | Menu lateral, visibilidad por rol y filtros por modulo del plan. |
+| `src/app/shared/shell/` | Layout autenticado con sidebar y `router-outlet`. |
+| `src/app/pages/landing/` | Landing publica. |
+| `src/app/pages/register/` | Registro/onboarding de empresas. |
+| `src/app/features/` | Modulos funcionales autenticados. |
+| `src/app/shared/motion/` | Helpers y directivas GSAP compartidas. |
 
-## Instalación
+## Rutas Relevantes
 
-Desde la raíz del repositorio:
+- `/` redirige a `/landing`.
+- `/landing` muestra la landing publica.
+- `/registro` permite iniciar el onboarding de empresa.
+- `/login` inicia sesion.
+- `/app` contiene el shell autenticado.
+- `/app/dashboard` muestra el panel ejecutivo-operativo, salvo rol `VENTAS`, que se redirige a `/app/ventas`.
+- `/app/ventas` contiene el panel de ventas y POS.
+- `/app/ventas/pago-retorno` confirma o cancela retornos de Stripe.
+- `/app/ventas/recibo/:id` muestra el comprobante operativo imprimible.
 
-```bash
-npm install
+## Modulos de UI Implementados
+
+- Dashboard con KPIs, prioridades, accesos rapidos y actividad reciente.
+- Productos, categorias, bodegas, proveedores, clientes y usuarios.
+- Inventario, alertas, stock inicial y abastecimiento.
+- Movimientos: entrada, salida, transferencia, ajuste, historial y detalle.
+- Reportes: Kardex y exportacion CSV.
+- Ventas: POS, venta clasica, resumen operativo, historial, detalle y comprobante.
+- Mi empresa, planes y checkout.
+
+## Ventas y POS en el Frontend
+
+La pantalla `src/app/features/ventas/ventas.page.ts` adapta su comportamiento al rol:
+
+- `VENTAS`: interfaz tipo POS, carrito, carga inicial de bodega, productos disponibles, acciones de cobro y resumen compacto.
+- `ADMIN` / `SUPER_ADMIN`: formulario clasico de venta y analisis operativo.
+- `GERENCIA`: consulta de ventas, resumen y detalle, sin registro de nuevas ventas.
+
+El POS valida bodega, lineas, stock disponible, cantidades, total y precio antes de permitir cobro. Para efectivo, captura `montoRecibido` y calcula cambio. Para Stripe, prepara una sesion Checkout y redirige fuera de la aplicacion.
+
+La pantalla de retorno no asume exito por venir de Stripe; sincroniza con el backend y Stripe antes de mostrar la venta como confirmada.
+
+## Configuracion de API
+
+En desarrollo, `src/environments/environment.ts` define:
+
+```ts
+apiUrl: '/api/v1'
 ```
 
-## Variables de entorno
+`proxy.conf.json` reenvia `/api` a `http://127.0.0.1:8080`. En produccion, `environment.prod.ts` tambien usa `/api/v1`, pensado para servir frontend y API bajo el mismo dominio o proxy inverso.
 
-La URL del API se define en `src/environments/environment.ts`:
+## Ejecucion
 
-- `apiUrl`: por defecto `http://localhost:8080/api/v1`
-
-Ajustar si el backend corre en otro host/puerto (p. ej. Docker publicando otro puerto).
-
-## Cómo ejecutar
-
-Desde la **raíz del monorepo** (donde está `package.json` y `angular.json`):
+Desde la raiz del repositorio:
 
 ```bash
 npm install
+npm run frontend
+```
+
+Tambien funcionan:
+
+```bash
 npm start
+npm run dev
 ```
 
-Arranque conjunto con base de datos Docker + API local (ver README raíz):
+`scripts/serve-frontend.mjs` inicia `ng serve` en modo development y busca un puerto libre a partir de `4200`. Si se requiere puerto estricto:
 
 ```bash
-npm run up
+NG_STRICT_PORT=1 npm run frontend
 ```
 
-(`npm run frontend` y `npm run dev` son equivalentes a `npm start`.)
-
-Navegador: http://localhost:4200 — la home pública es la **landing** (`/`). El panel autenticado es `/app`.
-
-El backend debe exponer CORS para `http://localhost:4200` (ya configurado en `SecurityConfig` del API).
-
-## Conexión con el backend
-
-1. Levantar API + PostgreSQL (`docker compose up -d --build` desde la raíz del monorepo).
-2. Verificar `apiUrl` en `environment.ts`.
-3. Iniciar sesión con un usuario existente (p. ej. semilla `admin@inventario.local` / `Admin123!` si aplica).
-
-**Logout:** el cliente solo borra token y usuario de `localStorage`. El backend **no** implementa `POST /auth/logout` en esta versión.
-
-## Pantallas disponibles
-
-- Login, panel (dashboard), productos, categorías (admin), bodegas, proveedores (ADMIN/COMPRAS/GERENCIA)
-- Inventario (filtros + alertas), stock inicial (admin)
-- Movimientos: historial, detalle, entrada, salida, transferencia, ajuste (según rol del API)
-- Reportes: kardex, descarga CSV de movimientos
-- Usuarios (admin)
-
-Los menús y rutas con `roleGuard` reflejan las autoridades del backend (`ADMIN`, `AUX_BODEGA`, `COMPRAS`, `GERENCIA`); la seguridad real sigue siendo **solo en el servidor**.
-
-## Plan de pruebas funcionales (manual)
-
-1. Login correcto → redirección a `/app`, token guardado.
-2. Login incorrecto → mensaje `Credenciales inválidas` (401).
-3. Recarga con token válido → sesión restaurada desde `localStorage`.
-4. Usuario sin rol para una ruta → redirección a `/app` (403 en API si se llama directamente).
-5. CRUD visual de producto (admin) y lectura para otros roles.
-6. Registrar entrada con líneas válidas; ver inventario actualizado.
-7. Registrar salida; probar **stock insuficiente** → mensaje de negocio (409).
-8. Transferencia con origen ≠ destino; error de validación si son iguales.
-9. Consultar inventario y alertas.
-10. Kardex por producto y export CSV en rango de fechas.
-11. Errores de validación backend (400) muestran `detail` del ProblemDetail.
-
-## Coherencia con el API real
-
-- Implementado según controladores en `backend/.../controller` (no se asume `GET /reportes/movimientos` ni `POST /auth/logout` que aparecían como opcionales/plan en documentación pero no en código).
-- Entrada: auxiliares sin permiso de listar proveedores usan campo opcional numérico `proveedorId` manual.
-
-## Compilación producción
+## Build y Pruebas
 
 ```bash
 npm run build
+npm run test
+npm run ci
 ```
 
-Salida: `dist/Inventario/browser/`.
+El build de produccion genera salida bajo `dist/Inventario/browser/`.
+
+## Seguridad en Cliente
+
+El frontend filtra navegacion y rutas con guards, pero eso solo mejora experiencia de usuario. La seguridad real se aplica en el backend con JWT, `@PreAuthorize`, tenant actual y validaciones de negocio.
+
+## Consideraciones
+
+- El frontend no implementa facturacion electronica; el comprobante de venta es operativo.
+- La navegacion por plan puede ocultar modulos cuando `GET /empresa/mi` informa capacidades.
+- El uso de GSAP debe seguir la politica de `src/app/shared/motion/README.md`.
+- Las pantallas operativas priorizan rendimiento y legibilidad sobre animaciones complejas.
